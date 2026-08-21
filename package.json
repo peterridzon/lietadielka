@@ -1,0 +1,46 @@
+{
+  "name": "lietadielka",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Transparency platform for the use of Slovak state aircraft, built on public ADS-B data.",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/cli/db-migrate.ts",
+    "db:studio": "drizzle-kit studio",
+    "db:reset": "tsx src/cli/db-reset.ts",
+    "seed": "tsx src/cli/seed.ts",
+    "airports:import": "tsx src/cli/airports-import.ts",
+    "adsb:backfill": "tsx src/cli/adsb-backfill.ts",
+    "flights:rebuild": "tsx src/cli/flights-rebuild.ts",
+    "flights:list": "tsx src/cli/flights-list.ts",
+    "costs:recompute": "tsx src/cli/costs-recompute.ts",
+    "imports:list": "tsx src/cli/imports-list.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.5",
+    "drizzle-orm": "^0.45.2",
+    "pg": "^8.23.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/pg": "^8.11.10",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.23.12",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.11"
+  },
+  "allowScripts": {
+    "esbuild@0.18.20": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true
+  }
+}

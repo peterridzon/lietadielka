@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+dist/
+.env
+.env.local
+*.log
+.DS_Store
+/data/cache/
+/data/pglite/
+/data/airports.csv
+/coverage/
