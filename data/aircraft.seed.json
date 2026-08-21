@@ -1,0 +1,190 @@
+{
+  "_readme": [
+    "Registry seed for tracked state aircraft.",
+    "",
+    "Rule from the brief: registration marks and ICAO 24-bit addresses are never guessed.",
+    "Every entry below carries the sources it rests on and a verificationStatus.",
+    "",
+    "verificationStatus = 'needs_verification' means: the identity is corroborated by the",
+    "listed sources, but not by a primary state register we can read ourselves. Slovak state",
+    "aircraft are deliberately absent from the civil register (Dopravny urad / NSAT), which we",
+    "checked - see notes. Upgrading these to 'verified' requires the military/state aircraft",
+    "register or a freedom-of-information answer from MV SR. See DATA_SOURCES.md.",
+    "",
+    "Aircraft that look state-operated but turned out NOT to be are kept in 'rejected' below,",
+    "so nobody re-adds them from the same bad assumption."
+  ],
+
+  "sources": [
+    {
+      "id": "src-nsat-civil-register-2026-01-07",
+      "publisher": "Dopravny urad / NSAT (Transport Authority of the Slovak Republic)",
+      "title": "Zoznam lietadiel zapisanych v registri lietadiel SR k 07.01.2026",
+      "url": "https://letectvo.nsat.sk/letova-sposobilost/register-lietadiel-slovenskej-republiky/zoznam-registra/",
+      "publishedAt": "2026-01-07",
+      "type": "government",
+      "notes": "Primary state source for CIVIL registrations. Used here as negative evidence: no A319 and no Fokker 100 appears in it, consistent with the government fleet being state aircraft outside the civil register."
+    },
+    {
+      "id": "src-wikipedia-sk-lu-mvsr",
+      "publisher": "Wikipedia (sk)",
+      "title": "Letecky utvar Ministerstva vnutra Slovenskej republiky",
+      "url": "https://sk.wikipedia.org/wiki/Leteck%C3%BD_%C3%BAtvar_Ministerstva_vn%C3%BAtra_Slovenskej_republiky",
+      "type": "media",
+      "notes": "Fleet composition and in-service dates. Tertiary source; corroborated by media reporting below."
+    },
+    {
+      "id": "src-wikipedia-en-sgfs",
+      "publisher": "Wikipedia (en)",
+      "title": "Slovak Government Flying Service",
+      "url": "https://en.wikipedia.org/wiki/Slovak_Government_Flying_Service",
+      "type": "media"
+    },
+    {
+      "id": "src-sita-fokker-withdrawal",
+      "publisher": "SITA",
+      "title": "Ministerstvo vnutra vyraduje jedno z dvoch lietadiel Fokker 100, bude na nahradne diely",
+      "url": "https://sita.sk/ministerstvo-vnutra-vyraduje-jedno-z-dvoch-lietadiel-fokker-100-bude-na-nahradne-diely/",
+      "type": "media",
+      "notes": "Withdrawal of OM-BYC from service on 2025-02-11."
+    },
+    {
+      "id": "src-tar1090-db",
+      "publisher": "wiedehopf / tar1090-db",
+      "title": "Community ADS-B aircraft database (ICAO 24-bit address to registration)",
+      "url": "https://github.com/wiedehopf/tar1090-db",
+      "type": "adsb",
+      "notes": "Source of the icao24 <-> registration mapping. Community-maintained, not an official register. This is the single weakest link in aircraft identity and the reason nothing here is marked 'verified'."
+    }
+  ],
+
+  "aircraft": [
+    {
+      "id": "ac-om-bya",
+      "icao24": "505c06",
+      "registration": "OM-BYA",
+      "manufacturer": "Airbus",
+      "model": "A319",
+      "variant": "A319-115X CJ",
+      "typeCode": "A319",
+      "operator": "Letecky utvar Ministerstva vnutra SR",
+      "category": "government",
+      "activeFrom": "2016-06-14",
+      "activeUntil": null,
+      "trackingEnabled": true,
+      "isRotorcraft": false,
+      "costModelKey": "a319cj-gov-sk",
+      "verificationStatus": "needs_verification",
+      "dataStatus": "real",
+      "sourceId": "src-tar1090-db",
+      "sourceUrl": "https://sk.wikipedia.org/wiki/Leteck%C3%BD_%C3%BAtvar_Ministerstva_vn%C3%BAtra_Slovenskej_republiky",
+      "notes": "Government flying service, operated by the Ministry of Interior air unit. In service since 2016-06-14. ICAO24 from tar1090-db; type and dates from sk/en Wikipedia. Not present in the NSAT civil register (checked 2026-08-21), as expected for a state aircraft."
+    },
+    {
+      "id": "ac-om-byk",
+      "icao24": "505c09",
+      "registration": "OM-BYK",
+      "manufacturer": "Airbus",
+      "model": "A319",
+      "variant": "A319-115X CJ",
+      "typeCode": "A319",
+      "operator": "Letecky utvar Ministerstva vnutra SR",
+      "category": "government",
+      "activeFrom": "2017-09-02",
+      "activeUntil": null,
+      "trackingEnabled": true,
+      "isRotorcraft": false,
+      "costModelKey": "a319cj-gov-sk",
+      "verificationStatus": "needs_verification",
+      "dataStatus": "real",
+      "sourceId": "src-tar1090-db",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Slovak_Government_Flying_Service",
+      "notes": "Second A319 of the government flying service. Same caveats as OM-BYA."
+    },
+    {
+      "id": "ac-om-byb",
+      "icao24": "505c07",
+      "registration": "OM-BYB",
+      "manufacturer": "Fokker",
+      "model": "Fokker 100",
+      "variant": "F28 Mark 0100",
+      "typeCode": "F100",
+      "operator": "Letecky utvar Ministerstva vnutra SR",
+      "category": "government",
+      "activeFrom": "2017-01-29",
+      "activeUntil": null,
+      "trackingEnabled": true,
+      "isRotorcraft": false,
+      "costModelKey": "f100-gov-sk",
+      "verificationStatus": "needs_verification",
+      "dataStatus": "real",
+      "sourceId": "src-tar1090-db",
+      "sourceUrl": "https://sk.wikipedia.org/wiki/Leteck%C3%BD_%C3%BAtvar_Ministerstva_vn%C3%BAtra_Slovenskej_republiky",
+      "notes": "Remaining airworthy Fokker 100 after OM-BYC was withdrawn in February 2025."
+    },
+    {
+      "id": "ac-om-byc",
+      "icao24": "505c08",
+      "registration": "OM-BYC",
+      "manufacturer": "Fokker",
+      "model": "Fokker 100",
+      "variant": "F28 Mark 0100",
+      "typeCode": "F100",
+      "operator": "Letecky utvar Ministerstva vnutra SR",
+      "category": "government",
+      "activeFrom": "2016-09-26",
+      "activeUntil": "2025-02-11",
+      "trackingEnabled": true,
+      "isRotorcraft": false,
+      "costModelKey": "f100-gov-sk",
+      "verificationStatus": "needs_verification",
+      "dataStatus": "real",
+      "sourceId": "src-sita-fokker-withdrawal",
+      "sourceUrl": "https://sita.sk/ministerstvo-vnutra-vyraduje-jedno-z-dvoch-lietadiel-fokker-100-bude-na-nahradne-diely/",
+      "notes": "Withdrawn from service 2025-02-11 and used for spares. Kept in the registry with activeUntil set so historical flights remain attributable; no positions are expected after that date."
+    }
+  ],
+
+  "candidates": [
+    {
+      "icao24": "505c02",
+      "registration": "OM-BYU",
+      "typeCode": "MI8",
+      "hypothesis": "Former Ministry of Interior Mil Mi-17. The OM-BY* block is used by the ministry air unit, but this specific airframe is not confirmed.",
+      "verificationStatus": "needs_verification",
+      "trackingEnabled": false
+    },
+    {
+      "icao24": "505c03",
+      "registration": "OM-BYH",
+      "typeCode": "MI8",
+      "hypothesis": "Former Ministry of Interior Mil Mi-17. Slovak Mi-17 operations ended in September 2024 under sanctions on Russian spare parts; unconfirmed for this airframe.",
+      "verificationStatus": "needs_verification",
+      "trackingEnabled": false
+    },
+    {
+      "registration": "OM-BYW",
+      "typeCode": "A189",
+      "hypothesis": "AgustaWestland AW189 delivered to the ministry air unit in February 2025. No ICAO 24-bit address found in any source we can cite, so it is deliberately NOT seeded - we do not guess hex addresses.",
+      "verificationStatus": "needs_verification",
+      "trackingEnabled": false
+    },
+    {
+      "registration": "OM-BYD",
+      "typeCode": "B429",
+      "hypothesis": "Bell 429 police helicopter of the ministry air unit. ICAO 24-bit address unconfirmed.",
+      "verificationStatus": "needs_verification",
+      "trackingEnabled": false
+    }
+  ],
+
+  "rejected": [
+    {
+      "registrations": ["OM-BHA", "OM-BHB", "OM-BHC", "OM-BHD", "OM-BHE", "OM-BHG", "OM-BHK"],
+      "type": "Sikorsky UH-60 / EH-60 Black Hawk",
+      "reason": "Look like state aircraft, are not. The NSAT civil register of 2026-01-07 lists them as owned by Slovak Training Academy, s.r.o. and operated by HELI COMPANY, s.r.o., with liens held by commercial entities. Private aircraft - out of scope for this project.",
+      "sourceId": "src-nsat-civil-register-2026-01-07",
+      "checkedAt": "2026-08-21"
+    }
+  ]
+}

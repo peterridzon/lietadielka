@@ -1,0 +1,77 @@
+{
+  "_readme": [
+    "Cost model seed.",
+    "",
+    "The brief is explicit: 'Nevymyslaj naklady.' No hourly rate, fuel burn or crew cost is",
+    "entered here unless it comes from a citable source. As of the initial commit we have not",
+    "yet obtained sourced operating figures for the Slovak government fleet, so the models",
+    "below carry structure and sources-to-obtain, not numbers.",
+    "",
+    "Consequence by design: with ALLOW_UNVERIFIED_COST_MODELS=false (the default) the cost",
+    "engine returns 'data unavailable' for these aircraft rather than a plausible-looking",
+    "invented figure. That is the correct behaviour until the inputs are sourced.",
+    "",
+    "Candidate primary sources to obtain (see COST_MODEL.md):",
+    "  - MV SR budget chapter and annual reports (fixed cost, crew, maintenance contracts)",
+    "  - Public procurement contracts for fuel, maintenance and handling (crz.gov.sk)",
+    "  - Freedom-of-information requests under zakon c. 211/2000 Z. z. for per-hour operating cost",
+    "  - Airport published charges for LZIB and destination airports (handling, landing fees)"
+  ],
+
+  "costModels": [
+    {
+      "key": "a319cj-gov-sk",
+      "version": 1,
+      "label": "Airbus A319-115X CJ - Slovak government flying service",
+      "appliesToTypeCode": "A319",
+      "validFrom": "2016-06-14",
+      "validTo": null,
+      "currency": "EUR",
+      "verificationStatus": "needs_verification",
+      "params": {
+        "components": {},
+        "unavailable": [
+          "fuelBurnKgPerHour",
+          "fuelPricePerKg",
+          "maintenancePerFlightHour",
+          "maintenancePerCycle",
+          "crewHourlyCost",
+          "fixedAnnualCost",
+          "expectedAnnualFlightHours",
+          "acquisitionCost",
+          "depreciationYears",
+          "airportHandlingCost"
+        ]
+      },
+      "sources": [],
+      "notes": "Structure only. No figure is entered until it has a citable source."
+    },
+    {
+      "key": "f100-gov-sk",
+      "version": 1,
+      "label": "Fokker 100 - Slovak government flying service",
+      "appliesToTypeCode": "F100",
+      "validFrom": "2016-09-26",
+      "validTo": null,
+      "currency": "EUR",
+      "verificationStatus": "needs_verification",
+      "params": {
+        "components": {},
+        "unavailable": [
+          "fuelBurnKgPerHour",
+          "fuelPricePerKg",
+          "maintenancePerFlightHour",
+          "maintenancePerCycle",
+          "crewHourlyCost",
+          "fixedAnnualCost",
+          "expectedAnnualFlightHours",
+          "acquisitionCost",
+          "depreciationYears",
+          "airportHandlingCost"
+        ]
+      },
+      "sources": [],
+      "notes": "Structure only. No figure is entered until it has a citable source."
+    }
+  ]
+}
