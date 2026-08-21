@@ -1,5 +1,5 @@
 {
-  "id": "9ce3ccf3-9950-441a-a930-b62b0105b571",
+  "id": "16235918-b2b3-4b05-b51e-fbcc565249f9",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1542,6 +1542,12 @@
         "position_age_seconds": {
           "name": "position_age_seconds",
           "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stale": {
+          "name": "stale",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": false
         },

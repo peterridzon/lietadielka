@@ -172,6 +172,7 @@ CREATE TABLE "raw_adsb_position" (
 	"callsign" varchar(12),
 	"on_ground" boolean,
 	"position_age_seconds" real,
+	"stale" boolean,
 	"source" text NOT NULL,
 	"data_status" text DEFAULT 'real' NOT NULL,
 	"import_job_id" text,

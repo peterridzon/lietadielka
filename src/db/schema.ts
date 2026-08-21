@@ -186,6 +186,8 @@ export const rawAdsbPosition = pgTable(
     onGround: boolean('on_ground'),
     /** Seconds since the position was actually received; high values = stale/interpolated. */
     positionAgeSeconds: real('position_age_seconds'),
+    /** Provider marked the position as stale (re-broadcast of an older fix). */
+    stale: boolean('stale'),
     source: text('source').notNull(),
     dataStatus: text('data_status').notNull().default('real'),
     importJobId: text('import_job_id').references(() => importJob.id),
