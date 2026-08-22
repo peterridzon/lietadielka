@@ -89,6 +89,7 @@
     navigation: 'navigačné poplatky',
     airport: 'letiskové poplatky',
     handling: 'handling',
+    allocated_fixed: 'alokované fixné náklady',
   }
 
   function eur(v) { return v == null ? '—' : Math.round(v).toLocaleString('sk-SK') + '\u00a0€' }

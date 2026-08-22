@@ -27,7 +27,7 @@ export type CostCategory =
   | 'fuel' | 'navigation' | 'airport' | 'handling'
   | 'maintenance_hour' | 'maintenance_cycle' | 'crew_variable' | 'blended_direct'
   | 'insurance' | 'crew_fixed' | 'training' | 'facility' | 'software'
-  | 'capital' | 'administration' | 'other'
+  | 'capital' | 'administration' | 'allocated_fixed' | 'other'
 
 export type CostScopeKind = 'direct' | 'fixed'
 

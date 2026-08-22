@@ -156,7 +156,7 @@ export function computeFlightCost(input: FlightCostInput): FlightCostResult {
       fixed = scaleInterval(perHour, flightHours)
 
       components.push({
-        category: 'other',
+        category: 'allocated_fixed',
         scope: 'fixed',
         status: 'estimated',
         valueLow: fixed.low,
