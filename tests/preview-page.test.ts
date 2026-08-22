@@ -104,6 +104,45 @@ describe('design preview', () => {
     }
   })
 
+  it('shows the full derivation chain from the source document to the number', () => {
+    const steps = $$('ol.chain li')
+    // Rate, block time, direct, annual fixed, fleet share, per hour, per flight, total.
+    expect(steps.length).toBeGreaterThanOrEqual(7)
+    for (const step of steps) {
+      expect(step.querySelector('.badge')).not.toBeNull()
+      expect(step.querySelector('.cmath')?.textContent?.trim().length).toBeGreaterThan(0)
+    }
+  })
+
+  it('separates what is quoted from what we derived', () => {
+    expect($$('ol.chain .badge.sourced').length).toBeGreaterThan(0)
+    expect($$('ol.chain .badge.derived').length).toBeGreaterThan(0)
+  })
+
+  it('links the primary source and quotes its figures', () => {
+    const link = $('#method-source a[href*="rokovania.gov.sk"]')
+    expect(link).not.toBeNull()
+    const quotes = $$('.quotes .quote')
+    expect(quotes.length).toBeGreaterThanOrEqual(4)
+    expect($('.msrc-check')?.textContent).toContain('768 004')
+  })
+
+  it('marks where our inputs sit in the source hierarchy', () => {
+    const here = $('table.tiers tr.here')
+    expect(here?.textContent).toContain('A4')
+  })
+
+  it('tells the reader how to check it themselves', () => {
+    const steps = $$('.verify-steps li')
+    expect(steps.length).toBeGreaterThanOrEqual(3)
+    expect($('.verify-steps code')?.textContent).toContain('costs:explain')
+  })
+
+  it('says the missing categories make the real cost higher, not lower', () => {
+    expect($('#method-missing')?.textContent).toMatch(/nezahŕňa/i)
+    expect($('#sec-methodology')?.textContent).toContain('vyššie')
+  })
+
   it('marks the flight purpose as probable rather than confirmed', () => {
     const status = $('.purpose .status')
     expect(status?.textContent).toBe('pravdepodobný')

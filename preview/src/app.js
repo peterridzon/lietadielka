@@ -390,6 +390,223 @@
         : '')
   }
 
+  // --- metodika: reťazec od dokumentu po číslo ------------------------------
+  // Všetko sa vykresľuje zo skutočných riadkov databázy, takže sa text nemôže rozísť
+  // s tým, čo engine naozaj počíta.
+  var model = (DATA.costModels || []).filter(function (m) { return m.validTo === null })[0] ||
+    (DATA.costModels || [])[0]
+  var a4 = (DATA.sources || []).filter(function (s) { return s.sourceTier === 'A4' })[0]
+  var fixedOrg = (DATA.fixedCosts || []).filter(function (f) { return f.scope === 'organization' })[0]
+  var fixedFleet = (DATA.fixedCosts || []).filter(function (f) { return f.scope === 'fleet' })[0]
+  var utilOfficial = (DATA.utilisation || []).filter(function (u) { return u.method === 'official' })[0]
+  var utilMinimum = (DATA.utilisation || []).filter(function (u) {
+    return u.method === 'planning_minimum' && u.scopeKey === 'lu-mvsr-fixedwing'
+  })[0]
+  var example = costed.filter(function (f) { return !f.costBlockEstimated })[0] || costed[0]
+
+  var methodSource = document.getElementById('method-source')
+  if (methodSource && a4) {
+    var head = el('div', 'msrc-head')
+    head.appendChild(el('h3', null, a4.title))
+    var link = document.createElement('a')
+    link.href = a4.url
+    link.target = '_blank'
+    link.rel = 'noopener noreferrer'
+    link.textContent = a4.url
+    head.appendChild(link)
+    methodSource.appendChild(head)
+
+    var quotes = el('div', 'quotes')
+    // Krátke citáty s číslami — presne tie vety, ktoré sa dajú v PDF nájsť a porovnať.
+    ;[
+      ['4 079 €', 'na hodinu letu na letúnoch (priemer oboch typov lietadiel F100 a A319)', 'za roky 2018 a 2019'],
+      ['3 802 €', 'na hodinu letu na letúnoch (vrátane poplatkov)', 'dlhodobý priemer po započítaní roka 2020'],
+      ['2 359,55 € – 5 300,75 €', 'rozptyl hodinovej ceny priamych prevádzkových nákladov letúnov', 'na najvyužívanejších letiskách'],
+      ['1 400', 'letových hodín na letúnoch', 'vykonaných v roku 2019'],
+      ['9 885 780 €', 'priemerný dlhodobý rozpočet bez mzdových nákladov', 'pri minimálnom nálete 600 h letúny + 600 h vrtuľníky'],
+    ].forEach(function (q) {
+      var box = el('div', 'quote')
+      box.innerHTML = '<b>' + q[0] + '</b> — ' + q[1] + ' <em style="font-style:normal;color:var(--ink-3)">(' + q[2] + ')</em>'
+      quotes.appendChild(box)
+    })
+    methodSource.appendChild(quotes)
+
+    var check = el('div', 'msrc-check')
+    check.innerHTML =
+      'Kontrola, že sme dokument čítali správne: jeho vlastná plánovacia tabuľka uvádza pre ' +
+      'MZVEZ SR 202 letových hodín a 768 004 €. <b>768 004 ÷ 202 = 3 802,0</b> — presne tá ' +
+      'sadzba, ktorú používame. To isté sedí na každom ďalšom riadku tabuľky.'
+    methodSource.appendChild(check)
+  }
+
+  var chain = document.getElementById('method-chain')
+  if (chain && model && example) {
+    var directMid = model.blendedDirectRateMid
+    var orgFixed = fixedOrg ? fixedOrg.valueMid : null
+    var fleetFixed = fixedFleet ? fixedFleet.valueMid : null
+    var hoursOfficial = utilOfficial ? utilOfficial.flightHours : null
+    var hoursMinimum = utilMinimum ? utilMinimum.flightHours : null
+    var perHourOfficial = fleetFixed && hoursOfficial ? fleetFixed / hoursOfficial : null
+    var perHourMinimum = fleetFixed && hoursMinimum ? fleetFixed / hoursMinimum : null
+    var exBlock = example.costBlockHours || 0
+    var exAirborne = (example.durationSeconds || 0) / 3600
+
+    var w = function (v) { return nf(Math.round(v)) }
+
+    function step(title, badge, math, note) {
+      var li = document.createElement('li')
+      var t = el('div', 'ctitle')
+      t.appendChild(document.createTextNode(title))
+      t.appendChild(el('span', 'badge ' + badge, badge === 'sourced' ? 'zdroj' : 'odvodené'))
+      li.appendChild(t)
+      var m = el('div', 'cmath')
+      m.innerHTML = math
+      li.appendChild(m)
+      if (note) li.appendChild(el('div', 'cnote', note))
+      chain.appendChild(li)
+    }
+
+    step(
+      'Sadzba priamych nákladov',
+      'sourced',
+      '<span class="eq">' + nf(directMid) + ' €</span> na hodinu letu',
+      'Prevzatá z dokumentu bez úpravy. Interval ' + nf(model.blendedDirectRateLow) + ' – ' +
+        nf(model.blendedDirectRateHigh) + ' € je rozptyl, ktorý uvádza ten istý materiál.',
+    )
+
+    step(
+      'Block time konkrétneho letu',
+      'derived',
+      'let ' + example.publicId + ': ' + exAirborne.toFixed(2) + ' h vo vzduchu → ' +
+        '<span class="eq">' + exBlock.toFixed(2) + ' h</span> block',
+      'Meraný z pozemného pohybu v ADS-B dátach — od prvej pozície s rýchlosťou nad 3 uzly ' +
+        'pred vzletom po poslednú po pristátí. Kde pozemné pozície chýbajú, použije sa čas vo ' +
+        'vzduchu plus prirážka na rolovanie a let je označený ako odhad.',
+    )
+
+    step(
+      'Priame náklady letu',
+      'derived',
+      exBlock.toFixed(2) + ' h × ' + nf(directMid) + ' €/h = <span class="eq">' +
+        w(exBlock * directMid) + ' €</span>',
+      'Jediné násobenie. Sadzba už obsahuje palivo, poplatky, handling aj údržbu viazanú na ' +
+        'prevádzku — preto ich nepripočítavame druhýkrát.',
+    )
+
+    if (orgFixed && fleetFixed && perHourOfficial) {
+      step(
+        'Fixné náklady útvaru za rok',
+        'derived',
+        '9 885 780 € rozpočet − (600 h × 3 802 € + 600 h × 812 €) = 9 885 780 − 2 768 400 = ' +
+          '<span class="eq">' + w(orgFixed) + ' €</span>',
+        'Rozpočtové číslo je z dokumentu. Odpočítanie priamych nákladov pri minimálnom nálete ' +
+          'je naša aritmetika: rozpočet obsahuje obe zložky, nás zaujíma tá, ktorá vzniká aj keď ' +
+          'lietadlá stoja. Sadzba 812 €/h pre vrtuľníky je z toho istého materiálu.',
+      )
+
+      step(
+        'Podiel pripadajúci na letúny',
+        'derived',
+        w(orgFixed) + ' € × (600 ÷ 1 200) = <span class="eq">' + w(fleetFixed) + ' €</span>',
+        'Rozpočet kryje letúny aj vrtuľníky. Delíme ho podľa plánovaných hodín, teda na polovicu. ' +
+          'Iná metóda alokácie — napríklad podľa hodnoty lietadiel — by dala iné číslo. Toto je ' +
+          'najspochybniteľnejší krok celého reťazca.',
+      )
+
+      step(
+        'Fixné náklady na letovú hodinu',
+        'derived',
+        w(fleetFixed) + ' € ÷ ' + nf(hoursOfficial) + ' h = <span class="eq">' +
+          w(perHourOfficial) + ' €/h</span>' +
+          (perHourMinimum
+            ? '&nbsp;&nbsp;·&nbsp;&nbsp;pri ' + nf(hoursMinimum) + ' h = ' + w(perHourMinimum) + ' €/h'
+            : ''),
+        'Menovateľ rozhoduje o výsledku viac než čokoľvek iné. Máme dva oficiálne údaje — ' +
+          nf(hoursOfficial) + ' skutočne nalietaných hodín za rok 2019 a ' + nf(hoursMinimum) +
+          ' hodín ako minimum na udržanie spôsobilosti. Rozdiel je ' +
+          (perHourMinimum / perHourOfficial).toFixed(1) + '-násobok, a preto z neho robíme interval, nie poznámku pod čiarou.',
+      )
+
+      step(
+        'Fixné náklady konkrétneho letu',
+        'derived',
+        exAirborne.toFixed(2) + ' h × ' + w(perHourOfficial) + ' €/h = <span class="eq">' +
+          w(exAirborne * perHourOfficial) + ' €</span>',
+        'Alokujeme podľa času vo vzduchu, nie block time — fixné náklady sa viažu na využitie ' +
+          'lietadla, ktoré je vykázané v letových hodinách.',
+      )
+    }
+
+    step(
+      'Celkové náklady daňovníka',
+      'derived',
+      w(example.costDirectMid) + ' € + ' + w(example.costFixedMid) + ' € = <span class="eq">' +
+        w(example.costFullMid) + ' €</span>',
+      'Zaokrúhľujeme položky pred sčítaním, aby zobrazené čísla naozaj dali zobrazený súčet.',
+    )
+  }
+
+  var tiers = document.getElementById('tiers')
+  if (tiers) {
+    ;[
+      ['A1', 'skutočná faktúra / zaplatená suma', false],
+      ['A2', 'oficiálne údaje o výdavkoch', false],
+      ['A3', 'zmluva v CRZ / ÚVO', false],
+      ['A4', 'oficiálny materiál štátneho orgánu', true],
+      ['A5', 'sadzobník letiska / EUROCONTROL', false],
+      ['B1', 'údaje výrobcu', false],
+      ['B2', 'certifikovaný prevádzkovateľ', false],
+      ['C', 'priemyselný benchmark', false],
+      ['D', 'analytický odhad', false],
+    ].forEach(function (t) {
+      var tr = document.createElement('tr')
+      if (t[2]) tr.className = 'here'
+      tr.appendChild(el('td', null, t[0]))
+      tr.appendChild(el('td', null, t[1]))
+      tr.appendChild(el('td', null, t[2] ? '← naše vstupy' : ''))
+      tiers.appendChild(tr)
+    })
+  }
+
+  var methodMissing = document.getElementById('method-missing')
+  if (methodMissing && example) {
+    var list = (example.costMissing || []).map(function (m) { return MISSING_SK[m] || m })
+    methodMissing.innerHTML = list.length
+      ? 'Odhad nezahŕňa: <b>' + list.join(', ') + '</b>.'
+      : 'Odhad zahŕňa všetky modelované kategórie.'
+  }
+
+  var methodPriceYear = document.getElementById('method-priceyear')
+  if (methodPriceYear && example) {
+    methodPriceYear.innerHTML =
+      'Vstupy sú v cenách roku <b>' + (example.costPriceYear || '?') + '</b>, lety sú z roku ' +
+      new Date(example.departureTime).getUTCFullYear() + '. Odstup ' +
+      (example.costPriceYearGap || 0) + ' rokov <b>neupravujeme o infláciu</b> — nemáme na to ' +
+      'zdrojovaný index. Reálne náklady sú preto pravdepodobne vyššie než uvedené. Preto je ' +
+      'kvalita každého odhadu na tejto stránke nízka.'
+  }
+
+  var verifyList = document.getElementById('verify-list')
+  if (verifyList && a4 && model && example) {
+    ;[
+      '<b>Otvorte dokument.</b> Sadzby ' + nf(Math.round(model.blendedDirectRateMid)) + ' €/h, rozptyl ' +
+        nf(model.blendedDirectRateLow) + ' – ' + nf(model.blendedDirectRateHigh) +
+        ' €/h aj rozpočet 9 885 780 € sú v kapitolách 2 a 4.1. ' +
+        '<a href="' + a4.url + '" target="_blank" rel="noopener noreferrer">rokovania.gov.sk</a>',
+      '<b>Prepočítajte jeden let.</b> Vezmite block time z detailu ktoréhokoľvek letu vyššie a ' +
+        'vynásobte ho sadzbou. Musí vyjsť zobrazené číslo priamych nákladov.',
+      '<b>Spochybnite alokáciu.</b> Delenie rozpočtu na polovicu medzi letúny a vrtuľníky je ' +
+        'naše rozhodnutie, nie údaj z dokumentu. Ak podľa vás patrí letúnom iný podiel, ' +
+        'prepočítajte krok 5 a uvidíte, ako veľmi to hýbe výsledkom.',
+      '<b>Pozrite si kód.</b> Každé číslo má v databáze uložený vzorec, vstupy a zdroj. ' +
+        'Z príkazového riadka: <code>npm run costs:explain -- --flight ' + example.publicId + '</code>',
+    ].forEach(function (item) {
+      var li = document.createElement('li')
+      li.innerHTML = item
+      verifyList.appendChild(li)
+    })
+  }
+
   // --- misie ---------------------------------------------------------------
   var costByFlight = {}
   flights.forEach(function (f) { costByFlight[f.publicId] = f })

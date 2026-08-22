@@ -11,7 +11,11 @@ import { closeDb, getDb } from '../src/db/client.js'
 import {
   aircraft,
   airport,
+  annualFixedCost,
+  annualUtilisation,
+  costBenchmark,
   costModel,
+  costResearchItem,
   flight,
   flightCost,
   flightPurpose,
@@ -129,6 +133,10 @@ const missionLegs = await db
 
 const models = await db.select().from(costModel).orderBy(asc(costModel.validFrom))
 const sources = await db.select().from(source)
+const research = await db.select().from(costResearchItem).orderBy(asc(costResearchItem.id))
+const benchmarks = await db.select().from(costBenchmark)
+const utilisation = await db.select().from(annualUtilisation).orderBy(asc(annualUtilisation.year))
+const fixedCosts = await db.select().from(annualFixedCost).orderBy(asc(annualFixedCost.year))
 const jobs = await db
   .select({
     day: importJob.rangeFrom,
@@ -158,6 +166,10 @@ writeFileSync(
     missionLegs,
     costModels: models,
     sources,
+    research,
+    benchmarks,
+    utilisation,
+    fixedCosts,
   }),
 )
 console.log(
