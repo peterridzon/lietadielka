@@ -6,18 +6,15 @@ on:
   schedule:
     - cron: '17 4 * * *'
   workflow_dispatch:
-    inputs:
-      backfill_days:
-        description: 'Koľko dní dozadu doplniť (max 40)'
-        required: false
-        default: '39'
 
 concurrency:
   group: collect
   cancel-in-progress: false
 
 permissions:
-  contents: write
+  contents: write   # commits the new observations
+  pages: write      # publishes the page
+  id-token: write
 
 jobs:
   collect:
@@ -54,15 +51,15 @@ jobs:
 
       - name: Collect
         run: |
-          DAYS="${{ github.event.inputs.backfill_days || '39' }}"
           # Recent days are re-fetched: a trace can still be filling in, and a day written
           # off as empty too early would stay empty for ever.
           npx tsx src/cli/adsb-backfill.ts --all \
             --from "$(date -u -d '3 days ago' +%F)" --to "$(date -u -d 'yesterday' +%F)" \
             --concurrency 6 --force
-          # Then anything untouched since the last run. Already-imported days are skipped.
+          # Then anything untouched since the last run. Already-imported days are skipped,
+          # so a long gap costs one pass rather than one run per missed day.
           npx tsx src/cli/adsb-backfill.ts --all \
-            --from "$(date -u -d "$DAYS days ago" +%F)" --to "$(date -u -d '4 days ago' +%F)" \
+            --from "$(date -u -d '39 days ago' +%F)" --to "$(date -u -d '4 days ago' +%F)" \
             --concurrency 6
 
       - name: Rebuild everything derived
@@ -74,10 +71,14 @@ jobs:
           # Re-attaches the hand-entered flight purposes to the rebuilt flights.
           npm run seed
 
+      # Nothing is published if the pipeline is broken.
       - run: npm test
 
       - name: Build the page
-        run: npm run preview:build
+        run: |
+          npm run preview:build
+          mkdir -p public
+          cp preview/state-flights-preview.html public/index.html
 
       - name: Commit the new observations
         run: |
@@ -87,25 +88,14 @@ jobs:
           if git diff --cached --quiet; then
             echo 'Nič nové — žiadny commit.'
           else
-            git commit -m "data: collection $(date -u +%F)"
+            git commit -m "data: zber $(date -u +%F)"
             git push
           fi
 
-      # Optional. Set WS_HOST, WS_USER, WS_PASSWORD and WS_PATH as repository secrets to
-      # publish to WebSupport; without them the workflow just collects and commits.
-      - name: Upload to WebSupport
-        if: ${{ env.WS_HOST != '' }}
-        env:
-          WS_HOST: ${{ secrets.WS_HOST }}
-          WS_USER: ${{ secrets.WS_USER }}
-          WS_PASSWORD: ${{ secrets.WS_PASSWORD }}
-          WS_PATH: ${{ secrets.WS_PATH }}
-        run: |
-          curl --fail --ssl-reqd --ftp-create-dirs \
-            -T preview/state-flights-preview.html \
-            -u "$WS_USER:$WS_PASSWORD" \
-            "ftp://$WS_HOST/${WS_PATH#/}/index.html"
-          echo "Nahraté."
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
 
       - name: Summary
         if: always()
@@ -115,8 +105,14 @@ jobs:
             echo '```'
             npx tsx src/cli/imports-list.ts 2>/dev/null | head -14 || true
             echo '```'
-            echo '### Detegované lety'
-            echo '```'
-            npx tsx src/cli/flights-list.ts --limit 8 2>/dev/null | tail -20 || true
-            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  publish:
+    needs: collect
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

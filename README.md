@@ -163,14 +163,15 @@ npm run obs:import        # day files → database
 npm run collect:daily     # the whole cycle, for running it by hand
 ```
 
-## Nasadenie
+## Deployment
 
-WebSupport webhosting is PHP-only, so the collector cannot run there — but this project
-does not need it to. Nothing on the public site changes between recomputations, because
-nothing is published until six hours after a landing. The site is static, the pipeline
-runs in CI, and **the database never faces the internet**.
+Three steps, no credentials, free: push to GitHub, set Pages to build from GitHub
+Actions, allow the workflow to write. The page then rebuilds itself every morning.
 
-See [deploy/README.md](deploy/README.md) for the setup and the alternatives.
+Nothing on it changes between recomputations — nothing is published until six hours after
+a landing — so it is static, the pipeline runs in CI, and **the database never faces the
+internet**. See [deploy/README.md](deploy/README.md), including how to point a WebSupport
+domain at it.
 
 ## Licence
 
