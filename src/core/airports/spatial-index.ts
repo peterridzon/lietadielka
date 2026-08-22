@@ -23,6 +23,8 @@ export type AirportRecord = {
  */
 export class AirportIndex {
   private readonly buckets = new Map<string, AirportRecord[]>()
+  /** Field elevation is looked up once per fix during classification; memoise it. */
+  private readonly elevationCache = new Map<string, number | null>()
 
   constructor(airports: Iterable<AirportRecord>) {
     for (const airport of airports) {
@@ -56,10 +58,21 @@ export class AirportIndex {
     return found
   }
 
-  /** Field elevation in feet at a point, from the nearest airport within 15 km. */
+  /**
+   * Field elevation in feet at a point, from the nearest airport within 15 km.
+   *
+   * Cached on a ~1 km grid: terrain elevation is only used to decide whether a fix is
+   * near the ground, which does not need metre precision, and the detector calls this
+   * once per fix.
+   */
   elevationAt(latitude: number, longitude: number): number | null {
+    const key = `${latitude.toFixed(2)}/${longitude.toFixed(2)}`
+    const cached = this.elevationCache.get(key)
+    if (cached !== undefined) return cached
     const nearest = this.near({ latitude, longitude }, 15)[0]
-    return nearest?.airport.elevationFt ?? null
+    const elevation = nearest?.airport.elevationFt ?? null
+    this.elevationCache.set(key, elevation)
+    return elevation
   }
 
   get size(): number {

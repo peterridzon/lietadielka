@@ -5,7 +5,7 @@
  * bump DETECTOR_VERSION, because `flight.detector_version` is what tells us which
  * flights need rebuilding.
  */
-export const DETECTOR_VERSION = 'fd-1.1.0'
+export const DETECTOR_VERSION = 'fd-1.2.0'
 
 export type DetectionConfig = {
   /** Above this gap, two fixes are never part of one continuous track. */
@@ -46,6 +46,20 @@ export type DetectionConfig = {
    * the aircraft used. A track that ends at cruise altitude gets no airport, not a guess.
    */
   maxAnchorAltitudeAglFt: number
+
+  // --- inferred ground stop ---
+  // An intermediate landing is invisible when no surface positions are received: the
+  // track descends, disappears for an hour, and resumes climbing. Without this the two
+  // legs merge into one impossible flight, and the intermediate airport vanishes from
+  // the record entirely.
+  /** Minimum gap before a stop may be inferred rather than observed. */
+  inferredStopMinGapSeconds: number
+  /** Both sides of the gap must be below this height above field elevation. */
+  inferredStopMaxAltitudeAglFt: number
+  /** ...and below this ground speed. */
+  inferredStopMaxSpeedKt: number
+  /** ...and the aircraft must not have gone anywhere during the gap. */
+  inferredStopMaxDriftKm: number
 }
 
 export const DEFAULT_DETECTION_CONFIG: DetectionConfig = {
@@ -66,4 +80,9 @@ export const DEFAULT_DETECTION_CONFIG: DetectionConfig = {
   teleportMinDistanceKm: 20,
 
   maxAnchorAltitudeAglFt: 5_000,
+
+  inferredStopMinGapSeconds: 900,
+  inferredStopMaxAltitudeAglFt: 6_000,
+  inferredStopMaxSpeedKt: 250,
+  inferredStopMaxDriftKm: 30,
 }

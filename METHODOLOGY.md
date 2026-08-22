@@ -61,6 +61,19 @@ not evidence of a landing. A track is only broken by a gap longer than six hours
 two fixes that no aircraft could have flown between. Everything else is recorded as a
 coverage gap and reduces the coverage figure.
 
+**2b. An intermediate landing we never saw is inferred, carefully.** Surface positions
+are often not received at airports outside dense receiver coverage, so a turnaround can
+look like nothing but a hole in a cruise. Where a gap of 15 minutes or more has, on both
+sides, fixes below 6 000 ft above field elevation and under 250 kt, and the aircraft
+moved less than 30 km in between, the only explanation is that it was on the ground, and
+the track is split.
+
+This is an inference, not an observation, and it is labelled as one: both resulting legs
+carry estimated times, and the intermediate airport can never be reported as more than
+*probable*. Without it, OM-BYK's Bratislava–Amman–Brussels rotation of 2026-08-19 was
+reported as a single 7 000 km "Bratislava to Brussels" flight, with the Amman stop absent
+from the record and 74 minutes on the ground counted as flying time.
+
 **3. A state machine walks each track.**
 
 ```
@@ -91,6 +104,10 @@ kilometres is discarded as ground movement.
 - A diversion followed by a quick departure can read as a touch-and-go.
 - A destination that was never observed is reported as unknown, even though the aircraft
   obviously landed somewhere.
+- An intermediate stop where coverage was lost only *above* 6 000 ft still merges two
+  legs into one. The signature has to be visible for the inference to fire.
+- Conversely, a long low-level hold with no coverage could in principle be mistaken for
+  a stop. The 15-minute and 30-kilometre limits make this unlikely, not impossible.
 
 ---
 

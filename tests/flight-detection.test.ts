@@ -162,6 +162,58 @@ describe('detectFlights — coverage gaps', () => {
   })
 })
 
+describe('detectFlights — unobserved intermediate stop', () => {
+  /**
+   * The real case this exists for: OM-BYK flew Bratislava to Amman to Brussels on
+   * 2026-08-19. No surface positions were received at Amman, so the turnaround looked
+   * like a 74-minute hole in the middle of a cruise, and the two legs merged into one
+   * 7 000 km "Bratislava to Brussels" flight with the Amman stop erased.
+   */
+  const withHiddenStop = [
+    ...leg({ fromT: 0, toT: 600, count: 20, from: LZIB, to: LZIB, altitude: 'ground', groundSpeed: 4 }),
+    ...leg({ fromT: 660, toT: 9_000, count: 60, from: LZIB, to: [32.1, 36.4], altitude: 35_000, groundSpeed: 460 }),
+    // Descending into the terminal area, then coverage stops.
+    ...leg({ fromT: 9_060, toT: 9_600, count: 10, from: [32.1, 36.4], to: [31.73, 36.07], altitude: 3_150, groundSpeed: 155 }),
+    // 74 minutes later, low and slow again 8 km away: it was on the ground.
+    ...leg({ fromT: 14_040, toT: 14_600, count: 10, from: [31.71, 35.98], to: [32.0, 35.5], altitude: 2_900, groundSpeed: 175 }),
+    ...leg({ fromT: 14_660, toT: 23_000, count: 60, from: [32.0, 35.5], to: [50.92, 4.5], altitude: 37_000, groundSpeed: 450 }),
+    ...leg({ fromT: 23_060, toT: 23_800, count: 20, from: [50.91, 4.49], to: [50.91, 4.49], altitude: 'ground', groundSpeed: 4 }),
+  ]
+
+  it('splits the rotation into two legs instead of one impossible flight', () => {
+    const flights = detectFlights(withHiddenStop)
+    expect(flights).toHaveLength(2)
+    expect(flights[0]!.arrivalTimeEstimated).toBe(true)
+    expect(flights[1]!.departureTimeEstimated).toBe(true)
+    // Neither leg may absorb the 74 minutes the aircraft spent on the ground.
+    const airborne = flights.reduce((sum, f) => sum + f.durationSeconds, 0)
+    expect(airborne).toBeLessThan(23_800 - 600 - 4_000)
+  })
+
+  it('does not split when the aircraft was plainly still cruising', () => {
+    const cruiseGap = [
+      ...leg({ fromT: 0, toT: 600, count: 20, from: LZIB, to: LZIB, altitude: 'ground', groundSpeed: 4 }),
+      ...leg({ fromT: 660, toT: 3_000, count: 30, from: LZIB, to: [45, 25], altitude: 35_000, groundSpeed: 460 }),
+      // Same length of gap, but at cruise altitude and speed, and it moved 900 km.
+      ...leg({ fromT: 7_500, toT: 9_000, count: 30, from: [40, 33], to: [38, 36], altitude: 35_000, groundSpeed: 460 }),
+      ...leg({ fromT: 9_060, toT: 9_700, count: 20, from: [38, 36], to: [38, 36], altitude: 'ground', groundSpeed: 4 }),
+    ]
+    expect(detectFlights(cruiseGap)).toHaveLength(1)
+  })
+
+  it('does not split on a short gap at low level, which could be a hold', () => {
+    const shortLowGap = [
+      ...leg({ fromT: 0, toT: 600, count: 20, from: LZIB, to: LZIB, altitude: 'ground', groundSpeed: 4 }),
+      ...leg({ fromT: 660, toT: 3_000, count: 30, from: LZIB, to: [49.9, 14.5], altitude: 20_000, groundSpeed: 400 }),
+      ...leg({ fromT: 3_060, toT: 3_300, count: 5, from: [49.9, 14.5], to: [50.05, 14.4], altitude: 4_000, groundSpeed: 200 }),
+      // Ten minutes of silence, below the inferred-stop threshold.
+      ...leg({ fromT: 3_900, toT: 4_100, count: 5, from: [50.06, 14.38], to: LKPR, altitude: 3_000, groundSpeed: 180 }),
+      ...leg({ fromT: 4_160, toT: 4_800, count: 20, from: LKPR, to: LKPR, altitude: 'ground', groundSpeed: 4 }),
+    ]
+    expect(detectFlights(shortLowGap)).toHaveLength(1)
+  })
+})
+
 describe('detectFlights — noise rejection', () => {
   it('discards ground movement that never becomes a flight', () => {
     const taxiOnly = leg({

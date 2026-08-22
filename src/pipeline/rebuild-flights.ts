@@ -5,7 +5,7 @@
  * improving the detector is a matter of bumping DETECTOR_VERSION and re-running this
  * — which is the entire reason the raw layer exists.
  */
-import { and, asc, eq, gte, lt } from 'drizzle-orm'
+import { and, asc, eq, gte, lt, type SQL } from 'drizzle-orm'
 import { matchAirport, type AirportMatch } from '../core/airports/match.js'
 import type { AirportIndex } from '../core/airports/spatial-index.js'
 import {
@@ -130,8 +130,13 @@ export async function rebuildFlightsForAircraft(options: {
     elevationAt: (latitude, longitude) => index.elevationAt(latitude, longitude),
   })
 
-  // Derived data only — raw positions are untouched.
-  await db.delete(flight).where(eq(flight.aircraftId, target.id))
+  // Derived data only — raw positions are untouched. When a window was given, only
+  // flights departing inside it are replaced; wiping the aircraft's whole history to
+  // rebuild one week would quietly destroy everything outside the window.
+  const deleteFilters: SQL[] = [eq(flight.aircraftId, target.id)]
+  if (options.from) deleteFilters.push(gte(flight.departureTime, options.from))
+  if (options.to) deleteFilters.push(lt(flight.departureTime, options.to))
+  await db.delete(flight).where(and(...deleteFilters))
 
   const results: RebuiltFlight[] = []
 

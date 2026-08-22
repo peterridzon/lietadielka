@@ -6,6 +6,7 @@
  * pass --public to apply the publication delay exactly as the public site will.
  */
 import { and, asc, eq, sql } from 'drizzle-orm'
+import { alias } from 'drizzle-orm/pg-core'
 import { closeDb, getDb } from '../db/client.js'
 import { findAircraft } from '../db/repositories/aircraft.js'
 import { publishedOnly } from '../db/repositories/flights.js'
@@ -18,6 +19,23 @@ function formatDuration(seconds: number | null): string {
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.round((seconds % 3600) / 60)
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+}
+
+/**
+ * An endpoint is either identified, probable (below the confidence threshold, shown
+ * with a question mark), or unknown. The three are visually distinct on purpose.
+ */
+function endpoint(
+  iata: string | null,
+  ident: string | null,
+  city: string | null,
+  probableIata: string | null,
+  probableIdent: string | null,
+  probableCity: string | null,
+): { code: string | null; city: string | null; certain: boolean } {
+  if (ident) return { code: iata || ident, city, certain: true }
+  if (probableIdent) return { code: probableIata || probableIdent, city: probableCity, certain: false }
+  return { code: null, city: null, certain: false }
 }
 
 function formatAirport(code: string | null, city: string | null, certain: boolean): string {
@@ -43,6 +61,13 @@ async function main(): Promise<void> {
   // One implementation of the publication rule, shared with every other reader.
   if (publicOnly) filters.push(publishedOnly())
 
+  // Four aliases: the accepted airport at each end, plus the probable one recorded
+  // where the match fell below the confidence threshold.
+  const depAirport = alias(airport, 'dep_airport')
+  const arrAirport = alias(airport, 'arr_airport')
+  const depProbable = alias(airport, 'dep_probable')
+  const arrProbable = alias(airport, 'arr_probable')
+
   const rows = await db
     .select({
       publicId: flight.publicId,
@@ -51,10 +76,6 @@ async function main(): Promise<void> {
       arrivalTime: flight.arrivalTime,
       departureTimeEstimated: flight.departureTimeEstimated,
       arrivalTimeEstimated: flight.arrivalTimeEstimated,
-      departureAirportId: flight.departureAirportId,
-      arrivalAirportId: flight.arrivalAirportId,
-      probableDepartureAirportId: flight.probableDepartureAirportId,
-      probableArrivalAirportId: flight.probableArrivalAirportId,
       durationSeconds: flight.durationSeconds,
       distanceKm: flight.distanceKm,
       distanceFromGapsKm: flight.distanceFromGapsKm,
@@ -66,23 +87,30 @@ async function main(): Promise<void> {
       positionCount: flight.positionCount,
       maxGapSeconds: flight.maxGapSeconds,
       callsign: flight.callsign,
-      publishedAt: flight.publishedAt,
+
+      depIdent: depAirport.ident,
+      depIata: depAirport.iata,
+      depCity: depAirport.city,
+      depProbableIdent: depProbable.ident,
+      depProbableIata: depProbable.iata,
+      depProbableCity: depProbable.city,
+
+      arrIdent: arrAirport.ident,
+      arrIata: arrAirport.iata,
+      arrCity: arrAirport.city,
+      arrProbableIdent: arrProbable.ident,
+      arrProbableIata: arrProbable.iata,
+      arrProbableCity: arrProbable.city,
     })
     .from(flight)
     .innerJoin(aircraft, eq(aircraft.id, flight.aircraftId))
+    .leftJoin(depAirport, eq(depAirport.id, flight.departureAirportId))
+    .leftJoin(arrAirport, eq(arrAirport.id, flight.arrivalAirportId))
+    .leftJoin(depProbable, eq(depProbable.id, flight.probableDepartureAirportId))
+    .leftJoin(arrProbable, eq(arrProbable.id, flight.probableArrivalAirportId))
     .where(filters.length > 0 ? and(...filters) : undefined)
     .orderBy(asc(flight.departureTime))
     .limit(limit)
-
-  const airportRows = await db
-    .select({ id: airport.id, ident: airport.ident, iata: airport.iata, city: airport.city })
-    .from(airport)
-  const byId = new Map(airportRows.map((row) => [row.id, row]))
-  const code = (id: string | null): { code: string | null; city: string | null } => {
-    if (!id) return { code: null, city: null }
-    const found = byId.get(id)
-    return { code: found?.iata || found?.ident || id, city: found?.city ?? null }
-  }
 
   if (rows.length === 0) {
     console.log('no flights in the database for that selection')
@@ -97,17 +125,17 @@ async function main(): Promise<void> {
   )
 
   for (const row of rows) {
-    const departure = code(row.departureAirportId ?? row.probableDepartureAirportId)
-    const arrival = code(row.arrivalAirportId ?? row.probableArrivalAirportId)
+    const departure = endpoint(row.depIata, row.depIdent, row.depCity, row.depProbableIata, row.depProbableIdent, row.depProbableCity)
+    const arrival = endpoint(row.arrIata, row.arrIdent, row.arrCity, row.arrProbableIata, row.arrProbableIdent, row.arrProbableCity)
     const date = row.departureTime.toISOString().slice(0, 10)
     const outTime = row.departureTime.toISOString().slice(11, 16)
     const inTime = row.arrivalTime?.toISOString().slice(11, 16) ?? '--:--'
 
     console.log(
       `${date}  ${row.registration ?? ''}  ${(row.callsign ?? '').padEnd(8)}\n` +
-        `  ${formatAirport(departure.code, departure.city, row.departureAirportId !== null)} ` +
+        `  ${formatAirport(departure.code, departure.city, departure.certain)} ` +
         `${outTime}${row.departureTimeEstimated ? '~' : ' '}` +
-        ` ->  ${formatAirport(arrival.code, arrival.city, row.arrivalAirportId !== null)} ` +
+        ` ->  ${formatAirport(arrival.code, arrival.city, arrival.certain)} ` +
         `${inTime}${row.arrivalTimeEstimated ? '~' : ' '}\n` +
         `  ${formatDuration(row.durationSeconds)}  ` +
         `${Math.round(row.distanceKm ?? 0).toLocaleString('en-GB')} km` +

@@ -61,7 +61,7 @@ export function detectFlights(
 
   const flights: DetectedFlight[] = []
 
-  for (const segment of segmentPositions(positions, config)) {
+  for (const segment of segmentPositions(positions, config, options.elevationAt)) {
     if (segment.length < 2) continue
 
     const states = resolveUnknowns(
