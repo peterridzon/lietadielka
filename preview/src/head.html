@@ -177,16 +177,18 @@ section > .wrap > .sec-head { margin-bottom: 28px; }
 
 /* --- fleet --------------------------------------------------------------- */
 .fleet { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
-.ac { background: var(--surface); padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 4px; }
-.ac .reg { font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: -0.01em; }
-.ac .type { font-size: 13.5px; color: var(--ink-2); }
-.ac figure { margin: 14px 0 0; }
+.ac { background: var(--surface); padding: 16px 18px 18px; display: flex; gap: 14px; align-items: flex-start; }
+.ac-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ac .reg { font-family: var(--display); font-weight: 700; font-size: 20px; letter-spacing: -0.01em; }
+.ac .type { font-size: 12.5px; color: var(--ink-2); line-height: 1.4; }
+.ac .type em { font-style: normal; color: var(--ink-3); }
+/* A thumbnail, not a hero: it says which aeroplane this is and gets out of the way. */
+.ac figure { margin: 0; flex: none; width: 116px; }
 .ac img { width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; display: block; background: var(--surface-2); border: 1px solid var(--rule); }
-.ac figcaption { margin-top: 6px; font-family: var(--data); font-size: 10px; line-height: 1.45; color: var(--ink-3); }
-.ac figcaption a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
-.ac figcaption a:hover { color: var(--accent); }
-.ac .no-photo { margin-top: 14px; aspect-ratio: 3 / 2; border: 1px dashed var(--rule-strong); display: flex; align-items: center; justify-content: center; text-align: center; padding: 12px; font-family: var(--data); font-size: 11px; color: var(--ink-3); }
-.ac .stat { margin-top: 12px; font-family: var(--data); font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.ac figcaption { margin-top: 4px; font-family: var(--data); font-size: 9px; line-height: 1.4; color: var(--ink-3); }
+.ac figcaption a { color: inherit; text-decoration: none; }
+.ac figcaption a:hover { color: var(--accent); text-decoration: underline; }
+.ac .stat { margin-top: 8px; font-family: var(--data); font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .ac .stat b { color: var(--ink); font-weight: 600; }
 .tag { align-self: flex-start; margin-top: 10px; font-family: var(--data); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 7px; border: 1px solid currentColor; }
 a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

@@ -185,15 +185,21 @@ must not be used here.
 | 9633 | Kambui | CC BY 2.0 | 2016-04-13 | **illustrative** — Nomad Aviation HB-JFB |
 
 **Photographs never identify an aircraft.** Identity is the ICAO 24-bit address, and the
-registration on a card comes from the registry, never from the image. Illustrative images
-are marked `imageType: AIRCRAFT_TYPE`, badged *ilustračné* on the page, and carry the full
-caveat in the image details.
+registration on a card comes from the registry, never from the image. Photographs are
+thumbnails: they say which aeroplane this is and get out of the way.
 
-The 9513 image was offered as showing that same airframe under its earlier mark C-FDIL.
-We use it, but only as illustrative, because the claim is not verifiable from the source:
-the Commons page states no serial number, the photograph is dated 2025-09-12 — after the
-December 2024 Slovak acquisition contracts — and C-FDIL is a Canadian mark Bombardier
-reuses across delivery aircraft. It may well be the same airframe; we cannot show that it is.
+`imageType` records whether an image shows the airframe itself or another aircraft of the
+same type. It is metadata, not card copy: the two Global 5000 images show other aircraft
+of the same type in the same configuration, which no reader needs warning about. The
+caveat is recorded here rather than repeated on every card.
+
+For the record on 9513: the image was offered as that airframe under its earlier mark
+C-FDIL. That is plausible but not verifiable from the source — the Commons page states no
+serial number, the photograph is dated 2025-09-12, after the December 2024 Slovak
+acquisition contracts, and C-FDIL is a Canadian mark Bombardier reuses across delivery
+aircraft. It is therefore filed as a type photograph.
+
+Attribution stays on the card because the CC BY and CC BY-SA licences require it.
 
 ## 5. Costs
 

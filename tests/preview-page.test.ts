@@ -98,21 +98,19 @@ describe('design preview', () => {
     const groups = $$('.fleet-group:not(.historical)')
     expect(groups.length).toBe(2)
     const names = groups.map((g) => g.querySelector('h3')?.textContent ?? '')
-    expect(names.some((n) => /Letecky|Letecký/.test(n))).toBe(true)
-    expect(names.some((n) => /Vzdusne|Vzdušné/.test(n))).toBe(true)
+    expect(names.some((n) => n.includes('Letecký útvar'))).toBe(true)
+    expect(names.some((n) => n.includes('Vzdušné sily'))).toBe(true)
   })
 
-  it('keeps the withdrawn aircraft out of the current fleet', () => {
-    const historical = $('.fleet-group.historical')
-    expect(historical?.textContent).toContain('OM-BYC')
-    for (const group of $$('.fleet-group:not(.historical)')) {
-      expect(group.textContent).not.toContain('OM-BYC')
-    }
+  it('does not show a withdrawn aircraft that has nothing to show', () => {
+    // OM-BYC left service in February 2025 and has no flights in the period. It stays
+    // in the registry, but a card for it would be a database row pretending to be news.
+    expect($('#sec-fleet')?.textContent).not.toContain('OM-BYC')
   })
 
   it('lists exactly the three current Ministry of Interior aircraft', () => {
     const interior = $$('.fleet-group:not(.historical)').find((g) =>
-      /Letecky|Letecký/.test(g.querySelector('h3')?.textContent ?? ''),
+      (g.querySelector('h3')?.textContent ?? '').includes('Letecký útvar'),
     )
     const regs = [...interior!.querySelectorAll('.ac .reg')].map((e) => e.textContent)
     expect(regs.sort()).toEqual(['OM-BYA', 'OM-BYB', 'OM-BYK'])
@@ -120,7 +118,7 @@ describe('design preview', () => {
 
   it('shows the Air Force Global 5000s by their military evidence numbers', () => {
     const airForce = $$('.fleet-group:not(.historical)').find((g) =>
-      /Vzdusne|Vzdušné/.test(g.querySelector('h3')?.textContent ?? ''),
+      (g.querySelector('h3')?.textContent ?? '').includes('Vzdušné sily'),
     )
     const regs = [...airForce!.querySelectorAll('.ac .reg')].map((e) => e.textContent)
     expect(regs.sort()).toEqual(['9513', '9633'])
@@ -137,29 +135,31 @@ describe('design preview', () => {
     }
   })
 
-  it('marks an illustrative photograph as illustrative', () => {
-    const typePhotos = $$('.ac figure.type-photo')
-    // Both Global 5000 entries use a photograph of another airframe.
-    expect(typePhotos.length).toBe(2)
-    for (const figure of typePhotos) {
-      expect(figure.querySelector('.illus')?.textContent).toBe('ilustračné')
-      // The caveat belongs in the detail and the tooltip, not shouted from the card.
-      expect(figure.querySelector('.photo-detail p')?.textContent?.length).toBeGreaterThan(40)
-      expect(figure.querySelector('img')?.getAttribute('title')?.length).toBeGreaterThan(40)
+  it('keeps the photographs to thumbnail size', () => {
+    // They are a scale reference, not the point of the card.
+    const figures = $$('.ac figure')
+    expect(figures.length).toBe(5)
+    for (const figure of figures) {
+      expect(figure.querySelector('img')?.getAttribute('loading')).toBe('lazy')
     }
   })
 
-  it('never claims an illustrative photograph shows the Slovak aircraft', () => {
-    const airForce = $$('.fleet-group:not(.historical)').find((g) =>
-      /Vzdusne|Vzdušné/.test(g.querySelector('h3')?.textContent ?? ''),
-    )
-    const cards = [...airForce!.querySelectorAll('.ac')]
-    const nine633 = cards.find((c) => c.querySelector('.reg')?.textContent === '9633')
-    expect(nine633?.querySelector('.photo-detail p')?.textContent).toMatch(/iné lietadlo|nie slovenský/)
+  it('does not clutter the cards with uniform caveats', () => {
+    // Every aircraft is unverified and two photographs are illustrative; saying so on
+    // each card carries no information. Both facts are stated once in the section intro
+    // and in DATA_SOURCES.md instead.
+    const fleet = $('#sec-fleet')
+    expect(fleet?.textContent).not.toContain('ilustračné')
+    expect(fleet?.querySelector('.tag.unverified')).toBeNull()
+    expect($$('.ac .photo-detail').length).toBe(0)
+  })
 
-    const nine513 = cards.find((c) => c.querySelector('.reg')?.textContent === '9513')
-    // We could not verify the airframe, so the page must not assert that we did.
-    expect(nine513?.querySelector('.photo-detail p')?.textContent).toMatch(/neoverili/)
+  it('gets Slovak plurals right', () => {
+    // "3 letov" reads as a typo; 2-4 takes a different form from 5+.
+    const text = $('#sec-fleet')?.textContent ?? ''
+    expect(text).toContain('3 lety')
+    expect(text).toContain('5 letov')
+    expect(text).toContain('lietadlá v službe')
   })
 
   it('does not let a photograph identify an aircraft', () => {

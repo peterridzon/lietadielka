@@ -46,6 +46,11 @@
   function pct(x) { return x == null ? '—' : Math.round(x * 100) + '\u00a0%' }
   function grade(x) { return x >= 0.75 ? 'q-high' : x >= 0.5 ? 'q-med' : 'q-low' }
 
+  /** Slovak counts split 1 / 2-4 / 5+, and "3 letov" reads as a typo to a Slovak reader. */
+  function plural(n, one, few, many) {
+    return n === 1 ? one : n >= 2 && n <= 4 ? few : many
+  }
+
   function el(tag, cls, text) {
     var node = document.createElement(tag)
     if (cls) node.className = cls
@@ -360,7 +365,8 @@
       {
         label: 'Odhadované celkové náklady daňovníka',
         value: eurRange(totalFullLow, totalFull, totalFullHigh),
-        note: 'Súčet oboch vrstiev za ' + nf(costed.length) + ' detegovaných letov v tomto období.',
+        note: 'Súčet oboch vrstiev za ' + nf(costed.length) + ' ' +
+          plural(costed.length, 'detegovaný let', 'detegované lety', 'detegovaných letov') + ' v tomto období.',
       },
       {
         label: 'Porovnateľná komerčná alternatíva',
@@ -716,65 +722,44 @@
     var mine = flights.filter(function (f) { return f.registration === ac.registration })
     var hours = mine.reduce(function (s, f) { return s + (f.durationSeconds || 0) }, 0) / 3600
     var card = el('div', 'ac')
-    card.appendChild(el('div', 'reg', ac.registration))
-    var type = el('div', 'type', ac.variant || ac.model || '')
-    if (ac.registrationType === 'military') {
-      type.appendChild(el('em', null, ' · vojenský register, ev. č. ' + ac.registration))
-    }
-    card.appendChild(type)
 
-    // Photographs are illustrative and take no part in identifying an aircraft — that is
-    // the ICAO address alone. Where the image is not the airframe itself, the caption
-    // says so quietly and the full caveat sits in the tooltip rather than shouting from
-    // the card.
+    // Photographs are decoration and scale reference. They take no part in identifying
+    // an aircraft — that is the ICAO address alone. Attribution stays because the CC
+    // licences require it; everything else about the image is metadata, not card copy.
     var photo = PHOTOS[ac.registration]
     if (photo) {
-      var typePhoto = photo.imageType === 'AIRCRAFT_TYPE'
       var fig = el('figure')
-      if (typePhoto) fig.className = 'type-photo'
       var img = document.createElement('img')
       img.src = photo.src
-      img.alt = typePhoto
-        ? 'Ilustračná fotografia typu ' + (ac.model || 'lietadla') +
-          (photo.subjectRegistration ? ', snímka zachytáva ' + photo.subjectRegistration : '')
-        : ac.registration + ', ' + (ac.variant || ac.model || 'lietadlo') + ', fotografované ' + photo.date
-      if (photo.photoLabel) img.title = photo.photoLabel
-      img.loading = 'lazy'
+      img.alt = (ac.model || 'Lietadlo') + ' ' + ac.registration
+      img.setAttribute('loading', 'lazy')
       fig.appendChild(img)
-
       var cap = el('figcaption')
       cap.innerHTML =
-        (typePhoto ? '<span class="illus" title="' + (photo.photoLabel || '').replace(/"/g, '&quot;') +
-          '">ilustračné</span> ' : '') +
-        'Foto ' + (photo.date || '').slice(0, 4) + ': ' +
         '<a href="' + photo.page + '" target="_blank" rel="noopener noreferrer">' + photo.author + '</a>' +
-        ' · <a href="' + photo.licenseUrl + '" target="_blank" rel="noopener noreferrer">' + photo.license + '</a>' +
-        (typePhoto && photo.subjectRegistration ? ' · ' + photo.subjectRegistration : '')
+        ' · <a href="' + photo.licenseUrl + '" target="_blank" rel="noopener noreferrer">' + photo.license + '</a>'
       fig.appendChild(cap)
-
-      if (photo.photoLabel) {
-        var det = document.createElement('details')
-        det.className = 'photo-detail'
-        var sum = document.createElement('summary')
-        sum.textContent = 'O fotografii'
-        det.appendChild(sum)
-        det.appendChild(el('p', null, photo.photoLabel))
-        fig.appendChild(det)
-      }
       card.appendChild(fig)
-    } else {
-      card.appendChild(el('div', 'no-photo', 'Voľne licencovanú fotografiu tohto lietadla sme nenašli'))
     }
+
+    var body = el('div', 'ac-body')
+    body.appendChild(el('div', 'reg', ac.registration))
+    var type = el('div', 'type', ac.variant || ac.model || '')
+    if (ac.registrationType === 'military') {
+      type.appendChild(el('em', null, ' · vojenský register'))
+    }
+    body.appendChild(type)
 
     var stat = el('div', 'stat')
-    if (mine.length) stat.innerHTML = '<b>' + nf(mine.length) + '</b> letov · <b>' + nf(hours, 1) + '</b> h'
-    else stat.textContent = 'v tomto období nezaznamenané'
-    card.appendChild(stat)
-
-    if (ac.activeUntil) card.appendChild(el('span', 'tag retired', 'vyradené ' + ac.activeUntil))
-    else if (ac.verificationStatus === 'needs_verification') {
-      card.appendChild(el('span', 'tag unverified', 'identita neoverená'))
+    if (mine.length) {
+      stat.innerHTML =
+        '<b>' + nf(mine.length) + '</b> ' + plural(mine.length, 'let', 'lety', 'letov') +
+        ' · <b>' + nf(hours, 1) + '</b> h'
     }
+    else stat.textContent = 'v tomto období nezaznamenané'
+    body.appendChild(stat)
+
+    card.appendChild(body)
     return card
   }
 
@@ -795,7 +780,8 @@
         .filter(function (f) { return members.some(function (m) { return m.registration === f.registration }) })
         .reduce(function (s, f) { return s + (f.durationSeconds || 0) }, 0) / 3600
       header.appendChild(el('span', 'gmeta',
-        nf(members.length) + ' lietadlá v službe · ' + nf(hours, 1) + ' h v tomto období'))
+        nf(members.length) + ' ' + plural(members.length, 'lietadlo', 'lietadlá', 'lietadiel') +
+          ' v službe · ' + nf(hours, 1) + ' h v tomto období'))
       group.appendChild(header)
       var grid = el('div', 'fleet')
       members.forEach(function (ac) { grid.appendChild(aircraftCard(ac)) })
@@ -803,15 +789,20 @@
       groupsBox.appendChild(group)
     })
 
-  if (historical.length) {
+  // Withdrawn aircraft appear only where they have something to show. One with no
+  // flights in the period is a database row, not a fact worth a card.
+  var historicalWithFlights = historical.filter(function (ac) {
+    return flights.some(function (f) { return f.registration === ac.registration })
+  })
+  if (historicalWithFlights.length) {
     var group = el('div', 'fleet-group historical')
     var header = document.createElement('header')
-    header.appendChild(el('h3', null, 'Historické záznamy'))
+    header.appendChild(el('h3', null, 'Mimo služby'))
     header.appendChild(el('span', 'gmeta',
-      'Mimo služby. Nevstupujú do počtu lietadiel, do nákladov ani do žiadneho údaja o dnešnej flotile.'))
+      'Nevstupujú do počtu lietadiel, do nákladov ani do žiadneho údaja o dnešnej flotile.'))
     group.appendChild(header)
     var grid = el('div', 'fleet')
-    historical.forEach(function (ac) { grid.appendChild(aircraftCard(ac)) })
+    historicalWithFlights.forEach(function (ac) { grid.appendChild(aircraftCard(ac)) })
     group.appendChild(grid)
     groupsBox.appendChild(group)
   }
@@ -869,7 +860,8 @@
   }
 
   var stripsBox = document.getElementById('strips')
-  document.getElementById('flights-heading').textContent = nf(flights.length) + ' letov, od najstaršieho'
+  document.getElementById('flights-heading').textContent =
+    nf(flights.length) + ' ' + plural(flights.length, 'let', 'lety', 'letov') + ', od najstaršieho'
 
   flights.forEach(function (f, index) {
     var dep = endpoint(f, 'dep'), arr = endpoint(f, 'arr')
