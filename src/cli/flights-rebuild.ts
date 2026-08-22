@@ -7,7 +7,7 @@
  *   --from/--to  optional YYYY-MM-DD window (UTC)
  */
 import { closeDb } from '../db/client.js'
-import { listTrackedAircraft, requireAircraft } from '../db/repositories/aircraft.js'
+import { listAllAircraft, requireAircraft } from '../db/repositories/aircraft.js'
 import { getAirportIndex } from '../db/repositories/airports.js'
 import { rebuildFlightsForAircraft } from '../pipeline/rebuild-flights.js'
 import { flag, optionalString, parseArgs, parseUtcDate, requireString, runCli } from '../lib/cli.js'
@@ -17,8 +17,10 @@ async function main(): Promise<void> {
   const fromArg = optionalString(args, 'from')
   const toArg = optionalString(args, 'to')
 
+  // --all covers withdrawn aircraft too: their historical flights are still derived data
+  // and still need rebuilding when the detector improves.
   const fleet = flag(args, 'all')
-    ? await listTrackedAircraft()
+    ? await listAllAircraft()
     : [await requireAircraft(requireString(args, 'aircraft'))]
 
   const index = await getAirportIndex()

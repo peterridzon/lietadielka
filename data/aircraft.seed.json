@@ -5,6 +5,15 @@
     "Rule from the brief: registration marks and ICAO 24-bit addresses are never guessed.",
     "Every entry below carries the sources it rests on and a verificationStatus.",
     "",
+    "The CURRENT fleet of the MV SR air unit is OM-BYA, OM-BYK and OM-BYB. OM-BYC was",
+    "withdrawn on 2025-02-11 and is kept only as a historical record: status 'retired',",
+    "trackingEnabled false, activeUntil set. It must not appear in any figure describing",
+    "the fleet today - see src/core/fleet.ts.",
+    "",
+    "fleetKey attaches an aircraft to a cost model and a utilisation denominator. Aircraft",
+    "of another ministry belong to another fleetKey so that one ministry's operating rate",
+    "is never applied to another's aircraft.",
+    "",
     "verificationStatus = 'needs_verification' means: the identity is corroborated by the",
     "listed sources, but not by a primary state register we can read ourselves. Slovak state",
     "aircraft are deliberately absent from the civil register (Dopravny urad / NSAT), which we",
@@ -14,7 +23,6 @@
     "Aircraft that look state-operated but turned out NOT to be are kept in 'rejected' below,",
     "so nobody re-adds them from the same bad assumption."
   ],
-
   "sources": [
     {
       "id": "src-nsat-civil-register-2026-01-07",
@@ -55,9 +63,18 @@
       "url": "https://github.com/wiedehopf/tar1090-db",
       "type": "adsb",
       "notes": "Source of the icao24 <-> registration mapping. Community-maintained, not an official register. This is the single weakest link in aircraft identity and the reason nothing here is marked 'verified'."
+    },
+    {
+      "id": "src-magnetpress-global5000",
+      "publisher": "MAGNET PRESS / Aeromagazin ATM",
+      "title": "Vianocna nadielka OS SR: Bizjety Bombardier Global 5000",
+      "url": "https://magnetpress.online/atm/vianocna-nadielka-os-sr-bizjety-bombardier-global-5000/",
+      "publishedAt": "2024-12-27",
+      "type": "media",
+      "sourceTier": "C",
+      "notes": "Aviation trade press. Gives MSN 9513 (built 2013, 2 400 flight hours) and MSN 9633 (built 2014, 2 455 flight hours), acquired from United Wings International under contracts of 16 and 19 December 2024 worth USD 23.15 and 24.6 million."
     }
   ],
-
   "aircraft": [
     {
       "id": "ac-om-bya",
@@ -78,7 +95,11 @@
       "dataStatus": "real",
       "sourceId": "src-tar1090-db",
       "sourceUrl": "https://sk.wikipedia.org/wiki/Leteck%C3%BD_%C3%BAtvar_Ministerstva_vn%C3%BAtra_Slovenskej_republiky",
-      "notes": "Government flying service, operated by the Ministry of Interior air unit. In service since 2016-06-14. ICAO24 from tar1090-db; type and dates from sk/en Wikipedia. Not present in the NSAT civil register (checked 2026-08-21), as expected for a state aircraft."
+      "notes": "Government flying service, operated by the Ministry of Interior air unit. In service since 2016-06-14. ICAO24 from tar1090-db; type and dates from sk/en Wikipedia. Not present in the NSAT civil register (checked 2026-08-21), as expected for a state aircraft.",
+      "fleetKey": "lu-mvsr-fixedwing",
+      "status": "active",
+      "operatorId": "lu-mvsr",
+      "registrationType": "civil"
     },
     {
       "id": "ac-om-byk",
@@ -99,7 +120,11 @@
       "dataStatus": "real",
       "sourceId": "src-tar1090-db",
       "sourceUrl": "https://en.wikipedia.org/wiki/Slovak_Government_Flying_Service",
-      "notes": "Second A319 of the government flying service. Same caveats as OM-BYA."
+      "notes": "Second A319 of the government flying service. Same caveats as OM-BYA.",
+      "fleetKey": "lu-mvsr-fixedwing",
+      "status": "active",
+      "operatorId": "lu-mvsr",
+      "registrationType": "civil"
     },
     {
       "id": "ac-om-byb",
@@ -120,7 +145,11 @@
       "dataStatus": "real",
       "sourceId": "src-tar1090-db",
       "sourceUrl": "https://sk.wikipedia.org/wiki/Leteck%C3%BD_%C3%BAtvar_Ministerstva_vn%C3%BAtra_Slovenskej_republiky",
-      "notes": "Remaining airworthy Fokker 100 after OM-BYC was withdrawn in February 2025."
+      "notes": "Remaining airworthy Fokker 100 after OM-BYC was withdrawn in February 2025.",
+      "fleetKey": "lu-mvsr-fixedwing",
+      "status": "active",
+      "operatorId": "lu-mvsr",
+      "registrationType": "civil"
     },
     {
       "id": "ac-om-byc",
@@ -134,17 +163,83 @@
       "category": "government",
       "activeFrom": "2016-09-26",
       "activeUntil": "2025-02-11",
-      "trackingEnabled": true,
+      "trackingEnabled": false,
       "isRotorcraft": false,
       "costModelKey": "f100-gov-sk",
       "verificationStatus": "needs_verification",
       "dataStatus": "real",
       "sourceId": "src-sita-fokker-withdrawal",
       "sourceUrl": "https://sita.sk/ministerstvo-vnutra-vyraduje-jedno-z-dvoch-lietadiel-fokker-100-bude-na-nahradne-diely/",
-      "notes": "Withdrawn from service 2025-02-11 and used for spares. Kept in the registry with activeUntil set so historical flights remain attributable; no positions are expected after that date."
+      "notes": "Withdrawn from service on 2025-02-11 and used as a source of spare parts for the remaining Fokker 100. Kept as a historical record only: it is excluded from the current fleet, from ADS-B polling, from cost allocation and utilisation, and from every dashboard figure describing the fleet today. Flights before the withdrawal date remain attributable to it if data for them is ever obtained.",
+      "fleetKey": "lu-mvsr-fixedwing",
+      "status": "retired",
+      "operatorId": "lu-mvsr",
+      "registrationType": "civil"
+    },
+    {
+      "id": "ac-9513",
+      "icao24": "505fa0",
+      "registration": "9513",
+      "registrationType": "military",
+      "msn": "9513",
+      "previousRegistrations": [
+        "C-FDIL",
+        "C-FMPX",
+        "C-GPYF"
+      ],
+      "manufacturer": "Bombardier",
+      "model": "Global 5000",
+      "variant": "BD-700-1A11",
+      "typeCode": "GL5T",
+      "operator": "Vzdusne sily OS SR",
+      "operatorId": "os-sr",
+      "fleetKey": "os-sr-global5000",
+      "category": "ministry_of_defence",
+      "activeFrom": null,
+      "activeUntil": null,
+      "status": "active",
+      "trackingEnabled": true,
+      "isRotorcraft": false,
+      "costModelKey": null,
+      "verificationStatus": "needs_verification",
+      "dataStatus": "real",
+      "sourceId": "src-tar1090-db",
+      "sourceUrl": "https://magnetpress.online/atm/vianocna-nadielka-os-sr-bizjety-bombardier-global-5000/",
+      "notes": "Slovak military register, evidence number equals the MSN. Built 2013. Deliberately has no OM- mark: state aircraft in the military register are absent from the civil register, so absence there is not evidence against it. Acquisition contract signed December 2024; no sourced in-service date, so activeFrom is left unset. Previous marks are for provenance research only - flights under them predate Slovak ownership and carried different ICAO addresses."
+    },
+    {
+      "id": "ac-9633",
+      "icao24": "505fa1",
+      "registration": "9633",
+      "registrationType": "military",
+      "msn": "9633",
+      "previousRegistrations": [
+        "T7-AVA",
+        "9H-AVA",
+        "M-DANK",
+        "C-GYOF"
+      ],
+      "manufacturer": "Bombardier",
+      "model": "Global 5000",
+      "variant": "BD-700-1A11",
+      "typeCode": "GL5T",
+      "operator": "Vzdusne sily OS SR",
+      "operatorId": "os-sr",
+      "fleetKey": "os-sr-global5000",
+      "category": "ministry_of_defence",
+      "activeFrom": null,
+      "activeUntil": null,
+      "status": "active",
+      "trackingEnabled": true,
+      "isRotorcraft": false,
+      "costModelKey": null,
+      "verificationStatus": "needs_verification",
+      "dataStatus": "real",
+      "sourceId": "src-tar1090-db",
+      "sourceUrl": "https://magnetpress.online/atm/vianocna-nadielka-os-sr-bizjety-bombardier-global-5000/",
+      "notes": "Slovak military register, evidence number equals the MSN. Built 2014. Same caveats as 9513."
     }
   ],
-
   "candidates": [
     {
       "icao24": "505c02",
@@ -177,14 +272,59 @@
       "trackingEnabled": false
     }
   ],
-
   "rejected": [
     {
-      "registrations": ["OM-BHA", "OM-BHB", "OM-BHC", "OM-BHD", "OM-BHE", "OM-BHG", "OM-BHK"],
+      "registrations": [
+        "OM-BHA",
+        "OM-BHB",
+        "OM-BHC",
+        "OM-BHD",
+        "OM-BHE",
+        "OM-BHG",
+        "OM-BHK"
+      ],
       "type": "Sikorsky UH-60 / EH-60 Black Hawk",
       "reason": "Look like state aircraft, are not. The NSAT civil register of 2026-01-07 lists them as owned by Slovak Training Academy, s.r.o. and operated by HELI COMPANY, s.r.o., with liens held by commercial entities. Private aircraft - out of scope for this project.",
       "sourceId": "src-nsat-civil-register-2026-01-07",
       "checkedAt": "2026-08-21"
+    },
+    {
+      "registrations": [
+        "OM-NTN"
+      ],
+      "type": "Bombardier BD-700-1A11 Global 5000",
+      "reason": "A privately operated Bombardier Global 5000: the NSAT civil register of 2026-01-07 gives the owner as Raiffeisen - Leasing, s.r.o. and the operator as ELITE JET s.r.o. Out of scope. NOTE: this entry once carried the conclusion that Slovakia therefore operates no state Global 5000. That was wrong, and wrong in the way this project exists to avoid - absence from one register is not absence in fact. The Slovak Air Force operates two, 9513 and 9633, in the military register. They are seeded above.",
+      "sourceId": "src-nsat-civil-register-2026-01-07",
+      "checkedAt": "2026-08-22"
+    }
+  ],
+  "operators": [
+    {
+      "id": "sk-state-air-transport",
+      "name": "Statna letecka preprava Slovenskej republiky",
+      "shortName": "SK state air transport",
+      "parentId": null,
+      "category": "government",
+      "country": "SK",
+      "notes": "Umbrella only. It is not an operator itself; the two ministries below are, and they have separate budgets, separate registers and separate operating costs."
+    },
+    {
+      "id": "lu-mvsr",
+      "name": "Letecky utvar Ministerstva vnutra Slovenskej republiky",
+      "shortName": "LU MV SR",
+      "parentId": "sk-state-air-transport",
+      "category": "ministry_of_interior",
+      "country": "SK",
+      "notes": "The government flying service. Civil OM- registrations, absent from the civil register because they are state aircraft."
+    },
+    {
+      "id": "os-sr",
+      "name": "Vzdusne sily Ozbrojenych sil Slovenskej republiky",
+      "shortName": "Slovak Air Force",
+      "parentId": "sk-state-air-transport",
+      "category": "ministry_of_defence",
+      "country": "SK",
+      "notes": "Ministry of Defence. Aircraft carry military evidence numbers in the military aircraft register, not OM- marks."
     }
   ]
 }

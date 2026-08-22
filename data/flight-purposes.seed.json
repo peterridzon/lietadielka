@@ -1,0 +1,42 @@
+{
+  "_readme": [
+    "Hand-entered flight purposes, kept in version control rather than only in a local",
+    "database. Rebuilding the database from scratch must not consume research that cost",
+    "someone an afternoon or a freedom-of-information request.",
+    "",
+    "Flights are matched by publicId. Entries whose flight does not exist yet are reported",
+    "and skipped, so this file can be seeded before the pipeline has run.",
+    "",
+    "status must be one of confirmed | probable | unknown, and anything other than",
+    "'unknown' needs a publisher and a source URL.",
+    "",
+    "'confirmed' means a source states that THIS aircraft carried THIS mission.",
+    "'probable' means the evidence is circumstantial - typically an officially announced",
+    "trip whose dates and destination match. Matching dates are not a confirmation."
+  ],
+
+  "purposes": [
+    {
+      "flightPublicId": "2026-07-12-om-bya-lzib-kewr",
+      "title": "Pracovna cesta ministra zahranicnych veci do sidla OSN v New Yorku",
+      "description": "MZVEZ SR ohlasilo pracovnu cestu ministra Juraja Blanara do USA od 12. do 16. jula 2026, kde Slovensko oficialne predstavilo kandidaturu na nestale clenstvo v Bezpecnostnej rade OSN na roky 2028-2029. Datumy sa zhoduju s tymto letom, ziadny zdroj vsak neuvadza, ze delegacia cestovala prave tymto lietadlom. Zhoda datumov nie je potvrdenie.",
+      "status": "probable",
+      "sourcePublisher": "slovensko247.sk, citujuc MZVEZ SR",
+      "sourceUrl": "https://www.slovensko247.sk/103439-blanar-odcestuje-do-sidla-osn-v-spojenych-statoch-oficialne-predstavi-kandidaturu-slovenska-do-bezpecnostnej-rady/",
+      "sourcePublishedAt": "2026-07-12",
+      "sourceType": "media",
+      "verifiedBy": "manual research 2026-08-22"
+    },
+    {
+      "flightPublicId": "2026-07-15-om-bya-kewr-lzib",
+      "title": "Navrat z pracovnej cesty ministra zahranicnych veci v OSN",
+      "description": "Spiatocny usek. Rovnaka evidencia a rovnake obmedzenia ako pri ceste tam.",
+      "status": "probable",
+      "sourcePublisher": "slovensko247.sk, citujuc MZVEZ SR",
+      "sourceUrl": "https://www.slovensko247.sk/103439-blanar-odcestuje-do-sidla-osn-v-spojenych-statoch-oficialne-predstavi-kandidaturu-slovenska-do-bezpecnostnej-rady/",
+      "sourcePublishedAt": "2026-07-12",
+      "sourceType": "media",
+      "verifiedBy": "manual research 2026-08-22"
+    }
+  ]
+}

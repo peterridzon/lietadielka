@@ -72,9 +72,13 @@ export function selectModel(candidates: ModelRow[], date: Date): { model: ModelR
 async function resolveModel(
   aircraftId: string,
   typeCode: string | null,
+  fleetKey: string | null,
   date: Date,
 ): Promise<ResolvedCostModel | null> {
   const { db } = await getDb()
+  // A fleet-wide model applies only within its own fleet. Without the fleetKey match,
+  // the Ministry of Interior's hourly rate would be applied to any aircraft with no
+  // model of its own — including another ministry's.
   const rows = await db
     .select()
     .from(costModel)
@@ -82,7 +86,11 @@ async function resolveModel(
       or(
         eq(costModel.appliesToAircraftId, aircraftId),
         typeCode ? eq(costModel.appliesToTypeCode, typeCode) : sql`false`,
-        and(isNull(costModel.appliesToAircraftId), isNull(costModel.appliesToTypeCode)),
+        and(
+          isNull(costModel.appliesToAircraftId),
+          isNull(costModel.appliesToTypeCode),
+          fleetKey ? eq(costModel.scopeKey, fleetKey) : sql`false`,
+        ),
       ),
     )
     .orderBy(desc(costModel.validFrom))
@@ -203,6 +211,7 @@ export async function recomputeCosts(options: { aircraftId?: string } = {}): Pro
       publicId: flight.publicId,
       aircraftId: flight.aircraftId,
       typeCode: aircraft.typeCode,
+      fleetKey: aircraft.fleetKey,
       departureTime: flight.departureTime,
       durationSeconds: flight.durationSeconds,
       blockSeconds: flight.blockSeconds,
@@ -217,10 +226,13 @@ export async function recomputeCosts(options: { aircraftId?: string } = {}): Pro
   let skipped = 0
 
   for (const row of flights) {
-    const model = await resolveModel(row.aircraftId, row.typeCode, row.departureTime)
+    const model = await resolveModel(row.aircraftId, row.typeCode, row.fleetKey, row.departureTime)
     if (!model) {
       skipped++
-      reasons['no cost model'] = (reasons['no cost model'] ?? 0) + 1
+      const reason = row.fleetKey
+        ? `no cost model for fleet ${row.fleetKey}`
+        : 'aircraft has no fleetKey, so no fleet model can apply'
+      reasons[reason] = (reasons[reason] ?? 0) + 1
       continue
     }
 

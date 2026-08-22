@@ -701,24 +701,34 @@
     table.appendChild(row)
   })
 
-  // --- register -----------------------------------------------------------
-  var fleetBox = document.getElementById('fleet')
-  DATA.fleet.forEach(function (ac) {
+  // --- register: oddelene podľa prevádzkovateľa -----------------------------
+  // Vyradené lietadlo zostáva v registri, ale nesmie vstupovať do ničoho, čo opisuje
+  // flotilu dnes — inak nafúkne jej veľkosť a rozriedi každý údaj na lietadlo.
+  function isCurrentlyActive(ac) {
+    if (ac.status !== 'active') return false
+    var today = new Date().toISOString().slice(0, 10)
+    if (ac.activeFrom && ac.activeFrom > today) return false
+    if (ac.activeUntil && ac.activeUntil < today) return false
+    return true
+  }
+
+  function aircraftCard(ac) {
     var mine = flights.filter(function (f) { return f.registration === ac.registration })
     var hours = mine.reduce(function (s, f) { return s + (f.durationSeconds || 0) }, 0) / 3600
     var card = el('div', 'ac')
     card.appendChild(el('div', 'reg', ac.registration))
-    card.appendChild(el('div', 'type', ac.variant || ac.model || ''))
+    var type = el('div', 'type', ac.variant || ac.model || '')
+    if (ac.registrationType === 'military') {
+      type.appendChild(el('em', null, ' · vojenský register, ev. č. ' + ac.registration))
+    }
+    card.appendChild(type)
 
-    // Fotografie sú z Wikimedia Commons pod voľnou licenciou. Autor a licencia sú
-    // uvedené pri každej — bez toho by sme ich použiť nesmeli.
     var photo = PHOTOS[ac.registration]
     if (photo) {
       var fig = el('figure')
       var img = document.createElement('img')
       img.src = photo.src
-      img.alt = ac.registration + ', ' + (ac.variant || ac.model || 'lietadlo') +
-        ', fotografované ' + photo.date
+      img.alt = ac.registration + ', ' + (ac.variant || ac.model || 'lietadlo') + ', fotografované ' + photo.date
       img.loading = 'lazy'
       fig.appendChild(img)
       var cap = el('figcaption')
@@ -732,75 +742,53 @@
     }
 
     var stat = el('div', 'stat')
-    if (mine.length) {
-      stat.innerHTML = '<b>' + nf(mine.length) + '</b> letov · <b>' + nf(hours, 1) + '</b> h'
-    } else {
-      stat.textContent = 'v tomto období nezaznamenané'
-    }
+    if (mine.length) stat.innerHTML = '<b>' + nf(mine.length) + '</b> letov · <b>' + nf(hours, 1) + '</b> h'
+    else stat.textContent = 'v tomto období nezaznamenané'
     card.appendChild(stat)
-    if (ac.activeUntil) {
-      card.appendChild(el('span', 'tag retired', 'vyradené ' + ac.activeUntil))
-    } else if (ac.verificationStatus === 'needs_verification') {
+
+    if (ac.activeUntil) card.appendChild(el('span', 'tag retired', 'vyradené ' + ac.activeUntil))
+    else if (ac.verificationStatus === 'needs_verification') {
       card.appendChild(el('span', 'tag unverified', 'identita neoverená'))
     }
-    fleetBox.appendChild(card)
-  })
-
-  // --- sú to naozaj samostatné lietadlá? ----------------------------------
-  /**
-   * Register hovorí, že OM-BYA a OM-BYK sú dva rôzne stroje, ale register je cudzí
-   * zdroj. Z vlastných pozorovaní sa to dá overiť: nájdeme dve pozície rôznych
-   * lietadiel najbližšie v čase a spočítame, akou rýchlosťou by sa medzi nimi muselo
-   * jedno lietadlo presunúť. Ak vyjde nadzvuková rýchlosť, jeden stroj to byť nemôže.
-   */
-  var A319_CRUISE_KMH = 830
-  function haversineKm(a, b) {
-    var R = 6371.0088, rad = Math.PI / 180
-    var dLat = (b.lat - a.lat) * rad, dLon = (b.lon - a.lon) * rad
-    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(a.lat * rad) * Math.cos(b.lat * rad)
-    return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)))
+    return card
   }
 
-  var marksByTime = []
-  flights.forEach(function (f) {
-    var t = f.track || []
-    if (t.length < 2) return
-    ;[t[0], t[t.length - 1]].forEach(function (p) {
-      marksByTime.push({ reg: f.registration, t: p[3], lat: p[1], lon: p[0] })
+  var groupsBox = document.getElementById('fleet-groups')
+  var operators = DATA.operators || []
+  var current = DATA.fleet.filter(isCurrentlyActive)
+  var historical = DATA.fleet.filter(function (ac) { return !isCurrentlyActive(ac) })
+
+  operators
+    .filter(function (op) { return op.parentId })
+    .forEach(function (op) {
+      var members = current.filter(function (ac) { return ac.operatorId === op.id })
+      if (!members.length) return
+      var group = el('div', 'fleet-group')
+      var header = document.createElement('header')
+      header.appendChild(el('h3', null, op.name))
+      var hours = flights
+        .filter(function (f) { return members.some(function (m) { return m.registration === f.registration }) })
+        .reduce(function (s, f) { return s + (f.durationSeconds || 0) }, 0) / 3600
+      header.appendChild(el('span', 'gmeta',
+        nf(members.length) + ' lietadlá v službe · ' + nf(hours, 1) + ' h v tomto období'))
+      group.appendChild(header)
+      var grid = el('div', 'fleet')
+      members.forEach(function (ac) { grid.appendChild(aircraftCard(ac)) })
+      group.appendChild(grid)
+      groupsBox.appendChild(group)
     })
-  })
-  marksByTime.sort(function (a, b) { return a.t - b.t })
 
-  var best = null
-  for (var i = 1; i < marksByTime.length; i++) {
-    var a = marksByTime[i - 1], b = marksByTime[i]
-    if (a.reg === b.reg) continue
-    var hours = (b.t - a.t) / 3600
-    if (hours <= 0) continue
-    var distKm = haversineKm(a, b)
-    var needed = distKm / hours
-    if (!best || needed > best.needed) best = { a: a, b: b, hours: hours, distKm: distKm, needed: needed }
-  }
-
-  if (best && best.needed > A319_CRUISE_KMH) {
-    var box = document.getElementById('verify')
-    box.appendChild(el('h3', null, 'Sú ' + best.a.reg + ' a ' + best.b.reg + ' naozaj dva rôzne stroje?'))
-    box.appendChild(el('p', null,
-      'Register tvrdí, že áno — ale register je cudzí zdroj. Z našich vlastných pozorovaní ' +
-      'to vyplýva priamo: dve lietadlá boli v ten istý deň zaznamenané na miestach, medzi ktorými ' +
-      'sa jeden stroj v danom čase presunúť nedokáže.'))
-    var proof = el('div', 'proof')
-    proof.innerHTML =
-      '<span><b>' + best.a.reg + '</b> ' + new Date(best.a.t * 1000).toISOString().slice(0, 16).replace('T', ' ') +
-        ' UTC · ' + best.a.lat.toFixed(3) + ', ' + best.a.lon.toFixed(3) + '</span>' +
-      '<span><b>' + best.b.reg + '</b> ' + new Date(best.b.t * 1000).toISOString().slice(0, 16).replace('T', ' ') +
-        ' UTC · ' + best.b.lat.toFixed(3) + ', ' + best.b.lon.toFixed(3) + '</span>' +
-      '<span>vzdialenosť <b>' + km(best.distKm) + ' km</b> za <b>' +
-        nf(best.hours, 1) + ' h</b> → potrebná rýchlosť <b>' + km(best.needed) + ' km/h</b></span>' +
-      '<span>cestovná rýchlosť A319 je približne ' + nf(A319_CRUISE_KMH) + ' km/h</span>'
-    box.appendChild(proof)
-    box.appendChild(el('p', 'verdict', 'Jeden stroj to byť nemôže — ide o dve samostatné lietadlá.'))
+  if (historical.length) {
+    var group = el('div', 'fleet-group historical')
+    var header = document.createElement('header')
+    header.appendChild(el('h3', null, 'Historické záznamy'))
+    header.appendChild(el('span', 'gmeta',
+      'Mimo služby. Nevstupujú do počtu lietadiel, do nákladov ani do žiadneho údaja o dnešnej flotile.'))
+    group.appendChild(header)
+    var grid = el('div', 'fleet')
+    historical.forEach(function (ac) { grid.appendChild(aircraftCard(ac)) })
+    group.appendChild(grid)
+    groupsBox.appendChild(group)
   }
 
   // --- letové pásiky ------------------------------------------------------

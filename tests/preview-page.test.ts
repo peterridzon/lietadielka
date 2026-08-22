@@ -94,9 +94,44 @@ describe('design preview', () => {
     expect($$('.cov .c-nodata').length).toBeGreaterThan(0)
   })
 
+  it('separates the two operators and never merges them into one fleet', () => {
+    const groups = $$('.fleet-group:not(.historical)')
+    expect(groups.length).toBe(2)
+    const names = groups.map((g) => g.querySelector('h3')?.textContent ?? '')
+    expect(names.some((n) => /Letecky|Letecký/.test(n))).toBe(true)
+    expect(names.some((n) => /Vzdusne|Vzdušné/.test(n))).toBe(true)
+  })
+
+  it('keeps the withdrawn aircraft out of the current fleet', () => {
+    const historical = $('.fleet-group.historical')
+    expect(historical?.textContent).toContain('OM-BYC')
+    for (const group of $$('.fleet-group:not(.historical)')) {
+      expect(group.textContent).not.toContain('OM-BYC')
+    }
+  })
+
+  it('lists exactly the three current Ministry of Interior aircraft', () => {
+    const interior = $$('.fleet-group:not(.historical)').find((g) =>
+      /Letecky|Letecký/.test(g.querySelector('h3')?.textContent ?? ''),
+    )
+    const regs = [...interior!.querySelectorAll('.ac .reg')].map((e) => e.textContent)
+    expect(regs.sort()).toEqual(['OM-BYA', 'OM-BYB', 'OM-BYK'])
+  })
+
+  it('shows the Air Force Global 5000s by their military evidence numbers', () => {
+    const airForce = $$('.fleet-group:not(.historical)').find((g) =>
+      /Vzdusne|Vzdušné/.test(g.querySelector('h3')?.textContent ?? ''),
+    )
+    const regs = [...airForce!.querySelectorAll('.ac .reg')].map((e) => e.textContent)
+    expect(regs.sort()).toEqual(['9513', '9633'])
+    expect(airForce!.textContent).toContain('vojenský register')
+  })
+
   it('credits every aircraft photograph', () => {
     const figures = $$('.ac figure')
     expect(figures.length).toBeGreaterThan(0)
+    // Aircraft with no freely licensed photograph say so rather than showing nothing.
+    expect($$('.ac .no-photo').length).toBeGreaterThan(0)
     for (const figure of figures) {
       const caption = figure.querySelector('figcaption')
       expect(caption?.textContent).toMatch(/CC BY/)

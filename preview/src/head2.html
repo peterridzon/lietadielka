@@ -99,6 +99,13 @@
 .overview svg { width: 100%; height: auto; display: block; }
 .overview .map-key { margin-top: 14px; }
 
+.fleet-group { margin-bottom: 28px; }
+.fleet-group > header { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; margin-bottom: 12px; }
+.fleet-group > header h3 { font-family: var(--display); font-size: 17px; font-weight: 600; }
+.fleet-group > header .gmeta { font-family: var(--data); font-size: 11.5px; color: var(--ink-3); }
+.fleet-group.historical .ac { opacity: 0.72; }
+.fleet-group.historical > header h3 { color: var(--ink-2); }
+
 .verify { margin-top: 24px; border: 1px solid var(--rule); border-left: 3px solid var(--ok); background: var(--surface); padding: 18px 20px; display: grid; gap: 10px; }
 .verify h3 { font-family: var(--display); font-size: 16px; font-weight: 600; margin: 0; }
 .verify p { margin: 0; font-size: 14px; color: var(--ink-2); line-height: 1.55; max-width: var(--prose); }

@@ -24,11 +24,20 @@ async function main(): Promise<void> {
     ? await listTrackedAircraft()
     : [await requireAircraft(requireString(args, 'aircraft'))]
 
-  if (fleet.length === 0) throw new Error('no aircraft with tracking_enabled — run "npm run seed" first')
+  if (fleet.length === 0) {
+    throw new Error(
+      'no aircraft are currently tracked. Either the registry is unseeded (run "npm run seed") ' +
+        'or every entry is withdrawn or has tracking disabled.',
+    )
+  }
 
   for (const target of fleet) {
     if (!target.trackingEnabled && !flag(args, 'force')) {
-      console.log(`${target.registration}: tracking_enabled is false, skipping (use --force to override)`)
+      console.log(
+        `${target.registration}: not tracked (status ${target.status}` +
+          `${target.activeUntil ? `, withdrawn ${target.activeUntil}` : ''}), skipping. ` +
+          `Use --force to collect historical data for it anyway.`,
+      )
       continue
     }
 

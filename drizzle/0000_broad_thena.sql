@@ -2,12 +2,18 @@ CREATE TABLE "aircraft" (
 	"id" text PRIMARY KEY NOT NULL,
 	"icao24" varchar(6) NOT NULL,
 	"registration" text,
+	"registration_type" text DEFAULT 'civil' NOT NULL,
+	"msn" text,
+	"previous_registrations" jsonb,
 	"manufacturer" text,
 	"model" text,
 	"variant" text,
 	"type_code" varchar(8),
 	"operator" text,
+	"operator_id" text,
+	"fleet_key" text,
 	"category" text NOT NULL,
+	"status" text DEFAULT 'active' NOT NULL,
 	"active_from" date,
 	"active_until" date,
 	"tracking_enabled" boolean DEFAULT false NOT NULL,
@@ -353,6 +359,16 @@ CREATE TABLE "mission_leg" (
 	"leg_index" integer NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "operator_organisation" (
+	"id" text PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"short_name" text,
+	"parent_id" text,
+	"category" text,
+	"country" varchar(2),
+	"notes" text
+);
+--> statement-breakpoint
 CREATE TABLE "raw_adsb_position" (
 	"id" bigserial PRIMARY KEY NOT NULL,
 	"aircraft_icao24" varchar(6) NOT NULL,
@@ -397,6 +413,7 @@ CREATE TABLE "source" (
 	"notes" text
 );
 --> statement-breakpoint
+ALTER TABLE "aircraft" ADD CONSTRAINT "aircraft_operator_id_operator_organisation_id_fk" FOREIGN KEY ("operator_id") REFERENCES "public"."operator_organisation"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "aircraft" ADD CONSTRAINT "aircraft_source_id_source_id_fk" FOREIGN KEY ("source_id") REFERENCES "public"."source"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "airport" ADD CONSTRAINT "airport_source_id_source_id_fk" FOREIGN KEY ("source_id") REFERENCES "public"."source"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "airport_fee_model" ADD CONSTRAINT "airport_fee_model_airport_id_airport_id_fk" FOREIGN KEY ("airport_id") REFERENCES "public"."airport"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -433,6 +450,8 @@ ALTER TABLE "route" ADD CONSTRAINT "route_origin_airport_id_airport_id_fk" FOREI
 ALTER TABLE "route" ADD CONSTRAINT "route_destination_airport_id_airport_id_fk" FOREIGN KEY ("destination_airport_id") REFERENCES "public"."airport"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "aircraft_icao24_uq" ON "aircraft" USING btree ("icao24");--> statement-breakpoint
 CREATE INDEX "aircraft_tracking_idx" ON "aircraft" USING btree ("tracking_enabled");--> statement-breakpoint
+CREATE INDEX "aircraft_status_idx" ON "aircraft" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "aircraft_fleet_idx" ON "aircraft" USING btree ("fleet_key");--> statement-breakpoint
 CREATE UNIQUE INDEX "airport_ident_uq" ON "airport" USING btree ("ident");--> statement-breakpoint
 CREATE INDEX "airport_icao_idx" ON "airport" USING btree ("icao");--> statement-breakpoint
 CREATE INDEX "airport_iata_idx" ON "airport" USING btree ("iata");--> statement-breakpoint
@@ -464,6 +483,7 @@ CREATE UNIQUE INDEX "mission_public_id_uq" ON "mission" USING btree ("public_id"
 CREATE INDEX "mission_aircraft_idx" ON "mission" USING btree ("aircraft_id","started_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "mission_leg_uq" ON "mission_leg" USING btree ("mission_id","flight_id");--> statement-breakpoint
 CREATE INDEX "mission_leg_flight_idx" ON "mission_leg" USING btree ("flight_id");--> statement-breakpoint
+CREATE INDEX "operator_parent_idx" ON "operator_organisation" USING btree ("parent_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "raw_pos_dedup_uq" ON "raw_adsb_position" USING btree ("aircraft_icao24","ts","source");--> statement-breakpoint
 CREATE INDEX "raw_pos_aircraft_ts_idx" ON "raw_adsb_position" USING btree ("aircraft_icao24","ts");--> statement-breakpoint
 CREATE UNIQUE INDEX "route_pair_uq" ON "route" USING btree ("origin_airport_id","destination_airport_id");--> statement-breakpoint

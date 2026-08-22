@@ -23,6 +23,7 @@ import {
   importJob,
   mission,
   missionLeg,
+  operatorOrganisation,
   source,
 } from '../src/db/schema.js'
 import { env } from '../src/lib/env.js'
@@ -108,6 +109,7 @@ const flights = await db
   .orderBy(asc(flight.departureTime))
 
 const fleet = await db.select().from(aircraft).orderBy(aircraft.registration)
+const operators = await db.select().from(operatorOrganisation)
 
 const missions = await db
   .select({
@@ -161,6 +163,7 @@ writeFileSync(
     publicationDelayHours: env.publicationDelayHours,
     flights,
     fleet,
+    operators,
     days,
     missions,
     missionLegs,

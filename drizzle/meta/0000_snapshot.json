@@ -1,5 +1,5 @@
 {
-  "id": "34db9241-27e8-405b-a7d5-11641c89a4ff",
+  "id": "3ce25404-c5c0-42b2-b288-9b10a779c1f3",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -23,6 +23,25 @@
         "registration": {
           "name": "registration",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "registration_type": {
+          "name": "registration_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'civil'"
+        },
+        "msn": {
+          "name": "msn",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "previous_registrations": {
+          "name": "previous_registrations",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         },
@@ -56,11 +75,30 @@
           "primaryKey": false,
           "notNull": false
         },
+        "operator_id": {
+          "name": "operator_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fleet_key": {
+          "name": "fleet_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "category": {
           "name": "category",
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
         },
         "active_from": {
           "name": "active_from",
@@ -171,9 +209,52 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "aircraft_status_idx": {
+          "name": "aircraft_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "aircraft_fleet_idx": {
+          "name": "aircraft_fleet_idx",
+          "columns": [
+            {
+              "expression": "fleet_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
+        "aircraft_operator_id_operator_organisation_id_fk": {
+          "name": "aircraft_operator_id_operator_organisation_id_fk",
+          "tableFrom": "aircraft",
+          "tableTo": "operator_organisation",
+          "columnsFrom": [
+            "operator_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "aircraft_source_id_source_id_fk": {
           "name": "aircraft_source_id_source_id_fk",
           "tableFrom": "aircraft",
@@ -3155,6 +3236,77 @@
           "onUpdate": "no action"
         }
       },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.operator_organisation": {
+      "name": "operator_organisation",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "short_name": {
+          "name": "short_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "country": {
+          "name": "country",
+          "type": "varchar(2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "operator_parent_idx": {
+          "name": "operator_parent_idx",
+          "columns": [
+            {
+              "expression": "parent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},

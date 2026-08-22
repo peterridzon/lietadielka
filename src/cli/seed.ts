@@ -7,7 +7,8 @@
  */
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
+import { randomUUID } from 'node:crypto'
 import { assertSpendingClaim } from '../core/cost/research.js'
 import { closeDb, getDb } from '../db/client.js'
 import {
@@ -17,6 +18,9 @@ import {
   costBenchmark,
   costModel,
   costResearchItem,
+  flight,
+  flightPurpose,
+  operatorOrganisation,
   source,
 } from '../db/schema.js'
 import { runCli } from '../lib/cli.js'
@@ -36,16 +40,32 @@ type SeedSource = {
   notes?: string
 }
 
+type SeedOperator = {
+  id: string
+  name: string
+  shortName?: string
+  parentId?: string | null
+  category?: string
+  country?: string
+  notes?: string
+}
+
 type SeedAircraft = {
   id: string
   icao24: string
   registration: string
+  registrationType?: string
+  msn?: string
+  previousRegistrations?: string[]
+  operatorId?: string
   manufacturer?: string
   model?: string
   variant?: string
   typeCode?: string
   operator?: string
+  fleetKey?: string
   category: string
+  status?: string
   activeFrom?: string | null
   activeUntil?: string | null
   trackingEnabled: boolean
@@ -84,6 +104,18 @@ type SeedCostModel = {
   notes?: string
 }
 
+type SeedPurpose = {
+  flightPublicId: string
+  title: string
+  description?: string
+  status: string
+  sourceUrl?: string
+  sourcePublisher?: string
+  sourcePublishedAt?: string
+  sourceType?: string
+  verifiedBy?: string
+}
+
 type SeedResearch = {
   sources: SeedSource[]
   researchItems: Record<string, unknown>[]
@@ -97,9 +129,11 @@ function readJson<T>(file: string): T {
 }
 
 async function main(): Promise<void> {
-  const registry = readJson<{ sources: SeedSource[]; aircraft: SeedAircraft[] }>(
-    'data/aircraft.seed.json',
-  )
+  const registry = readJson<{
+    sources: SeedSource[]
+    operators?: SeedOperator[]
+    aircraft: SeedAircraft[]
+  }>('data/aircraft.seed.json')
   const costs = readJson<{ costModels: SeedCostModel[] }>('data/cost-models.seed.json')
 
   const { db } = await getDb()
@@ -129,17 +163,40 @@ async function main(): Promise<void> {
 
   for (const entry of [...registry.sources, ...research.sources]) await upsertSource(entry)
 
+  // Parents before children: an operator may reference its parent.
+  for (const entry of [...(registry.operators ?? [])].sort((a, b) => (a.parentId ? 1 : 0) - (b.parentId ? 1 : 0))) {
+    const values = {
+      id: entry.id,
+      name: entry.name,
+      shortName: entry.shortName ?? null,
+      parentId: entry.parentId ?? null,
+      category: entry.category ?? null,
+      country: entry.country ?? null,
+      notes: entry.notes ?? null,
+    }
+    await db
+      .insert(operatorOrganisation)
+      .values(values)
+      .onConflictDoUpdate({ target: operatorOrganisation.id, set: values })
+  }
+
   for (const entry of registry.aircraft) {
     const values = {
       id: entry.id,
       icao24: entry.icao24.toLowerCase(),
       registration: entry.registration,
+      registrationType: entry.registrationType ?? 'civil',
+      msn: entry.msn ?? null,
+      previousRegistrations: entry.previousRegistrations ?? null,
+      operatorId: entry.operatorId ?? null,
       manufacturer: entry.manufacturer ?? null,
       model: entry.model ?? null,
       variant: entry.variant ?? null,
       typeCode: entry.typeCode ?? null,
       operator: entry.operator ?? null,
+      fleetKey: entry.fleetKey ?? null,
       category: entry.category,
+      status: entry.status ?? 'active',
       activeFrom: entry.activeFrom ?? null,
       activeUntil: entry.activeUntil ?? null,
       trackingEnabled: entry.trackingEnabled,
@@ -221,11 +278,68 @@ async function main(): Promise<void> {
       .onConflictDoUpdate({ target: annualFixedCost.id, set: row as never })
   }
 
+  // Purposes are research, so they live in version control and are re-applied after any
+  // rebuild. A purpose whose flight has not been detected yet is reported, not dropped.
+  const purposeSeed = readJson<{ purposes: SeedPurpose[] }>('data/flight-purposes.seed.json')
+  let purposesApplied = 0
+  const purposesPending: string[] = []
+
+  for (const entry of purposeSeed.purposes) {
+    const rows = await db
+      .select({ id: flight.id })
+      .from(flight)
+      .where(eq(flight.publicId, entry.flightPublicId))
+      .limit(1)
+    const target = rows[0]
+    if (!target) {
+      purposesPending.push(entry.flightPublicId)
+      continue
+    }
+
+    if (entry.status !== 'unknown' && (!entry.sourceUrl || !entry.sourcePublisher)) {
+      throw new Error(
+        `Flight purpose for ${entry.flightPublicId} is "${entry.status}" but has no source. ` +
+          'An unsourced claim about why a state aircraft flew must not be published.',
+      )
+    }
+
+    const sourceId = entry.sourceUrl ? `src-purpose-${entry.flightPublicId}` : null
+    if (sourceId && entry.sourceUrl && entry.sourcePublisher) {
+      await upsertSource({
+        id: sourceId,
+        publisher: entry.sourcePublisher,
+        title: entry.title,
+        url: entry.sourceUrl,
+        publishedAt: entry.sourcePublishedAt,
+        type: entry.sourceType ?? 'media',
+      })
+    }
+
+    await db.delete(flightPurpose).where(eq(flightPurpose.flightId, target.id))
+    await db.insert(flightPurpose).values({
+      id: randomUUID(),
+      flightId: target.id,
+      title: entry.title,
+      description: entry.description ?? null,
+      status: entry.status,
+      sourceUrl: entry.sourceUrl ?? null,
+      sourcePublisher: entry.sourcePublisher ?? null,
+      sourcePublishedAt: entry.sourcePublishedAt
+        ? new Date(`${entry.sourcePublishedAt}T00:00:00Z`)
+        : null,
+      sourceId,
+      confidence: entry.status === 'confirmed' ? 1 : entry.status === 'probable' ? 0.5 : 0,
+      verifiedBy: entry.verifiedBy ?? null,
+    })
+    purposesApplied++
+  }
+
   const [counts] = await db
     .select({
       sources: sql<number>`(select count(*) from ${source})`,
       aircraft: sql<number>`(select count(*) from ${aircraft})`,
-      tracked: sql<number>`(select count(*) from ${aircraft} where tracking_enabled)`,
+      tracked: sql<number>`(select count(*) from ${aircraft} where tracking_enabled and status = 'active')`,
+      operators: sql<number>`(select count(*) from ${operatorOrganisation})`,
       costModels: sql<number>`(select count(*) from ${costModel})`,
       research: sql<number>`(select count(*) from ${costResearchItem})`,
       benchmarks: sql<number>`(select count(*) from ${costBenchmark})`,
@@ -233,9 +347,17 @@ async function main(): Promise<void> {
     .from(sql`(select 1) as _`)
 
   console.log(
-    `seeded: ${counts?.sources ?? 0} sources, ${counts?.aircraft ?? 0} aircraft ` +
+    `seeded: ${counts?.sources ?? 0} sources, ${counts?.operators ?? 0} operators, ` +
+      `${counts?.aircraft ?? 0} aircraft ` +
       `(${counts?.tracked ?? 0} tracked), ${counts?.costModels ?? 0} cost models, ` +
       `${counts?.research ?? 0} research items, ${counts?.benchmarks ?? 0} benchmarks`,
+  )
+  console.log(
+    `flight purposes: ${purposesApplied} applied` +
+      (purposesPending.length
+        ? `, ${purposesPending.length} waiting for their flight to be detected ` +
+          `(re-run "npm run seed" after flights:rebuild)`
+        : ''),
   )
   console.log(
     'note: all aircraft are verification_status=needs_verification — see DATA_SOURCES.md',

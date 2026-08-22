@@ -30,6 +30,13 @@ export type DataStatus = (typeof DATA_STATUS)[number]
 export const VERIFICATION_STATUS = ['verified', 'needs_verification', 'disputed'] as const
 export type VerificationStatus = (typeof VERIFICATION_STATUS)[number]
 
+/**
+ * Operational state. Separate from `tracking_enabled`, which is a collector switch:
+ * an aircraft can be active but untracked, or retired and still worth polling briefly.
+ */
+export const AIRCRAFT_STATUS = ['active', 'retired', 'stored', 'planned'] as const
+export type AircraftStatus = (typeof AIRCRAFT_STATUS)[number]
+
 export const AIRCRAFT_CATEGORY = [
   'government',
   'ministry_of_interior',
@@ -118,20 +125,63 @@ export const source = pgTable(
 // Registry
 // ---------------------------------------------------------------------------
 
+/**
+ * Who operates an aircraft, as a hierarchy.
+ *
+ * Slovak state air transport is not one fleet. The Ministry of Interior air unit and the
+ * Air Force are separate operators with separate budgets, and merging them would apply
+ * one ministry's operating rate to the other's aircraft.
+ */
+export const operatorOrganisation = pgTable(
+  'operator_organisation',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    shortName: text('short_name'),
+    parentId: text('parent_id'),
+    category: text('category'),
+    country: varchar('country', { length: 2 }),
+    notes: text('notes'),
+  },
+  (t) => [index('operator_parent_idx').on(t.parentId)],
+)
+
 export const aircraft = pgTable(
   'aircraft',
   {
     id: text('id').primaryKey(),
-    /** ICAO 24-bit address, lowercase hex, no prefix. */
+    /**
+     * ICAO 24-bit address, lowercase hex, no prefix. THE primary identity.
+     *
+     * Registrations change and callsigns change per flight; the address is assigned with
+     * entry into a national register and is what the aircraft actually broadcasts.
+     */
     icao24: varchar('icao24', { length: 6 }).notNull(),
+    /** Civil mark (OM-BYA) or military evidence number (9513). */
     registration: text('registration'),
+    /** civil | military — a military aircraft has no OM- mark and needs none. */
+    registrationType: text('registration_type').notNull().default('civil'),
+    /** Manufacturer's serial number, stable across every change of registration. */
+    msn: text('msn'),
+    /**
+     * Earlier marks, for provenance research only. A flight recorded under a previous
+     * registration is NOT evidence of a Slovak state operation — it predates the sale.
+     */
+    previousRegistrations: jsonb('previous_registrations'),
     manufacturer: text('manufacturer'),
     model: text('model'),
     variant: text('variant'),
     /** ICAO type designator (A319, F100, H60 …) as broadcast / registered. */
     typeCode: varchar('type_code', { length: 8 }),
     operator: text('operator'),
+    operatorId: text('operator_id').references(() => operatorOrganisation.id),
+    /**
+     * The fleet this aircraft belongs to for cost allocation and utilisation.
+     * Keeps one ministry's cost model from being applied to another's aircraft.
+     */
+    fleetKey: text('fleet_key'),
     category: text('category').notNull(),
+    status: text('status').notNull().default('active'),
     activeFrom: date('active_from'),
     activeUntil: date('active_until'),
     trackingEnabled: boolean('tracking_enabled').notNull().default(false),
@@ -149,6 +199,8 @@ export const aircraft = pgTable(
   (t) => [
     uniqueIndex('aircraft_icao24_uq').on(t.icao24),
     index('aircraft_tracking_idx').on(t.trackingEnabled),
+    index('aircraft_status_idx').on(t.status),
+    index('aircraft_fleet_idx').on(t.fleetKey),
   ],
 )
 
