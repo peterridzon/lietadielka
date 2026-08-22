@@ -727,6 +727,7 @@
     // an aircraft — that is the ICAO address alone. Attribution stays because the CC
     // licences require it; everything else about the image is metadata, not card copy.
     var photo = PHOTOS[ac.registration]
+    if (!photo) card.className = 'ac no-image'
     if (photo) {
       var fig = el('figure')
       var img = document.createElement('img')
@@ -805,6 +806,65 @@
     historicalWithFlights.forEach(function (ac) { grid.appendChild(aircraftCard(ac)) })
     group.appendChild(grid)
     groupsBox.appendChild(group)
+  }
+
+  // --- sú to naozaj samostatné lietadlá? ----------------------------------
+  /**
+   * Register hovorí, že ide o rôzne stroje, ale register je cudzí zdroj. Z vlastných
+   * pozorovaní sa to dá ukázať: nájdeme dve pozície rôznych lietadiel najbližšie v čase
+   * a spočítame, akou rýchlosťou by sa medzi nimi muselo jedno lietadlo presunúť. Ak
+   * vyjde nadzvuková rýchlosť, jeden stroj to byť nemôže.
+   */
+  var CRUISE_KMH = 900
+  function haversineKm(a, b) {
+    var R = 6371.0088, rad = Math.PI / 180
+    var dLat = (b.lat - a.lat) * rad, dLon = (b.lon - a.lon) * rad
+    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(a.lat * rad) * Math.cos(b.lat * rad)
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)))
+  }
+
+  var marksByTime = []
+  flights.forEach(function (f) {
+    var t = f.track || []
+    if (t.length < 2) return
+    ;[t[0], t[t.length - 1]].forEach(function (p) {
+      marksByTime.push({ reg: f.registration, t: p[3], lat: p[1], lon: p[0] })
+    })
+  })
+  marksByTime.sort(function (a, b) { return a.t - b.t })
+
+  var bestPair = null
+  for (var mi = 1; mi < marksByTime.length; mi++) {
+    var pa = marksByTime[mi - 1], pb = marksByTime[mi]
+    if (pa.reg === pb.reg) continue
+    var hrs = (pb.t - pa.t) / 3600
+    if (hrs <= 0) continue
+    var dkm = haversineKm(pa, pb)
+    var needed = dkm / hrs
+    if (!bestPair || needed > bestPair.needed) bestPair = { a: pa, b: pb, hours: hrs, distKm: dkm, needed: needed }
+  }
+
+  if (bestPair && bestPair.needed > CRUISE_KMH) {
+    var vbox = document.getElementById('verify')
+    vbox.appendChild(el('h3', null, 'Sú ' + bestPair.a.reg + ' a ' + bestPair.b.reg + ' naozaj dva rôzne stroje?'))
+    vbox.appendChild(el('p', null,
+      'Register tvrdí, že áno — ale register je cudzí zdroj. Z našich vlastných pozorovaní ' +
+      'to vyplýva priamo: obe lietadlá boli v ten istý deň zaznamenané na miestach, medzi ' +
+      'ktorými sa jeden stroj v danom čase presunúť nedokáže.'))
+    var proof = el('div', 'proof')
+    proof.innerHTML =
+      '<span><b>' + bestPair.a.reg + '</b> ' +
+        new Date(bestPair.a.t * 1000).toISOString().slice(0, 16).replace('T', ' ') + ' UTC · ' +
+        bestPair.a.lat.toFixed(3) + ', ' + bestPair.a.lon.toFixed(3) + '</span>' +
+      '<span><b>' + bestPair.b.reg + '</b> ' +
+        new Date(bestPair.b.t * 1000).toISOString().slice(0, 16).replace('T', ' ') + ' UTC · ' +
+        bestPair.b.lat.toFixed(3) + ', ' + bestPair.b.lon.toFixed(3) + '</span>' +
+      '<span>vzdialenosť <b>' + km(bestPair.distKm) + ' km</b> za <b>' + nf(bestPair.hours, 1) +
+        ' h</b> → potrebná rýchlosť <b>' + km(bestPair.needed) + ' km/h</b></span>' +
+      '<span>cestovná rýchlosť týchto lietadiel je okolo ' + nf(CRUISE_KMH) + ' km/h</span>'
+    vbox.appendChild(proof)
+    vbox.appendChild(el('p', 'verdict', 'Jeden stroj to byť nemôže — ide o dve samostatné lietadlá.'))
   }
 
   // --- letové pásiky ------------------------------------------------------

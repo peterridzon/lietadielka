@@ -154,6 +154,31 @@ describe('design preview', () => {
     expect($$('.ac .photo-detail').length).toBe(0)
   })
 
+  it('keeps the two-aircraft proof, and never leaves an empty box in its place', () => {
+    // This block was silently deleted once by an unrelated edit and nothing noticed,
+    // because a styled empty div looks like a design bug rather than missing content.
+    const verify = $('.verify')
+    expect(verify).not.toBeNull()
+    expect(verify!.children.length).toBeGreaterThan(2)
+    expect(verify!.textContent).toMatch(/naozaj dva rôzne stroje/)
+    expect(verify!.querySelector('.proof')?.textContent).toMatch(/potrebná rýchlosť/)
+    expect(verify!.querySelector('.verdict')?.textContent).toMatch(/dve samostatné lietadlá/)
+  })
+
+  it('never renders an element that is styled as a box but holds nothing', () => {
+    for (const selector of ['.verify', '#fleet-groups', '#missions', '#routes', '#fleet-cost']) {
+      const node = $(selector)
+      if (node) expect(node.children.length, `${selector} is empty`).toBeGreaterThan(0)
+    }
+  })
+
+  it('does not crop the aircraft photographs', () => {
+    // A fixed aspect box cut the nose off the wider images. The frame follows the image.
+    const styles = [...dom.window.document.querySelectorAll('style')].map((s) => s.textContent).join('\n')
+    expect(styles).not.toMatch(/\.ac img[^}]*object-fit:\s*cover/)
+    expect(styles).toMatch(/\.ac img[^}]*height:\s*auto/)
+  })
+
   it('gets Slovak plurals right', () => {
     // "3 letov" reads as a typo; 2-4 takes a different form from 5+.
     const text = $('#sec-fleet')?.textContent ?? ''
