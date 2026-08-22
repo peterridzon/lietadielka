@@ -1,26 +1,26 @@
 <div class="preview-note">
   <div class="wrap">
-    <b>DESIGN PREVIEW</b>
-    <span>Static page built from the project's own database. Real detected flights, real coverage, no fabricated values. The live application is not built yet.</span>
+    <b>NÁHĽAD DIZAJNU</b>
+    <span>Statická stránka postavená z databázy projektu. Skutočné detegované lety, skutočné pokrytie, žiadne vymyslené hodnoty. Samotná aplikácia zatiaľ nie je postavená.</span>
   </div>
 </div>
 
 <header class="masthead">
   <div class="wrap">
     <div>
-      <p class="eyebrow">Lietadielka &middot; pipeline output</p>
-      <h1 class="wordmark">State flights<span>Slovakia</span></h1>
+      <p class="eyebrow">Lietadielka &middot; výstup pipeline</p>
+      <h1 class="wordmark">Štátne lety<span>Slovensko</span></h1>
       <p class="thesis">
-        Public aircraft, public data, public money. Every flight below was reconstructed
-        from volunteer ADS-B observations by an open pipeline, and carries
-        <strong>the evidence for it and the uncertainty around it</strong>.
+        Verejné lietadlá, verejné dáta, verejné peniaze. Každý let na tejto stránke
+        zrekonštruovala otvorená pipeline z dobrovoľníckych ADS-B pozorovaní a nesie so sebou
+        <strong>dôkazy aj mieru neistoty</strong>.
       </p>
     </div>
     <aside class="embargo">
-      <span class="eyebrow">Not a flight tracker</span>
-      Positions of state aircraft are never published in real time. A flight appears only
-      after it has ended, and only once <span class="mono" id="delay-hours">6</span> hours have
-      passed since the detected landing.
+      <span class="eyebrow">Toto nie je sledovač letov</span>
+      Polohu štátnych lietadiel nikdy nezverejňujeme v reálnom čase. Let sa objaví až po
+      svojom skončení, a až keď od detegovaného pristátia uplynie
+      <span class="mono" id="delay-hours">6</span> hodín.
     </aside>
   </div>
 </header>
@@ -28,31 +28,47 @@
 <section id="sec-totals">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Observed window</p>
-      <h2 id="window-heading">Detected activity</h2>
+      <p class="eyebrow">Sledované obdobie</p>
+      <h2>Zistená aktivita</h2>
       <p id="window-sub"></p>
     </div>
     <div class="kpis" id="kpis"></div>
   </div>
 </section>
 
+<section id="sec-overview">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Zrekonštruované trasy</p>
+      <h2>Kam flotila letela</h2>
+      <p>
+        Všetky detegované lety naraz. Plná čiara je trasa, ktorú sme skutočne pozorovali;
+        prerušovaná je úsek premostený cez výpadok pokrytia, kde predpokladáme priamy let,
+        hoci lietadlo priamo neletelo. Mapa teda nezobrazuje len trasy, ale aj to, koľko
+        z nich v skutočnosti vieme.
+      </p>
+    </div>
+    <div class="overview" id="overview"></div>
+  </div>
+</section>
+
 <section id="sec-coverage">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Dataset completeness</p>
-      <h2>A quiet day and a missing day are not the same thing</h2>
+      <p class="eyebrow">Úplnosť datasetu</p>
+      <h2>Pokojný deň a chýbajúci deň nie je to isté</h2>
       <p>
-        Each cell is one aircraft on one UTC day. The archive this pipeline reads keeps only
-        about 40 days and answers identically whether an aircraft did not fly or the day is
-        no longer held, so the collector proves each day separately before recording it as quiet.
-        Days it could not prove are excluded from every figure on this page rather than counted as zero.
+        Každá bunka je jedno lietadlo v jeden UTC deň. Archív, z ktorého pipeline číta, drží
+        len asi 40 dní a odpovedá rovnako, či lietadlo v ten deň neletelo, alebo či deň už
+        nemá. Collector preto každý deň zvlášť overí, kým ho označí za pokojný. Dni, ktoré
+        overiť nedokázal, sú z každého čísla na tejto stránke vylúčené &mdash; nie započítané ako nula.
       </p>
     </div>
     <div class="cov-scroll"><table class="cov" id="cov"></table></div>
     <div class="legend">
-      <span><i class="c-flew"></i> Flights detected</span>
-      <span><i class="c-quiet"></i> Archive held the day, aircraft not seen</span>
-      <span><i class="c-nodata"></i> Day not retrievable &mdash; excluded, not zero</span>
+      <span><i class="c-flew"></i> Detegované lety</span>
+      <span><i class="c-quiet"></i> Archív deň mal, lietadlo nevidel</span>
+      <span><i class="c-nodata"></i> Deň sa nedal získať &mdash; vylúčený, nie nula</span>
     </div>
   </div>
 </section>
@@ -60,28 +76,29 @@
 <section id="sec-fleet">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Registry</p>
-      <h2>Tracked aircraft</h2>
+      <p class="eyebrow">Register</p>
+      <h2>Sledované lietadlá</h2>
       <p>
-        Only aircraft in the project's registry are ever collected. Each identity rests on the
-        sources recorded with it; none has yet been confirmed against a primary state register,
-        so all four are marked unverified.
+        Zbierame výhradne lietadlá zapísané v registri projektu. Každá identita stojí na
+        zdrojoch, ktoré sú pri nej uvedené. Ani jedna zatiaľ nie je potvrdená voči primárnemu
+        štátnemu registru, takže všetky štyri sú označené ako neoverené.
       </p>
     </div>
     <div class="fleet" id="fleet"></div>
+    <div class="verify" id="verify"></div>
   </div>
 </section>
 
 <section id="sec-flights">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Reconstructed flights</p>
-      <h2 id="flights-heading">Flight log</h2>
+      <p class="eyebrow">Detegované lety</p>
+      <h2 id="flights-heading">Zoznam letov</h2>
       <p>
-        One strip per flight. The left edge carries overall confidence, the right edge the share
-        of the flight actually covered by observations. Select a strip for the reconstructed track
-        and the full data-quality breakdown. A question mark marks an airport identified below the
-        confidence threshold; <span class="mono">~</span> marks a time we inferred rather than watched.
+        Jeden pásik na let. Ľavá hrana nesie celkovú spoľahlivosť, pravá podiel letu, ktorý je
+        naozaj pokrytý pozorovaniami. Kliknutím na pásik sa otvorí zrekonštruovaná trasa a úplný
+        rozpad kvality dát. Otáznik označuje letisko určené pod hranicou spoľahlivosti,
+        vlnovka <span class="mono">~</span> čas, ktorý sme odvodili a nie odpozorovali.
       </p>
     </div>
     <div class="strips" id="strips"></div>
@@ -91,11 +108,11 @@
 <section id="sec-routes">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">City pairs</p>
-      <h2>Where the fleet went</h2>
+      <p class="eyebrow">Dvojice miest</p>
+      <h2>Najčastejšie spojenia</h2>
       <p>
-        Direction-insensitive pairs across the observed window. Legs whose origin or destination
-        was never observed are listed separately rather than being attributed to a guess.
+        Dvojice bez ohľadu na smer, za sledované obdobie. Úseky, ktorých začiatok alebo cieľ sme
+        nikdy nevideli, sú uvedené zvlášť &mdash; nie priradené k odhadu.
       </p>
     </div>
     <div class="routes" id="routes"></div>
@@ -105,54 +122,56 @@
 <section id="sec-method">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Reading these numbers</p>
-      <h2>What the pipeline can and cannot tell you</h2>
+      <p class="eyebrow">Ako čítať tieto čísla</p>
+      <h2>Čo pipeline vie a čo nie</h2>
     </div>
     <div class="notes">
       <div class="note">
-        <h3>Flight time is airborne time</h3>
+        <h3>Čas letu je čas vo vzduchu</h3>
         <p>
-          Departure is the last moment observed on the ground before the climb; arrival is the
-          first moment observed back on it. That is wheels-up to wheels-down, so it is shorter
-          than block time and not comparable to a published schedule.
+          Odlet je posledný okamih pozorovaný na zemi pred stúpaním, prílet prvý okamih pozorovaný
+          späť na zemi. Teda od vzletu po dosadnutie &mdash; je to kratšie než blokový čas a nedá sa
+          porovnávať s cestovným poriadkom.
         </p>
       </div>
       <div class="note">
-        <h3>Distance is a lower bound</h3>
+        <h3>Vzdialenosť je dolná hranica</h3>
         <p>
-          Where coverage is lost, the aircraft is assumed to have flown straight, which it did not.
-          The kilometres contributed by gaps are reported separately on every affected flight.
+          Tam, kde sa stratí pokrytie, predpokladáme, že lietadlo letelo priamo &mdash; čo neletelo.
+          Kilometre, ktoré pochádzajú z premostených výpadkov, uvádzame pri každom dotknutom lete zvlášť.
         </p>
       </div>
       <div class="note">
-        <h3>Some stops are inferred</h3>
+        <h3>Niektoré medzipristátia sú odvodené</h3>
         <p>
-          Surface positions often are not received outside dense receiver coverage, so a turnaround
-          can look like a hole in a cruise. Where a long gap is bracketed by low, slow fixes that
-          barely moved, the pipeline splits the track &mdash; and labels both legs as estimates.
+          Mimo hustého pokrytia prijímačov sa pozemné pozície často neprijmú, takže otočka na letisku
+          vyzerá ako diera v cestovnej hladine. Ak je dlhý výpadok z oboch strán ohraničený nízkymi
+          a pomalými pozíciami, ktoré sa takmer nepohli, pipeline trasu rozdelí &mdash; a obe nohy označí
+          za odhad.
         </p>
       </div>
       <div class="note">
-        <h3>Costs are absent on purpose</h3>
+        <h3>Náklady chýbajú zámerne</h3>
         <p>
-          No sourced operating figure for this fleet has been obtained, so no cost is shown. The
-          engine is designed to publish an interval with a full breakdown and a citation for every
-          input; until those exist it returns <code>data unavailable</code> rather than a plausible number.
+          Pre túto flotilu sa nám nepodarilo získať zdrojovaný údaj o prevádzkových nákladoch, takže
+          nezobrazujeme žiadny. Engine je navrhnutý tak, aby publikoval interval s úplným rozpadom
+          a citáciou ku každému vstupu; kým tie neexistujú, vracia <code>dáta nedostupné</code>
+          namiesto pravdepodobne vyzerajúceho čísla.
         </p>
       </div>
       <div class="note">
-        <h3>Purpose is never inferred</h3>
+        <h3>Účel letu nikdy neodvodzujeme</h3>
         <p>
-          Why a flight took place is entered by hand, with a publisher and a URL, and marked
-          confirmed, probable or unknown. No political conclusion is generated from this data.
+          Prečo sa let uskutočnil, sa zapisuje ručne, s vydavateľom a odkazom na zdroj, a označuje sa
+          ako potvrdený, pravdepodobný alebo neznámy. Z týchto dát softvér negeneruje žiadny politický záver.
         </p>
       </div>
       <div class="note">
-        <h3>Everything is rebuildable</h3>
+        <h3>Všetko sa dá prepočítať znova</h3>
         <p>
-          Raw observations are append-only. When the detection algorithm improves, every flight
-          ever recorded is recomputed from the original data rather than re-downloaded &mdash; which
-          matters, because the source archive has already deleted most of it.
+          Surové pozorovania sa iba pridávajú, nikdy nemažú. Keď sa detekčný algoritmus zlepší, každý
+          doteraz zaznamenaný let sa prepočíta z pôvodných dát &mdash; nie stiahne nanovo. A na tom záleží,
+          lebo zdrojový archív väčšinu z nich už dávno zmazal.
         </p>
       </div>
     </div>
@@ -162,6 +181,6 @@
 <footer>
   <div class="wrap">
     <span id="foot-generated"></span>
-    <span>Observations: adsb.lol &middot; Aerodromes: OurAirports &middot; Detector <span id="foot-detector"></span></span>
+    <span>Pozorovania: adsb.lol &middot; Letiská: OurAirports &middot; Detektor <span id="foot-detector"></span></span>
   </div>
 </footer>

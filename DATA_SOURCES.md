@@ -97,7 +97,21 @@ downloaded from `davidmegginson.github.io/ourairports-data/airports.csv` and cac
 
 ---
 
-## 4. Costs
+## 4. Aircraft photographs
+
+Photographs used in the design preview come from **Wikimedia Commons** under free licences,
+with the author, licence and a link to the source page shown beside every image. Photographs
+from planespotters, JetPhotos and similar services are copyrighted by their photographers and
+must not be used here.
+
+| Aircraft | Photographer | Licence | Taken |
+| -------- | ------------ | ------- | ----- |
+| OM-BYA | N509FZ | CC BY-SA 4.0 | 2026-07-27 |
+| OM-BYK | ERIC SALARD | CC BY-SA 4.0 | 2025-11-11 |
+| OM-BYB | Juke Schweizer | CC BY-SA 4.0 | 2019-02-16 |
+| OM-BYC | jounigripen | CC BY 2.0 | 2024-04-06 |
+
+## 5. Costs
 
 None obtained yet. See [COST_MODEL.md](COST_MODEL.md) for the list of sources to pursue
 and the reason nothing is estimated in the meantime.

@@ -4,16 +4,28 @@
   var DATA = JSON.parse(document.getElementById('flight-data').textContent)
   var LAND = JSON.parse(document.getElementById('land-data').textContent)
   var BORDERS = JSON.parse(document.getElementById('border-data').textContent)
+  var PHOTOS = JSON.parse(document.getElementById('photo-data').textContent)
   var SVG_NS = 'http://www.w3.org/2000/svg'
 
-  // --- formatting ---------------------------------------------------------
-  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  // --- formátovanie -------------------------------------------------------
+  var MONTH_SHORT = ['jan', 'feb', 'mar', 'apr', 'máj', 'jún', 'júl', 'aug', 'sep', 'okt', 'nov', 'dec']
+  var MONTH_GEN = ['januára', 'februára', 'marca', 'apríla', 'mája', 'júna', 'júla',
+    'augusta', 'septembra', 'októbra', 'novembra', 'decembra']
 
   function pad(n) { return n < 10 ? '0' + n : String(n) }
   function isoDate(s) { return s.slice(0, 10) }
+  function nf(n, digits) {
+    return Number(n).toLocaleString('sk-SK', digits != null
+      ? { minimumFractionDigits: digits, maximumFractionDigits: digits }
+      : undefined)
+  }
   function dayLabel(s) {
     var d = new Date(s)
-    return pad(d.getUTCDate()) + ' ' + MONTHS[d.getUTCMonth()]
+    return d.getUTCDate() + '. ' + MONTH_SHORT[d.getUTCMonth()]
+  }
+  function longDate(s) {
+    var d = new Date(s)
+    return d.getUTCDate() + '. ' + MONTH_GEN[d.getUTCMonth()] + ' ' + d.getUTCFullYear()
   }
   function hhmm(s) {
     var d = new Date(s)
@@ -23,15 +35,15 @@
     if (sec == null) return '—'
     return pad(Math.floor(sec / 3600)) + ':' + pad(Math.round((sec % 3600) / 60))
   }
-  /** Gaps span seconds to hours, and "00:00" for a 20-second gap reads as no gap at all. */
+  /** Výpadky trvajú od sekúnd po hodiny, a „00:00“ pri 20 sekundách sa číta ako žiadny výpadok. */
   function gapLength(sec) {
     if (sec == null) return '—'
     if (sec < 90) return Math.round(sec) + ' s'
     if (sec < 5400) return Math.round(sec / 60) + ' min'
     return Math.floor(sec / 3600) + ' h ' + Math.round((sec % 3600) / 60) + ' min'
   }
-  function km(n) { return n == null ? '—' : Math.round(n).toLocaleString('en-GB') }
-  function pct(x) { return x == null ? '—' : Math.round(x * 100) + '%' }
+  function km(n) { return n == null ? '—' : nf(Math.round(n)) }
+  function pct(x) { return x == null ? '—' : Math.round(x * 100) + ' %' }
   function grade(x) { return x >= 0.75 ? 'q-high' : x >= 0.5 ? 'q-med' : 'q-low' }
 
   function el(tag, cls, text) {
@@ -41,7 +53,7 @@
     return node
   }
 
-  /** Accepted airport, else the probable one, else nothing — never a guess dressed up. */
+  /** Prijaté letisko, inak pravdepodobné, inak nič — nikdy odhad vydávaný za istotu. */
   function endpoint(f, side) {
     var p = side === 'dep'
       ? { code: f.depIata || f.depIdent, city: f.depCity, name: f.depName, ident: f.depIdent }
@@ -51,14 +63,15 @@
       ? { code: f.depPIata || f.depPIdent, city: f.depPCity, name: f.depPName, ident: f.depPIdent }
       : { code: f.arrPIata || f.arrPIdent, city: f.arrPCity, name: f.arrPName, ident: f.arrPIdent }
     if (q.ident) return { code: q.code, city: q.city, name: q.name, state: 'probable' }
-    return { code: 'UNKN', city: null, name: 'Not identified', state: 'unknown' }
+    return { code: 'NEZN', city: null, name: 'Neurčené', state: 'unknown' }
   }
 
-  // --- headline figures ---------------------------------------------------
+  // --- hlavné čísla -------------------------------------------------------
   var flights = DATA.flights
   var totalSeconds = flights.reduce(function (s, f) { return s + (f.durationSeconds || 0) }, 0)
   var totalKm = flights.reduce(function (s, f) { return s + (f.distanceKm || 0) }, 0)
   var gapKm = flights.reduce(function (s, f) { return s + (f.distanceFromGapsKm || 0) }, 0)
+  var totalFixes = flights.reduce(function (s, f) { return s + f.positionCount }, 0)
 
   document.getElementById('delay-hours').textContent = DATA.publicationDelayHours
 
@@ -67,14 +80,14 @@
   var lastDay = days.length ? days[days.length - 1].day : isoDate(flights[flights.length - 1].departureTime)
 
   document.getElementById('window-sub').textContent =
-    'Every state aircraft in the registry, ' + dayLabel(firstDay) + ' to ' + dayLabel(lastDay) +
-    ' ' + new Date(lastDay).getUTCFullYear() + '. Figures cover only the days the archive could actually serve.'
+    'Všetky štátne lietadlá z registra, ' + longDate(firstDay) + ' až ' + longDate(lastDay) +
+    '. Čísla pokrývajú výhradne dni, ktoré archív dokázal poskytnúť.'
 
   var kpiDefs = [
-    { v: String(flights.length), unit: '', label: 'Flights detected', note: flights.length + ' reconstructed from ' + flights.reduce(function (s, f) { return s + f.positionCount }, 0).toLocaleString('en-GB') + ' observations' },
-    { v: (totalSeconds / 3600).toFixed(1), unit: 'h', label: 'Airborne time', note: 'Wheels-up to wheels-down, not block time' },
-    { v: km(totalKm), unit: 'km', label: 'Distance flown', note: km(gapKm) + ' km of it bridged across coverage gaps' },
-    { unavailable: 'Data unavailable', label: 'Estimated cost', note: 'No sourced operating figure has been obtained' },
+    { v: nf(flights.length), unit: '', label: 'Detegované lety', note: 'zrekonštruované z ' + nf(totalFixes) + ' pozorovaní' },
+    { v: nf(totalSeconds / 3600, 1), unit: 'h', label: 'Čas vo vzduchu', note: 'Od vzletu po dosadnutie, nie blokový čas' },
+    { v: km(totalKm), unit: 'km', label: 'Preletená vzdialenosť', note: km(gapKm) + ' km z toho premostených cez výpadky pokrytia' },
+    { unavailable: 'Dáta nedostupné', label: 'Odhadované náklady', note: 'Nemáme zdrojovaný údaj o prevádzkových nákladoch' },
   ]
   var kpis = document.getElementById('kpis')
   kpiDefs.forEach(function (d) {
@@ -92,8 +105,207 @@
     kpis.appendChild(box)
   })
 
-  // --- coverage grid ------------------------------------------------------
-  // One run may retry a day, so keep the best-informed answer per aircraft-day.
+  // --- mapa ---------------------------------------------------------------
+  /**
+   * Jedna mapa pre jeden let aj pre celú flotilu.
+   *
+   * Bez dlaždíc: pevná pevnina, hranice štátov ako geografická referencia a trasa,
+   * ktorá plnou čiarou hovorí „toto sme videli“ a prerušovanou „toto sme dopočítali“.
+   */
+  function buildMap(list, opts) {
+    opts = opts || {}
+    var tracks = list.map(function (f) { return f.track || [] }).filter(function (t) { return t.length > 1 })
+    if (!tracks.length) return null
+
+    var minLon = Infinity, maxLon = -Infinity, minLat = Infinity, maxLat = -Infinity
+    tracks.forEach(function (t) {
+      t.forEach(function (p) {
+        if (p[0] < minLon) minLon = p[0]
+        if (p[0] > maxLon) maxLon = p[0]
+        if (p[1] < minLat) minLat = p[1]
+        if (p[1] > maxLat) maxLat = p[1]
+      })
+    })
+
+    var padLon = Math.max((maxLon - minLon) * 0.14, 1.6)
+    var padLat = Math.max((maxLat - minLat) * 0.22, 1.6)
+    minLon -= padLon; maxLon += padLon; minLat -= padLat; maxLat += padLat
+
+    // Ekvidištantná valcová projekcia, os x stlačená kosínusom strednej šírky.
+    var k = Math.cos(((minLat + maxLat) / 2) * Math.PI / 180)
+    var w = (maxLon - minLon) * k
+    var h = maxLat - minLat
+    var W = 720
+    var H = Math.max(opts.minHeight || 220, Math.min(opts.maxHeight || 460, Math.round(W * h / w)))
+    var s = Math.min(W / w, H / h)
+    var ox = (W - w * s) / 2, oy = (H - h * s) / 2
+
+    function px(lon, lat) { return [ox + (lon - minLon) * k * s, oy + (maxLat - lat) * s] }
+
+    var svg = document.createElementNS(SVG_NS, 'svg')
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H)
+    svg.setAttribute('role', 'img')
+
+    function shape(points, close, fillVar, strokeVar, width) {
+      var d = points.map(function (pt, i) {
+        var q = px(pt[0], pt[1])
+        return (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1)
+      }).join('') + (close ? 'Z' : '')
+      var path = document.createElementNS(SVG_NS, 'path')
+      path.setAttribute('d', d)
+      if (fillVar) path.style.setProperty('fill', fillVar); else path.setAttribute('fill', 'none')
+      path.style.setProperty('stroke', strokeVar)
+      path.setAttribute('stroke-width', String(width))
+      return path
+    }
+
+    function inView(points, margin) {
+      for (var i = 0; i < points.length; i++) {
+        if (points[i][0] > minLon - margin && points[i][0] < maxLon + margin &&
+            points[i][1] > minLat - margin && points[i][1] < maxLat + margin) return true
+      }
+      return false
+    }
+
+    var landGroup = document.createElementNS(SVG_NS, 'g')
+    LAND.forEach(function (ring) {
+      if (inView(ring, 20)) landGroup.appendChild(shape(ring, true, 'var(--land)', 'var(--land-edge)', 0.7))
+    })
+    svg.appendChild(landGroup)
+
+    var borderGroup = document.createElementNS(SVG_NS, 'g')
+    BORDERS.forEach(function (line) {
+      if (inView(line, 6)) borderGroup.appendChild(shape(line, false, null, 'var(--border-line)', 0.8))
+    })
+    svg.appendChild(borderGroup)
+
+    var solidWidth = opts.solidWidth || 2.4
+    var dashWidth = opts.dashWidth || 1.6
+
+    list.forEach(function (f) {
+      var track = f.track || []
+      if (track.length < 2) return
+      var gaps = (f.gaps || []).map(function (g) {
+        return [Date.parse(g.from) / 1000, Date.parse(g.to) / 1000]
+      })
+      function bridged(t1, t2) {
+        for (var i = 0; i < gaps.length; i++) if (gaps[i][0] < t2 && gaps[i][1] > t1) return true
+        return false
+      }
+      for (var i = 1; i < track.length; i++) {
+        var a = track[i - 1], b = track[i]
+        var p1 = px(a[0], a[1]), p2 = px(b[0], b[1])
+        var line = document.createElementNS(SVG_NS, 'line')
+        line.setAttribute('x1', p1[0].toFixed(1)); line.setAttribute('y1', p1[1].toFixed(1))
+        line.setAttribute('x2', p2[0].toFixed(1)); line.setAttribute('y2', p2[1].toFixed(1))
+        line.style.setProperty('stroke', 'var(--accent)')
+        line.setAttribute('stroke-linecap', 'round')
+        if (bridged(a[3], b[3])) {
+          line.setAttribute('stroke-width', String(dashWidth))
+          line.setAttribute('stroke-dasharray', '3 5')
+          line.setAttribute('opacity', String(opts.dashOpacity || 0.62))
+        } else {
+          line.setAttribute('stroke-width', String(solidWidth))
+          if (opts.solidOpacity) line.setAttribute('opacity', String(opts.solidOpacity))
+        }
+        svg.appendChild(line)
+      }
+    })
+
+    // Koncové body. Duté kolieska sú miesta, kde sme lietadlo na zemi nikdy nevideli.
+    var marks = []
+    list.forEach(function (f) {
+      var track = f.track || []
+      if (track.length < 2) return
+      marks.push({ pt: track[0], port: endpoint(f, 'dep') })
+      marks.push({ pt: track[track.length - 1], port: endpoint(f, 'arr') })
+    })
+
+    var seen = {}
+    var placed = []
+    marks.forEach(function (m) {
+      var q = px(m.pt[0], m.pt[1])
+      var known = m.port.state === 'known'
+      var dedupKey = known ? m.port.code : 'x:' + q[0].toFixed(0) + ',' + q[1].toFixed(0)
+      if (seen[dedupKey]) return
+      seen[dedupKey] = true
+
+      var c = document.createElementNS(SVG_NS, 'circle')
+      c.setAttribute('cx', q[0].toFixed(1)); c.setAttribute('cy', q[1].toFixed(1))
+      c.setAttribute('r', '4.5')
+      c.style.setProperty('fill', known ? 'var(--accent)' : 'var(--surface)')
+      c.style.setProperty('stroke', known ? 'var(--surface)' : 'var(--accent)')
+      c.setAttribute('stroke-width', '2')
+      if (!known) c.setAttribute('stroke-dasharray', '2.5 2')
+      svg.appendChild(c)
+
+      // Na prehľadovej mape by šesť popiskov „NEZN“ len zaclonilo trasy; duté koliesko
+      // a legenda povedia to isté.
+      if (!known && opts.labelUnknown === false) return
+      var text = m.port.code + (known ? '' : ' ?')
+      var boxW = text.length * 7.4 + 10
+      // Greedy vyhýbanie sa prekryvom: skús vpravo, potom nad a pod, inak popisok vynechaj.
+      var offsets = [[9, 4], [9, -9], [9, 16], [-boxW - 4, 4], [9, -21], [9, 28]]
+      var spot = null
+      for (var o = 0; o < offsets.length; o++) {
+        var bx = q[0] + offsets[o][0], by = q[1] + offsets[o][1] - 10
+        var hit = false
+        for (var pI = 0; pI < placed.length; pI++) {
+          var r = placed[pI]
+          if (bx < r[0] + r[2] && bx + boxW > r[0] && by < r[1] + 14 && by + 14 > r[1]) { hit = true; break }
+        }
+        if (!hit) { spot = [bx, by, boxW]; break }
+      }
+      if (!spot) return
+      placed.push(spot)
+
+      var label = document.createElementNS(SVG_NS, 'text')
+      label.setAttribute('x', spot[0].toFixed(1))
+      label.setAttribute('y', (spot[1] + 14).toFixed(1))
+      label.style.setProperty('font-family', 'var(--data)')
+      label.setAttribute('font-size', '12')
+      label.setAttribute('font-weight', '600')
+      label.style.setProperty('fill', 'var(--ink)')
+      label.setAttribute('paint-order', 'stroke')
+      label.style.setProperty('stroke', 'var(--surface)')
+      label.setAttribute('stroke-width', '3.5')
+      label.setAttribute('stroke-linejoin', 'round')
+      label.textContent = text
+      svg.appendChild(label)
+    })
+
+    svg.setAttribute('aria-label', opts.aria || 'Zrekonštruovaná trasa letu')
+    return svg
+  }
+
+  function mapKey(extra) {
+    var key = el('div', 'map-key')
+    key.innerHTML =
+      '<span><svg viewBox="0 0 26 8"><line class="k-solid" x1="1" y1="4" x2="25" y2="4"/></svg> pozorované</span>' +
+      '<span><svg viewBox="0 0 26 8"><line class="k-dashed" x1="1" y1="4" x2="25" y2="4"/></svg> premostené cez výpadok</span>' +
+      (extra ? '<span>' + extra + '</span>' : '')
+    return key
+  }
+
+  // --- prehľadová mapa ----------------------------------------------------
+  var overview = document.getElementById('overview')
+  var overviewSvg = buildMap(flights, {
+    minHeight: 300,
+    maxHeight: 420,
+    solidWidth: 1.9,
+    solidOpacity: 0.85,
+    dashWidth: 1.2,
+    dashOpacity: 0.45,
+    labelUnknown: false,
+    aria: 'Mapa všetkých ' + flights.length + ' zrekonštruovaných trás slovenskej štátnej flotily',
+  })
+  if (overviewSvg) {
+    overview.appendChild(overviewSvg)
+    overview.appendChild(mapKey(nf(flights.length) + ' letov · duté koliesko = letisko, ktoré sme neurčili'))
+  }
+
+  // --- mriežka pokrytia ---------------------------------------------------
+  // Jeden deň sa môže importovať opakovane, tak si necháme najlepšie podloženú odpoveď.
   var RANK = { unavailable: 0, empty: 1, completed: 2 }
   var byCell = {}
   var dayKeys = []
@@ -104,12 +316,12 @@
   })
   dayKeys.sort()
 
-  var flightsByIcaoDay = {}
   var fleetByReg = {}
   DATA.fleet.forEach(function (a) { fleetByReg[a.registration] = a })
+  var flightsByIcaoDay = {}
   flights.forEach(function (f) {
-    var icao = fleetByReg[f.registration] ? fleetByReg[f.registration].icao24 : ''
-    flightsByIcaoDay[icao + '|' + isoDate(f.departureTime)] = true
+    var ac = fleetByReg[f.registration]
+    if (ac) flightsByIcaoDay[ac.icao24 + '|' + isoDate(f.departureTime)] = true
   })
 
   var table = document.getElementById('cov')
@@ -118,9 +330,9 @@
   var lastMonth = null
   dayKeys.forEach(function (day) {
     var m = day.slice(0, 7)
-    // The label is absolutely positioned so a wide month name cannot widen its column.
+    // Popisok je absolútne umiestnený, aby široký názov mesiaca nerozšíril stĺpec.
     var th = el('th', 'month-label')
-    if (m !== lastMonth) th.appendChild(el('b', null, MONTHS[Number(day.slice(5, 7)) - 1]))
+    if (m !== lastMonth) th.appendChild(el('b', null, MONTH_SHORT[Number(day.slice(5, 7)) - 1]))
     lastMonth = m
     headRow.appendChild(th)
   })
@@ -132,11 +344,11 @@
     dayKeys.forEach(function (day) {
       var td = el('td')
       var status = byCell[ac.icao24 + '|' + day]
-      var cls = 'c-nodata', title = 'no data retrievable'
+      var cls = 'c-nodata', title = 'deň sa nedal získať'
       if (status === 'completed' || flightsByIcaoDay[ac.icao24 + '|' + day]) {
-        cls = 'c-flew'; title = 'flights detected'
+        cls = 'c-flew'; title = 'detegované lety'
       } else if (status === 'empty') {
-        cls = 'c-quiet'; title = 'archive held the day, aircraft not seen'
+        cls = 'c-quiet'; title = 'archív deň mal, lietadlo nevidel'
       }
       var cell = el('span', 'cell ' + cls)
       cell.title = ac.registration + ' · ' + day + ' · ' + title
@@ -146,170 +358,109 @@
     table.appendChild(row)
   })
 
-  // --- fleet --------------------------------------------------------------
+  // --- register -----------------------------------------------------------
   var fleetBox = document.getElementById('fleet')
   DATA.fleet.forEach(function (ac) {
     var mine = flights.filter(function (f) { return f.registration === ac.registration })
     var hours = mine.reduce(function (s, f) { return s + (f.durationSeconds || 0) }, 0) / 3600
     var card = el('div', 'ac')
     card.appendChild(el('div', 'reg', ac.registration))
-    card.appendChild(el('div', 'type', (ac.variant || ac.model || '') + (ac.manufacturer ? '' : '')))
+    card.appendChild(el('div', 'type', ac.variant || ac.model || ''))
+
+    // Fotografie sú z Wikimedia Commons pod voľnou licenciou. Autor a licencia sú
+    // uvedené pri každej — bez toho by sme ich použiť nesmeli.
+    var photo = PHOTOS[ac.registration]
+    if (photo) {
+      var fig = el('figure')
+      var img = document.createElement('img')
+      img.src = photo.src
+      img.alt = ac.registration + ', ' + (ac.variant || ac.model || 'lietadlo') +
+        ', fotografované ' + photo.date
+      img.loading = 'lazy'
+      fig.appendChild(img)
+      var cap = el('figcaption')
+      cap.innerHTML = 'Foto ' + (photo.date || '').slice(0, 4) + ': ' +
+        '<a href="' + photo.page + '" target="_blank" rel="noopener noreferrer">' + photo.author + '</a>' +
+        ' · <a href="' + photo.licenseUrl + '" target="_blank" rel="noopener noreferrer">' + photo.license + '</a>'
+      fig.appendChild(cap)
+      card.appendChild(fig)
+    } else {
+      card.appendChild(el('div', 'no-photo', 'Voľne licencovanú fotografiu tohto lietadla sme nenašli'))
+    }
+
     var stat = el('div', 'stat')
     if (mine.length) {
-      stat.innerHTML = '<b>' + mine.length + '</b> flights · <b>' + hours.toFixed(1) + '</b> h'
+      stat.innerHTML = '<b>' + nf(mine.length) + '</b> letov · <b>' + nf(hours, 1) + '</b> h'
     } else {
-      stat.textContent = 'not seen in this window'
+      stat.textContent = 'v tomto období nezaznamenané'
     }
     card.appendChild(stat)
     if (ac.activeUntil) {
-      card.appendChild(el('span', 'tag retired', 'withdrawn ' + ac.activeUntil))
+      card.appendChild(el('span', 'tag retired', 'vyradené ' + ac.activeUntil))
     } else if (ac.verificationStatus === 'needs_verification') {
-      card.appendChild(el('span', 'tag unverified', 'identity unverified'))
+      card.appendChild(el('span', 'tag unverified', 'identita neoverená'))
     }
     fleetBox.appendChild(card)
   })
 
-  // --- map ----------------------------------------------------------------
-  function buildMap(f) {
-    var track = f.track || []
-    if (track.length < 2) return null
-
-    var lons = track.map(function (p) { return p[0] })
-    var lats = track.map(function (p) { return p[1] })
-    var minLon = Math.min.apply(null, lons), maxLon = Math.max.apply(null, lons)
-    var minLat = Math.min.apply(null, lats), maxLat = Math.max.apply(null, lats)
-
-    var padLon = Math.max((maxLon - minLon) * 0.14, 1.6)
-    var padLat = Math.max((maxLat - minLat) * 0.22, 1.6)
-    minLon -= padLon; maxLon += padLon; minLat -= padLat; maxLat += padLat
-
-    // Equirectangular, x compressed by the cosine of the view's centre latitude,
-    // which keeps shapes honest over the span of a single flight.
-    var k = Math.cos(((minLat + maxLat) / 2) * Math.PI / 180)
-    var w = (maxLon - minLon) * k
-    var h = maxLat - minLat
-    var W = 720
-    var H = Math.max(220, Math.min(460, Math.round(W * h / w)))
-    var sx = W / w, sy = H / h
-    var s = Math.min(sx, sy)
-    var ox = (W - w * s) / 2, oy = (H - h * s) / 2
-
-    function px(lon, lat) {
-      return [ox + (lon - minLon) * k * s, oy + (maxLat - lat) * s]
-    }
-
-    var svg = document.createElementNS(SVG_NS, 'svg')
-    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H)
-    svg.setAttribute('role', 'img')
-
-    var dep = endpoint(f, 'dep'), arr = endpoint(f, 'arr')
-    svg.setAttribute('aria-label',
-      'Reconstructed track, ' + dep.code + ' to ' + arr.code +
-      ', ' + pct(f.dataCoverage) + ' of the flight covered by observations')
-
-    // Land, drawn flat with a hairline edge — a chart base, not a basemap.
-    var landGroup = document.createElementNS(SVG_NS, 'g')
-    LAND.forEach(function (ring) {
-      var inView = false
-      for (var i = 0; i < ring.length; i++) {
-        if (ring[i][0] > minLon - 20 && ring[i][0] < maxLon + 20 &&
-            ring[i][1] > minLat - 20 && ring[i][1] < maxLat + 20) { inView = true; break }
-      }
-      if (!inView) return
-      var d = ring.map(function (pt, i) {
-        var q = px(pt[0], pt[1])
-        return (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1)
-      }).join('') + 'Z'
-      var path = document.createElementNS(SVG_NS, 'path')
-      path.setAttribute('d', d)
-      path.style.setProperty('fill', 'var(--land)')
-      path.style.setProperty('stroke', 'var(--land-edge)')
-      path.setAttribute('stroke-width', '0.7')
-      landGroup.appendChild(path)
-    })
-    svg.appendChild(landGroup)
-
-    var borderGroup = document.createElementNS(SVG_NS, 'g')
-    BORDERS.forEach(function (line) {
-      var inView = false
-      for (var i = 0; i < line.length; i++) {
-        if (line[i][0] > minLon - 6 && line[i][0] < maxLon + 6 &&
-            line[i][1] > minLat - 6 && line[i][1] < maxLat + 6) { inView = true; break }
-      }
-      if (!inView) return
-      var d = line.map(function (pt, i) {
-        var q = px(pt[0], pt[1])
-        return (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1)
-      }).join('')
-      var path = document.createElementNS(SVG_NS, 'path')
-      path.setAttribute('d', d)
-      path.setAttribute('fill', 'none')
-      path.style.setProperty('stroke', 'var(--border-line)')
-      path.setAttribute('stroke-width', '0.8')
-      borderGroup.appendChild(path)
-    })
-    svg.appendChild(borderGroup)
-
-    // Segments the aircraft was observed on, and segments inferred across a gap.
-    var gaps = (f.gaps || []).map(function (g) {
-      return [Date.parse(g.from) / 1000, Date.parse(g.to) / 1000]
-    })
-    function bridged(t1, t2) {
-      for (var i = 0; i < gaps.length; i++) {
-        if (gaps[i][0] < t2 && gaps[i][1] > t1) return true
-      }
-      return false
-    }
-
-    for (var i = 1; i < track.length; i++) {
-      var a = track[i - 1], b = track[i]
-      var p1 = px(a[0], a[1]), p2 = px(b[0], b[1])
-      var line = document.createElementNS(SVG_NS, 'line')
-      line.setAttribute('x1', p1[0].toFixed(1)); line.setAttribute('y1', p1[1].toFixed(1))
-      line.setAttribute('x2', p2[0].toFixed(1)); line.setAttribute('y2', p2[1].toFixed(1))
-      line.style.setProperty('stroke', 'var(--accent)')
-      line.setAttribute('stroke-linecap', 'round')
-      if (bridged(a[3], b[3])) {
-        line.setAttribute('stroke-width', '1.6')
-        line.setAttribute('stroke-dasharray', '3 5')
-        line.setAttribute('opacity', '0.62')
-      } else {
-        line.setAttribute('stroke-width', '2.4')
-      }
-      svg.appendChild(line)
-    }
-
-    ;[[track[0], dep], [track[track.length - 1], arr]].forEach(function (pair) {
-      var q = px(pair[0][0], pair[0][1])
-      var known = pair[1].state === 'known'
-      var c = document.createElementNS(SVG_NS, 'circle')
-      c.setAttribute('cx', q[0].toFixed(1)); c.setAttribute('cy', q[1].toFixed(1))
-      c.setAttribute('r', '4.5')
-      c.style.setProperty('fill', known ? 'var(--accent)' : 'var(--surface)')
-      c.style.setProperty('stroke', known ? 'var(--surface)' : 'var(--accent)')
-      c.setAttribute('stroke-width', '2')
-      if (!known) c.setAttribute('stroke-dasharray', '2.5 2')
-      svg.appendChild(c)
-
-      var label = document.createElementNS(SVG_NS, 'text')
-      label.setAttribute('x', (q[0] + 9).toFixed(1))
-      label.setAttribute('y', (q[1] + 4).toFixed(1))
-      label.style.setProperty('font-family', 'var(--data)')
-      label.setAttribute('font-size', '12')
-      label.setAttribute('font-weight', '600')
-      label.style.setProperty('fill', 'var(--ink)')
-      label.setAttribute('paint-order', 'stroke')
-      label.style.setProperty('stroke', 'var(--surface)')
-      label.setAttribute('stroke-width', '3.5')
-      label.setAttribute('stroke-linejoin', 'round')
-      label.textContent = pair[1].code + (known ? '' : ' ?')
-      svg.appendChild(label)
-    })
-
-    return svg
+  // --- sú to naozaj samostatné lietadlá? ----------------------------------
+  /**
+   * Register hovorí, že OM-BYA a OM-BYK sú dva rôzne stroje, ale register je cudzí
+   * zdroj. Z vlastných pozorovaní sa to dá overiť: nájdeme dve pozície rôznych
+   * lietadiel najbližšie v čase a spočítame, akou rýchlosťou by sa medzi nimi muselo
+   * jedno lietadlo presunúť. Ak vyjde nadzvuková rýchlosť, jeden stroj to byť nemôže.
+   */
+  var A319_CRUISE_KMH = 830
+  function haversineKm(a, b) {
+    var R = 6371.0088, rad = Math.PI / 180
+    var dLat = (b.lat - a.lat) * rad, dLon = (b.lon - a.lon) * rad
+    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(a.lat * rad) * Math.cos(b.lat * rad)
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)))
   }
 
-  // --- flight strips ------------------------------------------------------
+  var marksByTime = []
+  flights.forEach(function (f) {
+    var t = f.track || []
+    if (t.length < 2) return
+    ;[t[0], t[t.length - 1]].forEach(function (p) {
+      marksByTime.push({ reg: f.registration, t: p[3], lat: p[1], lon: p[0] })
+    })
+  })
+  marksByTime.sort(function (a, b) { return a.t - b.t })
+
+  var best = null
+  for (var i = 1; i < marksByTime.length; i++) {
+    var a = marksByTime[i - 1], b = marksByTime[i]
+    if (a.reg === b.reg) continue
+    var hours = (b.t - a.t) / 3600
+    if (hours <= 0) continue
+    var distKm = haversineKm(a, b)
+    var needed = distKm / hours
+    if (!best || needed > best.needed) best = { a: a, b: b, hours: hours, distKm: distKm, needed: needed }
+  }
+
+  if (best && best.needed > A319_CRUISE_KMH) {
+    var box = document.getElementById('verify')
+    box.appendChild(el('h3', null, 'Sú ' + best.a.reg + ' a ' + best.b.reg + ' naozaj dva rôzne stroje?'))
+    box.appendChild(el('p', null,
+      'Register tvrdí, že áno — ale register je cudzí zdroj. Z našich vlastných pozorovaní ' +
+      'to vyplýva priamo: dve lietadlá boli v ten istý deň zaznamenané na miestach, medzi ktorými ' +
+      'sa jeden stroj v danom čase presunúť nedokáže.'))
+    var proof = el('div', 'proof')
+    proof.innerHTML =
+      '<span><b>' + best.a.reg + '</b> ' + new Date(best.a.t * 1000).toISOString().slice(0, 16).replace('T', ' ') +
+        ' UTC · ' + best.a.lat.toFixed(3) + ', ' + best.a.lon.toFixed(3) + '</span>' +
+      '<span><b>' + best.b.reg + '</b> ' + new Date(best.b.t * 1000).toISOString().slice(0, 16).replace('T', ' ') +
+        ' UTC · ' + best.b.lat.toFixed(3) + ', ' + best.b.lon.toFixed(3) + '</span>' +
+      '<span>vzdialenosť <b>' + km(best.distKm) + ' km</b> za <b>' +
+        nf(best.hours, 1) + ' h</b> → potrebná rýchlosť <b>' + km(best.needed) + ' km/h</b></span>' +
+      '<span>cestovná rýchlosť A319 je približne ' + nf(A319_CRUISE_KMH) + ' km/h</span>'
+    box.appendChild(proof)
+    box.appendChild(el('p', 'verdict', 'Jeden stroj to byť nemôže — ide o dve samostatné lietadlá.'))
+  }
+
+  // --- letové pásiky ------------------------------------------------------
   function portNode(p, estimated) {
     var node = el('span', 'f-port' + (p.state === 'unknown' ? ' unknown' : p.state === 'probable' ? ' probable' : ''))
     node.appendChild(document.createTextNode(p.code))
@@ -344,25 +495,25 @@
   function caveatFor(f, dep, arr) {
     var lines = []
     if (dep.state !== 'known' && arr.state !== 'known') {
-      lines.push('Neither end of this flight was identified. The track begins and ends in the air.')
+      lines.push('Neurčili sme ani jeden koniec tohto letu — trasa začína aj končí vo vzduchu.')
     } else if (dep.state === 'unknown') {
-      lines.push('The origin was never observed — coverage begins with the aircraft already airborne.')
+      lines.push('Miesto odletu sme nikdy nevideli — pokrytie začína, keď je lietadlo už vo vzduchu.')
     } else if (arr.state === 'unknown') {
-      lines.push('The destination was never observed — coverage ends with the aircraft still airborne.')
+      lines.push('Cieľ sme nikdy nevideli — pokrytie končí, kým je lietadlo ešte vo vzduchu.')
     } else if (dep.state === 'probable' || arr.state === 'probable') {
-      lines.push('An airport marked <b>?</b> was identified from an airborne fix only, not from the aircraft on the ground.')
+      lines.push('Letisko označené <b>?</b> sme určili len z pozície vo vzduchu, nie z lietadla na zemi.')
     }
     if ((f.distanceFromGapsKm || 0) > 100) {
-      lines.push('<b>' + km(f.distanceFromGapsKm) + ' km</b> of the distance was bridged across gaps in coverage, so the figure is a lower bound.')
+      lines.push('<b>' + km(f.distanceFromGapsKm) + ' km</b> vzdialenosti je premostených cez výpadky pokrytia, takže údaj je dolná hranica.')
     }
     if (f.depEst || f.arrEst) {
-      lines.push('Times marked <b>~</b> were inferred from the first or last airborne fix rather than watched.')
+      lines.push('Časy s <b>~</b> sme odvodili z prvej alebo poslednej pozície vo vzduchu, nie odpozorovali.')
     }
     return lines
   }
 
   var stripsBox = document.getElementById('strips')
-  document.getElementById('flights-heading').textContent = flights.length + ' flights, oldest first'
+  document.getElementById('flights-heading').textContent = nf(flights.length) + ' letov, od najstaršieho'
 
   flights.forEach(function (f, index) {
     var dep = endpoint(f, 'dep'), arr = endpoint(f, 'arr')
@@ -376,10 +527,7 @@
     btn.setAttribute('aria-controls', 'detail-' + index)
 
     btn.appendChild(el('span', 'rail ' + f.confidence))
-
-    var date = el('span', 'f-date')
-    date.appendChild(document.createTextNode(dayLabel(f.departureTime)))
-    btn.appendChild(date)
+    btn.appendChild(el('span', 'f-date', dayLabel(f.departureTime)))
 
     var ac = el('span', 'f-ac', f.registration)
     ac.appendChild(el('em', null, f.callsign || '—'))
@@ -415,52 +563,46 @@
     strip.appendChild(detail)
 
     var built = false
-    btn.addEventListener('click', function () {
-      var open = strip.getAttribute('open-state') === '1'
-      strip.setAttribute('open-state', open ? '0' : '1')
-      btn.setAttribute('aria-expanded', open ? 'false' : 'true')
-      if (built || open) return
+    function build() {
+      if (built) return
       built = true
-
       var inner = el('div', 'detail-in')
 
       var mapCell = el('div', 'detail-map')
-      var svg = buildMap(f)
+      var svg = buildMap([f], {
+        aria: 'Zrekonštruovaná trasa, ' + dep.code + ' do ' + arr.code +
+          ', pozorovaniami pokryté ' + pct(f.dataCoverage) + ' letu',
+      })
       if (svg) {
         mapCell.appendChild(svg)
-        var key = el('div', 'map-key')
-        key.innerHTML =
-          '<span><svg viewBox="0 0 26 8"><line class="k-solid" x1="1" y1="4" x2="25" y2="4"/></svg> observed</span>' +
-          '<span><svg viewBox="0 0 26 8"><line class="k-dashed" x1="1" y1="4" x2="25" y2="4"/></svg> bridged across a gap</span>' +
-          '<span>' + f.trackPoints + ' of ' + f.trackFrom.toLocaleString('en-GB') + ' fixes drawn</span>'
-        mapCell.appendChild(key)
+        mapCell.appendChild(mapKey(nf(f.trackPoints) + ' z ' + nf(f.trackFrom) + ' pozícií vykreslených'))
       } else {
-        mapCell.appendChild(el('p', 'caveat', 'No track geometry stored for this flight.'))
+        mapCell.appendChild(el('p', 'caveat', 'K tomuto letu nemáme uloženú geometriu trasy.'))
       }
       inner.appendChild(mapCell)
 
       var facts = el('div', 'detail-facts')
       facts.appendChild(factList([
-        ['Departure', hhmm(f.departureTime) + (f.depEst ? ' ~' : '') + ' UTC'],
-        ['Arrival', hhmm(f.arrivalTime) + (f.arrEst ? ' ~' : '') + ' UTC'],
-        ['From', dep.name || '—', dep.state !== 'known'],
-        ['To', arr.name || '—', arr.state !== 'known'],
-        ['Airborne', duration(f.durationSeconds)],
-        ['Track flown', km(f.distanceKm) + ' km'],
-        ['Direct distance', km(f.greatCircleKm) + ' km'],
-        ['Maximum altitude', f.maxAltitudeFt ? f.maxAltitudeFt.toLocaleString('en-GB') + ' ft' : '—'],
-        ['Observations', f.positionCount.toLocaleString('en-GB')],
-        ['Longest gap', gapLength(f.maxGapSeconds)],
-        ['Aircraft', (f.variant || f.model || '') + ''],
-        ['Estimated cost', 'data unavailable', true],
+        ['Odlet', hhmm(f.departureTime) + (f.depEst ? ' ~' : '') + ' UTC'],
+        ['Prílet', hhmm(f.arrivalTime) + (f.arrEst ? ' ~' : '') + ' UTC'],
+        ['Odkiaľ', dep.name || '—', dep.state !== 'known'],
+        ['Kam', arr.name || '—', arr.state !== 'known'],
+        ['Vo vzduchu', duration(f.durationSeconds)],
+        ['Preletená trasa', km(f.distanceKm) + ' km'],
+        ['Priama vzdialenosť', km(f.greatCircleKm) + ' km'],
+        ['Maximálna výška', f.maxAltitudeFt ? nf(f.maxAltitudeFt) + ' ft' : '—'],
+        ['Pozorovania', nf(f.positionCount)],
+        ['Najdlhší výpadok', gapLength(f.maxGapSeconds)],
+        ['Lietadlo', f.variant || f.model || '—'],
+        ['Odhadované náklady', 'dáta nedostupné', true],
       ]))
 
       var quality = el('div', 'quality')
-      quality.appendChild(el('p', 'eyebrow', 'Data quality'))
-      quality.appendChild(qualityRow('ADS-B coverage', f.dataCoverage || 0))
-      quality.appendChild(qualityRow('Route', f.routeConfidence || 0))
-      quality.appendChild(qualityRow('Origin airport', f.depConf || 0))
-      quality.appendChild(qualityRow('Destination airport', f.arrConf || 0))
+      quality.appendChild(el('p', 'eyebrow', 'Kvalita dát'))
+      quality.appendChild(qualityRow('ADS-B pokrytie', f.dataCoverage || 0))
+      quality.appendChild(qualityRow('Trasa', f.routeConfidence || 0))
+      quality.appendChild(qualityRow('Letisko odletu', f.depConf || 0))
+      quality.appendChild(qualityRow('Letisko príletu', f.arrConf || 0))
       facts.appendChild(quality)
 
       var lines = caveatFor(f, dep, arr)
@@ -472,12 +614,26 @@
 
       inner.appendChild(facts)
       detail.appendChild(inner)
+    }
+
+    btn.addEventListener('click', function () {
+      var open = strip.getAttribute('open-state') === '1'
+      strip.setAttribute('open-state', open ? '0' : '1')
+      btn.setAttribute('aria-expanded', open ? 'false' : 'true')
+      if (!open) build()
     })
+
+    // Prvý let necháme otvorený, aby bolo vidieť, čo sa pod pásikom skrýva.
+    if (index === 0) {
+      strip.setAttribute('open-state', '1')
+      btn.setAttribute('aria-expanded', 'true')
+      build()
+    }
 
     stripsBox.appendChild(strip)
   })
 
-  // --- city pairs ---------------------------------------------------------
+  // --- dvojice miest ------------------------------------------------------
   var pairs = {}
   var unknownLegs = 0
   flights.forEach(function (f) {
@@ -491,7 +647,7 @@
         key: key,
         n: 0,
         cities: sameField
-          ? (dep.city || dep.code) + ' — returned to the airport it left'
+          ? (dep.city || dep.code) + ' — vrátilo sa na letisko, z ktorého vzlietlo'
           : [dep, arr].sort(function (a, b) { return a.code < b.code ? -1 : 1 })
               .map(function (p) { return p.city }).join(' – '),
       }
@@ -504,37 +660,24 @@
   var max = Math.max.apply(null, list.map(function (p) { return p.n }).concat([unknownLegs, 1]))
 
   var routesBox = document.getElementById('routes')
-  list.forEach(function (p) {
-    var row = el('div', 'route')
-    var pair = el('div', 'pair', p.key)
-    pair.appendChild(el('em', null, p.cities))
+  function routeRow(title, subtitle, n, unknown) {
+    var row = el('div', 'route' + (unknown ? ' unknown' : ''))
+    var pair = el('div', 'pair', title)
+    pair.appendChild(el('em', null, subtitle))
     row.appendChild(pair)
     var meter = el('div', 'meter')
     var fill = el('i')
-    fill.style.width = Math.round((p.n / max) * 100) + '%'
+    fill.style.width = Math.round((n / max) * 100) + '%'
     meter.appendChild(fill)
     row.appendChild(meter)
-    row.appendChild(el('div', 'n', String(p.n)))
-    routesBox.appendChild(row)
-  })
-
-  if (unknownLegs) {
-    var row = el('div', 'route unknown')
-    var pair = el('div', 'pair', 'One or both ends unknown')
-    pair.appendChild(el('em', null, 'not attributed to any airport'))
-    row.appendChild(pair)
-    var meter = el('div', 'meter')
-    var fill = el('i')
-    fill.style.width = Math.round((unknownLegs / max) * 100) + '%'
-    meter.appendChild(fill)
-    row.appendChild(meter)
-    row.appendChild(el('div', 'n', String(unknownLegs)))
+    row.appendChild(el('div', 'n', nf(n)))
     routesBox.appendChild(row)
   }
+  list.forEach(function (p) { routeRow(p.key, p.cities, p.n, false) })
+  if (unknownLegs) routeRow('Jeden alebo oba konce neznáme', 'nepriradené k žiadnemu letisku', unknownLegs, true)
 
-  // --- footer -------------------------------------------------------------
-  var gen = new Date(DATA.generatedAt)
+  // --- pätička ------------------------------------------------------------
   document.getElementById('foot-generated').textContent =
-    'Built from the pipeline database on ' + pad(gen.getUTCDate()) + ' ' + MONTHS[gen.getUTCMonth()] + ' ' + gen.getUTCFullYear()
+    'Postavené z databázy pipeline ' + longDate(DATA.generatedAt)
   document.getElementById('foot-detector').textContent = flights.length ? flights[0].detectorVersion : '—'
 })()
