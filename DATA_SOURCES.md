@@ -175,10 +175,25 @@ must not be used here.
 
 | Aircraft | Photographer | Licence | Taken |
 | -------- | ------------ | ------- | ----- |
-| OM-BYA | N509FZ | CC BY-SA 4.0 | 2026-07-27 |
-| OM-BYK | ERIC SALARD | CC BY-SA 4.0 | 2025-11-11 |
-| OM-BYB | Juke Schweizer | CC BY-SA 4.0 | 2019-02-16 |
-| OM-BYC | jounigripen | CC BY 2.0 | 2024-04-06 |
+| Aircraft | Photographer | Licence | Taken | Shows |
+| -------- | ------------ | ------- | ----- | ----- |
+| OM-BYA | N509FZ | CC BY-SA 4.0 | 2026-07-27 | the airframe |
+| OM-BYK | ERIC SALARD | CC BY-SA 4.0 | 2025-11-11 | the airframe |
+| OM-BYB | Juke Schweizer | CC BY-SA 4.0 | 2019-02-16 | the airframe |
+| OM-BYC | jounigripen | CC BY 2.0 | 2024-04-06 | the airframe |
+| 9513 | Acroterion | CC BY-SA 4.0 | 2025-09-12 | **illustrative** — a Global 5000 marked C-FDIL |
+| 9633 | Kambui | CC BY 2.0 | 2016-04-13 | **illustrative** — Nomad Aviation HB-JFB |
+
+**Photographs never identify an aircraft.** Identity is the ICAO 24-bit address, and the
+registration on a card comes from the registry, never from the image. Illustrative images
+are marked `imageType: AIRCRAFT_TYPE`, badged *ilustračné* on the page, and carry the full
+caveat in the image details.
+
+The 9513 image was offered as showing that same airframe under its earlier mark C-FDIL.
+We use it, but only as illustrative, because the claim is not verifiable from the source:
+the Commons page states no serial number, the photograph is dated 2025-09-12 — after the
+December 2024 Slovak acquisition contracts — and C-FDIL is a Canadian mark Bombardier
+reuses across delivery aircraft. It may well be the same airframe; we cannot show that it is.
 
 ## 5. Costs
 

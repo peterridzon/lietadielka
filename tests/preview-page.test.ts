@@ -130,13 +130,45 @@ describe('design preview', () => {
   it('credits every aircraft photograph', () => {
     const figures = $$('.ac figure')
     expect(figures.length).toBeGreaterThan(0)
-    // Aircraft with no freely licensed photograph say so rather than showing nothing.
-    expect($$('.ac .no-photo').length).toBeGreaterThan(0)
     for (const figure of figures) {
       const caption = figure.querySelector('figcaption')
       expect(caption?.textContent).toMatch(/CC BY/)
       expect(caption?.querySelector('a[href*="commons.wikimedia.org"]')).not.toBeNull()
     }
+  })
+
+  it('marks an illustrative photograph as illustrative', () => {
+    const typePhotos = $$('.ac figure.type-photo')
+    // Both Global 5000 entries use a photograph of another airframe.
+    expect(typePhotos.length).toBe(2)
+    for (const figure of typePhotos) {
+      expect(figure.querySelector('.illus')?.textContent).toBe('ilustračné')
+      // The caveat belongs in the detail and the tooltip, not shouted from the card.
+      expect(figure.querySelector('.photo-detail p')?.textContent?.length).toBeGreaterThan(40)
+      expect(figure.querySelector('img')?.getAttribute('title')?.length).toBeGreaterThan(40)
+    }
+  })
+
+  it('never claims an illustrative photograph shows the Slovak aircraft', () => {
+    const airForce = $$('.fleet-group:not(.historical)').find((g) =>
+      /Vzdusne|Vzdušné/.test(g.querySelector('h3')?.textContent ?? ''),
+    )
+    const cards = [...airForce!.querySelectorAll('.ac')]
+    const nine633 = cards.find((c) => c.querySelector('.reg')?.textContent === '9633')
+    expect(nine633?.querySelector('.photo-detail p')?.textContent).toMatch(/iné lietadlo|nie slovenský/)
+
+    const nine513 = cards.find((c) => c.querySelector('.reg')?.textContent === '9513')
+    // We could not verify the airframe, so the page must not assert that we did.
+    expect(nine513?.querySelector('.photo-detail p')?.textContent).toMatch(/neoverili/)
+  })
+
+  it('does not let a photograph identify an aircraft', () => {
+    // The registration on every card comes from the registry, never from the image
+    // subject. 9513's photograph shows an aircraft marked C-FDIL.
+    const regs = $$('.ac .reg').map((e) => e.textContent)
+    expect(regs).toContain('9513')
+    expect(regs).not.toContain('C-FDIL')
+    expect(regs).not.toContain('HB-JFB')
   })
 
   it('shows the full derivation chain from the source document to the number', () => {

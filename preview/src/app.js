@@ -723,19 +723,44 @@
     }
     card.appendChild(type)
 
+    // Photographs are illustrative and take no part in identifying an aircraft — that is
+    // the ICAO address alone. Where the image is not the airframe itself, the caption
+    // says so quietly and the full caveat sits in the tooltip rather than shouting from
+    // the card.
     var photo = PHOTOS[ac.registration]
     if (photo) {
+      var typePhoto = photo.imageType === 'AIRCRAFT_TYPE'
       var fig = el('figure')
+      if (typePhoto) fig.className = 'type-photo'
       var img = document.createElement('img')
       img.src = photo.src
-      img.alt = ac.registration + ', ' + (ac.variant || ac.model || 'lietadlo') + ', fotografované ' + photo.date
+      img.alt = typePhoto
+        ? 'Ilustračná fotografia typu ' + (ac.model || 'lietadla') +
+          (photo.subjectRegistration ? ', snímka zachytáva ' + photo.subjectRegistration : '')
+        : ac.registration + ', ' + (ac.variant || ac.model || 'lietadlo') + ', fotografované ' + photo.date
+      if (photo.photoLabel) img.title = photo.photoLabel
       img.loading = 'lazy'
       fig.appendChild(img)
+
       var cap = el('figcaption')
-      cap.innerHTML = 'Foto ' + (photo.date || '').slice(0, 4) + ': ' +
+      cap.innerHTML =
+        (typePhoto ? '<span class="illus" title="' + (photo.photoLabel || '').replace(/"/g, '&quot;') +
+          '">ilustračné</span> ' : '') +
+        'Foto ' + (photo.date || '').slice(0, 4) + ': ' +
         '<a href="' + photo.page + '" target="_blank" rel="noopener noreferrer">' + photo.author + '</a>' +
-        ' · <a href="' + photo.licenseUrl + '" target="_blank" rel="noopener noreferrer">' + photo.license + '</a>'
+        ' · <a href="' + photo.licenseUrl + '" target="_blank" rel="noopener noreferrer">' + photo.license + '</a>' +
+        (typePhoto && photo.subjectRegistration ? ' · ' + photo.subjectRegistration : '')
       fig.appendChild(cap)
+
+      if (photo.photoLabel) {
+        var det = document.createElement('details')
+        det.className = 'photo-detail'
+        var sum = document.createElement('summary')
+        sum.textContent = 'O fotografii'
+        det.appendChild(sum)
+        det.appendChild(el('p', null, photo.photoLabel))
+        fig.appendChild(det)
+      }
       card.appendChild(fig)
     } else {
       card.appendChild(el('div', 'no-photo', 'Voľne licencovanú fotografiu tohto lietadla sme nenašli'))

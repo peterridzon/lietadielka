@@ -23,6 +23,9 @@ for reg,c in credits.items():
       'author':c['author'], 'license':c['license'],
       'licenseUrl':LICENSE_URLS.get(c['license'],'https://commons.wikimedia.org/'),
       'page':c['page'], 'date':c['date'],
+      'imageType':c.get('imageType','AIRFRAME'),
+      'subjectRegistration':c.get('subjectRegistration'),
+      'photoLabel':c.get('photoLabel'),
     }
 def embed(o): return json.dumps(o, separators=(',',':'), ensure_ascii=False).replace('</','<\\/')
 open(OUT,'w').write('\n'.join([head, head2, body,

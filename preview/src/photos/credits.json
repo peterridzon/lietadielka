@@ -4,27 +4,59 @@
   "author": "N509FZ",
   "license": "CC BY-SA 4.0",
   "date": "2026-07-27",
-  "page": "https://commons.wikimedia.org/wiki/File%3AOM-BYA%40PEK_%2820260727145847%29.jpg"
+  "page": "https://commons.wikimedia.org/wiki/File%3AOM-BYA%40PEK_%2820260727145847%29.jpg",
+  "imageType": "AIRFRAME",
+  "subjectRegistration": "OM-BYA",
+  "photoLabel": null
  },
  "OM-BYK": {
   "file": "File:OM-BYK NCE (54917776260).jpg",
   "author": "ERIC SALARD",
   "license": "CC BY-SA 4.0",
   "date": "2025-11-11",
-  "page": "https://commons.wikimedia.org/wiki/File%3AOM-BYK_NCE_%2854917776260%29.jpg"
+  "page": "https://commons.wikimedia.org/wiki/File%3AOM-BYK_NCE_%2854917776260%29.jpg",
+  "imageType": "AIRFRAME",
+  "subjectRegistration": "OM-BYK",
+  "photoLabel": null
  },
  "OM-BYB": {
   "file": "File:OM-BYB at MUC.jpg",
   "author": "Juke Schweizer",
   "license": "CC BY-SA 4.0",
   "date": "2019-02-16",
-  "page": "https://commons.wikimedia.org/wiki/File%3AOM-BYB_at_MUC.jpg"
+  "page": "https://commons.wikimedia.org/wiki/File%3AOM-BYB_at_MUC.jpg",
+  "imageType": "AIRFRAME",
+  "subjectRegistration": "OM-BYB",
+  "photoLabel": null
  },
  "OM-BYC": {
   "file": "File:F100 OM-BYC Government of Slovakia (53709440163).jpg",
   "author": "jounigripen",
   "license": "CC BY 2.0",
   "date": "2024-04-06",
-  "page": "https://commons.wikimedia.org/wiki/File%3AF100_OM-BYC_Government_of_Slovakia_%2853709440163%29.jpg"
+  "page": "https://commons.wikimedia.org/wiki/File%3AF100_OM-BYC_Government_of_Slovakia_%2853709440163%29.jpg",
+  "imageType": "AIRFRAME",
+  "subjectRegistration": "OM-BYC",
+  "photoLabel": null
+ },
+ "9513": {
+  "file": "File:Bombardier Global 5000 C-FDIL IAD VA1.jpg",
+  "author": "Acroterion",
+  "license": "CC BY-SA 4.0",
+  "date": "2025-09-12",
+  "page": "https://commons.wikimedia.org/wiki/File%3ABombardier_Global_5000_C-FDIL_IAD_VA1.jpg",
+  "imageType": "AIRCRAFT_TYPE",
+  "subjectRegistration": "C-FDIL",
+  "photoLabel": "Ilustračná fotografia typu. Snímka zachytáva Bombardier Global 5000 pod značkou C-FDIL, ktorá je uvedená medzi predchádzajúcimi značkami stroja 9513. Zhodu airframu sme však neoverili: stránka zdroja neuvádza výrobné číslo, snímka je z 12. 9. 2025 (teda po slovenskom nákupe) a C-FDIL je kanadská značka, ktorú Bombardier opakovane používa na dodávkové stroje."
+ },
+ "9633": {
+  "file": "File:Nomad Aviation Bombardier Global 5000 (BD-700-1A11) HB-JFB (25955930403).jpg",
+  "author": "Kambui",
+  "license": "CC BY 2.0",
+  "date": "2016-04-13",
+  "page": "https://commons.wikimedia.org/wiki/File%3ANomad_Aviation_Bombardier_Global_5000_%28BD-700-1A11%29_HB-JFB_%2825955930403%29.jpg",
+  "imageType": "AIRCRAFT_TYPE",
+  "subjectRegistration": "HB-JFB",
+  "photoLabel": "Ilustračná fotografia typu Bombardier Global 5000 (BD-700-1A11). Zachytáva iné lietadlo, nie slovenský stroj 9633 — voľne licencovanú snímku tohto airframu sme nenašli."
  }
 }
