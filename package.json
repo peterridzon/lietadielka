@@ -22,6 +22,7 @@
     "costs:recompute": "tsx src/cli/costs-recompute.ts",
     "costs:explain": "tsx src/cli/costs-explain.ts",
     "preview:build": "tsx preview/export.ts && python3 preview/build.py",
+    "deploy:preview": "npm run preview:build && bash deploy/upload.sh",
     "purpose:set": "tsx src/cli/purpose-set.ts",
     "imports:list": "tsx src/cli/imports-list.ts",
     "test": "vitest run",

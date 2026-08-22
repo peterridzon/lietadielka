@@ -143,6 +143,19 @@ Read these before drawing conclusions from anything this tool prints.
 
 ---
 
+## Nasadenie
+
+WebSupport webhosting is PHP-only, so the collector cannot run there — but this project
+does not need it to. Nothing on the public site changes between recomputations, because
+nothing is published until six hours after a landing. The site is therefore static, the
+pipeline runs elsewhere, and **the database never faces the internet**.
+
+```bash
+npm run deploy:preview     # single self-contained page over SFTP
+```
+
+See [deploy/README.md](deploy/README.md) for the three options and their trade-offs.
+
 ## Licence
 
 [AGPL-3.0-or-later](LICENSE). Reference datasets carry their own terms — see
