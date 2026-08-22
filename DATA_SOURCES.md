@@ -32,21 +32,44 @@ withdrawn in 2025; the adapter needs `OPENSKY_CLIENT_ID` and `OPENSKY_CLIENT_SEC
 reports itself unhealthy without them. OpenSky decimates track waypoints, so flights
 reconstructed from it carry visibly lower coverage than the same flight from adsb.lol.
 
-### The deep-history problem
+### adsb.lol daily release archive (deep history)
 
-There is no free source of ADS-B history for the Slovak fleet going back to 2025. The
-realistic options, none of which is implemented:
+**This section replaces an earlier claim that no free deep history existed.** It did; we
+had only probed the live endpoint. Found via Bellingcat's Turnstone documentation — see
+[RESEARCH_TURNSTONE.md](RESEARCH_TURNSTONE.md).
+
+adsb.lol publishes the complete daily globe history as GitHub releases:
+
+| Repository | Coverage | Size per day |
+| ---------- | -------- | ------------ |
+| [`adsblol/globe_history_2024`](https://github.com/adsblol/globe_history_2024/releases) | all of 2024 | ~2.1 GB |
+| [`adsblol/globe_history_2025`](https://github.com/adsblol/globe_history_2025/releases) | all of 2025 | ~3.2 GB |
+| [`adsblol/globe_history_2026`](https://github.com/adsblol/globe_history_2026/releases) | current | ~3.3–4.1 GB |
+
+Each release is a `tar` split into 2 GB parts containing `./heatmap/` and
+`./traces/<last2hex>/trace_full_<hex>.json`. The traces are the same files the live
+endpoint serves: extracting `505c06` for 2026-08-15 from the archive gave an identical
+SHA-256 to the copy collected live — 157 716 bytes, 806 trace points.
+
+Practical notes, measured:
+
+* Entries are **not sorted** inside the tar, so a filename binary search over HTTP range
+  requests does not work even though the CDN supports ranges. The archive has to be
+  streamed.
+* Streaming one day and extracting six aircraft took **173 seconds** for 3.75 GB and
+  75 987 entries. A scheduled job doing a handful of historical days per run fills years
+  of history over a few months, and we keep only our own aircraft — about 5 MB a year.
+
+Other options, still unimplemented and now less pressing:
 
 | Option | Notes |
 | ------ | ----- |
-| Start collecting now | Free, correct, and slow — the dataset grows forward from today. This is the default. |
-| OpenSky historical (Trino / Impala) | Available to researchers on request; years of data, heavy queries. |
-| ADSBexchange historical | Commercial. Full daily globe archives. |
-| Own receiver | Contributes to the commons, but only covers what it can hear. |
+| OpenSky historical (Trino / Impala) | Available to researchers on request |
+| ADSBexchange historical | Commercial |
+| Own receiver | Contributes to the commons, covers only what it hears |
 
-Until one of these is in place, **any statistic before the archive window is missing,
-not zero**, and must be labelled as such. `npm run imports:list` reports exactly which
-days are absent.
+Whatever the source, **a day we could not retrieve is missing, not zero**, and is labelled
+as such. `npm run imports:list` reports exactly which days are absent.
 
 ---
 

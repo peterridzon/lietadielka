@@ -231,10 +231,13 @@ flag from the trace format, so interpolated/stale points can be down-weighted).
 `globe_history/YYYY/MM/DD/traces/<last2hex>/trace_full_<icao>.json` (gzip). The
 adapter decodes the positional array format into `AdsbPosition[]`.
 
-> **Measured constraint (2026-08-21/22):** the adsb.lol history archive only goes back
-> roughly 40–45 days, and the boundary is pruned continuously. Deep backfill to 2025 is
-> therefore *not possible from adsb.lol* — see `DATA_SOURCES.md` for the options.
-> The append-only raw store means coverage grows from the day we start collecting.
+> **Corrected 2026-08-23.** The ~40-day limit is a property of the **live trace endpoint**,
+> not of the provider. adsb.lol also publishes the complete daily globe history as GitHub
+> releases (`adsblol/globe_history_YYYY`) going back to 2024, and those archives contain
+> the same trace files — verified byte-for-byte identical for one aircraft-day. Deep
+> backfill *is* possible; see `RESEARCH_TURNSTONE.md`. The earlier claim that it was not
+> came from probing one endpoint and generalising, which is the same mistake this
+> project's coverage methodology exists to prevent.
 >
 > **The archive answers `504` for any trace it does not hold**, whether that is "this
 > aircraft did not fly that day" or "that day is no longer kept". Those two mean
