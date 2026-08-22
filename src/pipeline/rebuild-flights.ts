@@ -19,7 +19,15 @@ import { publishableAt } from '../core/publication.js'
 import type { AdsbPosition } from '../core/types.js'
 import { getDb } from '../db/client.js'
 import { getAirportIndex } from '../db/repositories/airports.js'
-import { flight, flightTrack, rawAdsbPosition, route, type Aircraft } from '../db/schema.js'
+import {
+  flight,
+  flightPassengers,
+  flightPurpose,
+  flightTrack,
+  rawAdsbPosition,
+  route,
+  type Aircraft,
+} from '../db/schema.js'
 import { env } from '../lib/env.js'
 import { log } from '../lib/log.js'
 
@@ -130,6 +138,11 @@ export async function rebuildFlightsForAircraft(options: {
     elevationAt: (latitude, longitude) => index.elevationAt(latitude, longitude),
   })
 
+  // Hand-entered enrichment is not derived data and must survive a rebuild. It hangs off
+  // the flight row by a surrogate id, so it has to be lifted out before the delete and
+  // re-attached afterwards by the natural key — aircraft plus departure time.
+  const carried = await liftManualEnrichment(target.id, options.from, options.to)
+
   // Derived data only — raw positions are untouched. When a window was given, only
   // flights departing inside it are replaced; wiping the aircraft's whole history to
   // rebuild one week would quietly destroy everything outside the window.
@@ -230,9 +243,108 @@ export async function rebuildFlightsForAircraft(options: {
     results.push({ id, publicId, detected: item, departureMatch, arrivalMatch, overallConfidence })
   }
 
+  const reattached = await reattachManualEnrichment(carried, results)
+
   log.info(
-    `${target.registration ?? target.icao24}: ${positions.length} positions -> ${results.length} flights`,
+    `${target.registration ?? target.icao24}: ${positions.length} positions -> ${results.length} flights` +
+      (carried.purposes.length + carried.passengers.length > 0
+        ? `, ${reattached} of ${carried.purposes.length + carried.passengers.length} manual records reattached`
+        : ''),
   )
 
   return { aircraft: target, positionsRead: positions.length, flights: results }
+}
+
+/** Detection may shift a departure time slightly; anything further apart is a different flight. */
+const REATTACH_TOLERANCE_MS = 30 * 60 * 1000
+
+type CarriedEnrichment = {
+  purposes: { departureTime: Date; row: typeof flightPurpose.$inferSelect }[]
+  passengers: { departureTime: Date; row: typeof flightPassengers.$inferSelect }[]
+}
+
+/**
+ * Lifts hand-entered records out before the flights they hang off are deleted.
+ *
+ * Purposes and passenger counts are research, not derived data. They cost someone an
+ * afternoon and a freedom-of-information request; a rebuild must not consume them.
+ */
+async function liftManualEnrichment(
+  aircraftId: string,
+  from?: Date,
+  to?: Date,
+): Promise<CarriedEnrichment> {
+  const { db } = await getDb()
+  const filters: SQL[] = [eq(flight.aircraftId, aircraftId)]
+  if (from) filters.push(gte(flight.departureTime, from))
+  if (to) filters.push(lt(flight.departureTime, to))
+
+  const purposes = await db
+    .select({ departureTime: flight.departureTime, row: flightPurpose })
+    .from(flightPurpose)
+    .innerJoin(flight, eq(flight.id, flightPurpose.flightId))
+    .where(and(...filters))
+
+  const passengers = await db
+    .select({ departureTime: flight.departureTime, row: flightPassengers })
+    .from(flightPassengers)
+    .innerJoin(flight, eq(flight.id, flightPassengers.flightId))
+    .where(and(...filters))
+
+  return { purposes, passengers }
+}
+
+/**
+ * Puts them back, matching on the natural key — this aircraft, departing at about this
+ * time. Anything that cannot be matched is reported loudly rather than dropped.
+ */
+async function reattachManualEnrichment(
+  carried: CarriedEnrichment,
+  rebuilt: RebuiltFlight[],
+): Promise<number> {
+  if (carried.purposes.length === 0 && carried.passengers.length === 0) return 0
+  const { db } = await getDb()
+
+  const nearest = (departureTime: Date): RebuiltFlight | null => {
+    let best: RebuiltFlight | null = null
+    let bestDelta = Number.POSITIVE_INFINITY
+    for (const candidate of rebuilt) {
+      const delta = Math.abs(candidate.detected.departureTime.getTime() - departureTime.getTime())
+      if (delta < bestDelta) {
+        bestDelta = delta
+        best = candidate
+      }
+    }
+    return bestDelta <= REATTACH_TOLERANCE_MS ? best : null
+  }
+
+  let reattached = 0
+
+  for (const item of carried.purposes) {
+    const match = nearest(item.departureTime)
+    if (!match) {
+      log.warn(
+        `purpose "${item.row.title}" could not be reattached: no rebuilt flight departs within ` +
+          `30 minutes of ${item.departureTime.toISOString()}`,
+      )
+      continue
+    }
+    await db.insert(flightPurpose).values({ ...item.row, flightId: match.id }).onConflictDoNothing()
+    reattached++
+  }
+
+  for (const item of carried.passengers) {
+    const match = nearest(item.departureTime)
+    if (!match) {
+      log.warn(
+        `passenger count could not be reattached: no rebuilt flight departs within 30 minutes ` +
+          `of ${item.departureTime.toISOString()}`,
+      )
+      continue
+    }
+    await db.insert(flightPassengers).values({ ...item.row, flightId: match.id }).onConflictDoNothing()
+    reattached++
+  }
+
+  return reattached
 }

@@ -425,6 +425,8 @@ Cestujúci   Komerčne   Priame št.   Celkové št.
 | Modelled annual total deviates > 20 % from an official total | `validationWarning`, confidence must not be high. |
 | Aircraft withdrawn mid-period | Cost model validity windows and `aircraft.active_until` both apply. |
 | Recomputation | New rows inserted, previous rows retained and marked not current. |
+| Rebuilding flights | Hand-entered purposes and passenger counts are lifted out before the delete and re-attached by aircraft plus departure time (±30 min). Anything unmatched is reported loudly, never dropped. |
+| A trip with an unidentified intermediate stop | Grouping needs matching identified airports to chain legs, so such a trip splits into two missions. Visible in the route key as `UNKNOWN`, and it understates mission-level cost. A known limitation. |
 
 ---
 

@@ -75,6 +75,37 @@
 
   document.getElementById('delay-hours').textContent = DATA.publicationDelayHours
 
+  // --- náklady -----------------------------------------------------------
+  var CONF_SK = { high: 'vysoká', medium: 'stredná', low: 'nízka' }
+  var MISSING_SK = {
+    insurance: 'poistenie',
+    crew_fixed: 'mzdové náklady posádok a personálu',
+    training: 'výcvik',
+    facility: 'hangárovanie a technická základňa',
+    software: 'software a navigačné databázy',
+    capital: 'kapitálové náklady a odpisy',
+    administration: 'administratíva',
+    maintenance_hour: 'údržba',
+    navigation: 'navigačné poplatky',
+    airport: 'letiskové poplatky',
+    handling: 'handling',
+  }
+
+  function eur(v) { return v == null ? '—' : Math.round(v).toLocaleString('sk-SK') + '\u00a0€' }
+  function eurRange(low, mid, high) {
+    if (mid == null) return 'dáta nedostupné'
+    if (low == null || high == null || Math.round(low) === Math.round(high)) return eur(mid)
+    return eur(low) + ' – ' + eur(high)
+  }
+
+  var costed = flights.filter(function (f) { return f.costFullMid != null })
+  var totalDirect = costed.reduce(function (s, f) { return s + (f.costDirectMid || 0) }, 0)
+  var totalFixed = costed.reduce(function (s, f) { return s + (f.costFixedMid || 0) }, 0)
+  var totalFull = costed.reduce(function (s, f) { return s + (f.costFullMid || 0) }, 0)
+  var totalFullLow = costed.reduce(function (s, f) { return s + (f.costFullLow || 0) }, 0)
+  var totalFullHigh = costed.reduce(function (s, f) { return s + (f.costFullHigh || 0) }, 0)
+
+
   var days = DATA.days.slice().sort(function (a, b) { return a.day < b.day ? -1 : 1 })
   var firstDay = days.length ? days[0].day : isoDate(flights[0].departureTime)
   var lastDay = days.length ? days[days.length - 1].day : isoDate(flights[flights.length - 1].departureTime)
@@ -87,7 +118,14 @@
     { v: nf(flights.length), unit: '', label: 'Detegované lety', note: 'zrekonštruované z ' + nf(totalFixes) + ' pozorovaní' },
     { v: nf(totalSeconds / 3600, 1), unit: 'h', label: 'Čas vo vzduchu', note: 'Od vzletu po dosadnutie, nie blokový čas' },
     { v: km(totalKm), unit: 'km', label: 'Preletená vzdialenosť', note: km(gapKm) + ' km z toho premostených cez výpadky pokrytia' },
-    { unavailable: 'Dáta nedostupné', label: 'Odhadované náklady', note: 'Nemáme zdrojovaný údaj o prevádzkových nákladoch' },
+    costed.length
+      ? {
+          v: eur(totalFull).replace('\u00a0€', ''),
+          unit: '€',
+          label: 'Odhadované celkové náklady',
+          note: 'Interval ' + eur(totalFullLow) + ' – ' + eur(totalFullHigh) + ' · kvalita odhadu nízka',
+        }
+      : { unavailable: 'Dáta nedostupné', label: 'Odhadované náklady', note: 'Nemáme zdrojovany udaj' },
   ]
   var kpis = document.getElementById('kpis')
   kpiDefs.forEach(function (d) {
@@ -302,6 +340,93 @@
   if (overviewSvg) {
     overview.appendChild(overviewSvg)
     overview.appendChild(mapKey(nf(flights.length) + ' letov · duté koliesko = letisko, ktoré sme neurčili'))
+  }
+
+  // --- náklady: karty a zdroj ---------------------------------------------
+  var fleetCost = document.getElementById('fleet-cost')
+  if (costed.length) {
+    ;[
+      {
+        label: 'Odhadované priame prevádzkové náklady',
+        value: eur(totalDirect),
+        note: 'Palivo, poplatky, handling a údržba viazaná na prevádzku. To, čo by odpadlo, keby sa lety neuskutočnili.',
+      },
+      {
+        label: 'Odhadované alokované fixné náklady',
+        value: eur(totalFixed),
+        note: 'Podiel na udržiavaní kapacity. Vzniká aj vtedy, keď lietadlá stoja.',
+      },
+      {
+        label: 'Odhadované celkové náklady daňovníka',
+        value: eurRange(totalFullLow, totalFull, totalFullHigh),
+        note: 'Súčet oboch vrstiev za ' + nf(costed.length) + ' detegovaných letov v tomto období.',
+      },
+      {
+        label: 'Porovnateľná komerčná alternatíva',
+        value: null,
+        note: 'Nemáme zdrojovanú porovnateľnú tarifu, takže porovnanie nezobrazujeme. Rozhranie je pripravené, čísla chýbajú.',
+      },
+    ].forEach(function (d) {
+      var card = el('div', 'fc')
+      card.appendChild(el('p', 'eyebrow', d.label))
+      if (d.value) card.appendChild(el('div', 'v', d.value))
+      else card.appendChild(el('div', 'r', 'dáta nedostupné'))
+      card.appendChild(el('div', 'note', d.note))
+      fleetCost.appendChild(card)
+    })
+
+    var first = costed[0]
+    var meta = document.getElementById('cost-source')
+    var modelSource = (DATA.sources || []).filter(function (s) { return s.sourceTier === 'A4' })[0]
+    meta.innerHTML =
+      '<span>Cost model <b>' + first.costModelVersion + '</b> · engine ' + first.costEngineVersion +
+      ' · cenová úroveň vstupov ' + (first.costPriceYear || '?') +
+      (first.costPriceYearGap ? ', lety o ' + first.costPriceYearGap + ' rokov neskôr' : '') + '</span>' +
+      '<span>Kvalita odhadu všetkých výpočtov: <b>' + (CONF_SK[first.costConfidence] || first.costConfidence).toUpperCase() + '</b></span>' +
+      (modelSource
+        ? '<span>Zdroj sadzby (' + modelSource.sourceTier + '): ' + modelSource.publisher + ' — ' +
+          '<a href="' + modelSource.url + '" target="_blank" rel="noopener noreferrer">' + modelSource.title + '</a></span>'
+        : '')
+  }
+
+  // --- misie ---------------------------------------------------------------
+  var costByFlight = {}
+  flights.forEach(function (f) { costByFlight[f.publicId] = f })
+  var legsByMission = {}
+  ;(DATA.missionLegs || []).forEach(function (l) {
+    if (!legsByMission[l.missionId]) legsByMission[l.missionId] = []
+    legsByMission[l.missionId].push(l)
+  })
+
+  var missionsBox = document.getElementById('missions')
+  if (missionsBox && (DATA.missions || []).length) {
+    var head = el('div', 'mrow head')
+    ;['Začiatok', 'Trasa', 'Úseky', 'Vo vzduchu', 'Celkové náklady'].forEach(function (h, i) {
+      head.appendChild(el('div', ['', 'mroute', 'mlegs', 'mhours', 'mcost'][i], h))
+    })
+    missionsBox.appendChild(head)
+
+    var rows = DATA.missions.map(function (m) {
+      var legs = (legsByMission[m.publicId] || []).sort(function (a, b) { return a.legIndex - b.legIndex })
+      var full = legs.reduce(function (s, l) {
+        var f = costByFlight[l.publicId]
+        return s + (f && f.costFullMid ? f.costFullMid : 0)
+      }, 0)
+      return { m: m, legs: legs, full: full }
+    })
+    rows.sort(function (a, b) { return b.full - a.full })
+
+    rows.forEach(function (r) {
+      var row = el('div', 'mrow')
+      row.appendChild(el('div', null, dayLabel(r.m.startedAt)))
+      var route = el('div', 'mroute', (r.m.routeKey || '').replace(/-/g, ' → ').replace(/UNKNOWN/g, 'NEZN'))
+      route.appendChild(el('em', null, r.m.registration || ''))
+      row.appendChild(route)
+      row.appendChild(el('div', 'mlegs', nf(r.m.legCount)))
+      row.appendChild(el('div', 'mhours', duration(r.m.airborneSeconds)))
+      row.appendChild(el('div', 'mcost', r.full ? eur(r.full) : '—'))
+      missionsBox.appendChild(row)
+    })
   }
 
   // --- mriežka pokrytia ---------------------------------------------------
@@ -594,7 +719,7 @@
         ['Pozorovania', nf(f.positionCount)],
         ['Najdlhší výpadok', gapLength(f.maxGapSeconds)],
         ['Lietadlo', f.variant || f.model || '—'],
-        ['Odhadované náklady', 'dáta nedostupné', true],
+        ['Odhadované náklady', f.costFullMid != null ? eur(f.costFullMid) : 'dáta nedostupné', f.costFullMid == null],
       ]))
 
       var quality = el('div', 'quality')
@@ -628,6 +753,71 @@
           'verejný doklad, zostáva neznámy.'))
       }
       facts.appendChild(purpose)
+
+      // Náklady: dve vrstvy oddelene, plus úplný postup výpočtu.
+      if (f.costFullMid != null) {
+        var cost = el('div', 'quality')
+        cost.appendChild(el('p', 'eyebrow', 'Odhadované náklady'))
+
+        var layers = el('div', 'cost-layers')
+        ;[
+          ['Priame prevádzkové', 'čo by odpadlo, keby sa let neuskutočnil', f.costDirectLow, f.costDirectMid, f.costDirectHigh, false],
+          ['Alokované fixné', 'podiel na udržiavaní kapacity', f.costFixedLow, f.costFixedMid, f.costFixedHigh, false],
+          ['Celkové náklady daňovníka', 'súčet oboch vrstiev', f.costFullLow, f.costFullMid, f.costFullHigh, true],
+        ].forEach(function (row) {
+          var layer = el('div', 'cost-layer' + (row[5] ? ' total' : ''))
+          var name = el('div', 'lname', row[0])
+          name.appendChild(el('em', null, row[1]))
+          layer.appendChild(name)
+          layer.appendChild(el('div', 'lval', eurRange(row[2], row[3], row[4])))
+          layers.appendChild(layer)
+        })
+        cost.appendChild(layers)
+
+        var cmeta = el('div', 'cost-meta')
+        cmeta.innerHTML =
+          '<span>Kvalita odhadu: <b>' + (CONF_SK[f.costConfidence] || f.costConfidence).toUpperCase() + '</b>' +
+          (f.costValidationWarning ? ' · validačné upozornenie' : '') + '</span>' +
+          '<span>Block time ' + (f.costBlockHours || 0).toFixed(2) + ' h ' +
+          (f.costBlockEstimated ? '(odhad)' : '(meraný)') + ' · model ' + f.costModelVersion + '</span>'
+        cost.appendChild(cmeta)
+
+        var missingList = (f.costMissing || []).map(function (m) { return MISSING_SK[m] || m })
+        if (missingList.length) {
+          var miss = el('div', 'cost-missing')
+          miss.innerHTML = '<b>Odhad nezahŕňa:</b> ' + missingList.join(', ') + '.'
+          cost.appendChild(miss)
+        }
+
+        var howto = document.createElement('details')
+        howto.className = 'howto'
+        var summary = document.createElement('summary')
+        summary.textContent = 'Ako sme toto vypočítali?'
+        howto.appendChild(summary)
+        var trace = el('div', 'trace')
+        ;((f.costTrace && f.costTrace.steps) || []).forEach(function (step) {
+          var box = el('div', 'tstep')
+          var html = '<b>' + step.label + '</b><span class="tf">' + step.formula + '</span>'
+          Object.keys(step.inputs || {}).forEach(function (k) {
+            var v = step.inputs[k]
+            if (v === null || v === undefined) return
+            html += '<span class="ti">' + k + ': ' + (typeof v === 'number' ? nf(v) : v) + '</span>'
+          })
+          if (step.result != null) {
+            var unit = step.resultUnit || 'EUR'
+            html += '<span class="tr">= ' + (unit === 'EUR' ? eur(step.result) : nf(step.result) + ' ' + unit) + '</span>'
+          }
+          box.innerHTML = html
+          trace.appendChild(box)
+        })
+        ;(f.costWarnings || []).forEach(function (w) {
+          trace.appendChild(el('div', 'tsrc', '⚠ ' + w.message))
+        })
+        howto.appendChild(trace)
+        cost.appendChild(howto)
+
+        facts.appendChild(cost)
+      }
 
       var lines = caveatFor(f, dep, arr)
       if (lines.length) {

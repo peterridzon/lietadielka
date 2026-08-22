@@ -21,6 +21,7 @@
     "missions:rebuild": "tsx src/cli/missions-rebuild.ts",
     "costs:recompute": "tsx src/cli/costs-recompute.ts",
     "costs:explain": "tsx src/cli/costs-explain.ts",
+    "preview:build": "tsx preview/export.ts && python3 preview/build.py",
     "purpose:set": "tsx src/cli/purpose-set.ts",
     "imports:list": "tsx src/cli/imports-list.ts",
     "test": "vitest run",
@@ -34,9 +35,11 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/jsdom": "^30.0.0",
     "@types/node": "^22.10.0",
     "@types/pg": "^8.11.10",
     "drizzle-kit": "^0.31.10",
+    "jsdom": "^30.0.1",
     "tsx": "^4.23.12",
     "typescript": "^5.7.2",
     "vitest": "^4.1.11"

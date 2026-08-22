@@ -5,10 +5,22 @@
  * Then rebuild the page with:    python3 preview/build.py
  */
 import { writeFileSync } from 'node:fs'
-import { asc, eq } from 'drizzle-orm'
+import { and, asc, eq } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import { closeDb, getDb } from '../src/db/client.js'
-import { aircraft, airport, flight, flightPurpose, flightTrack, importJob } from '../src/db/schema.js'
+import {
+  aircraft,
+  airport,
+  costModel,
+  flight,
+  flightCost,
+  flightPurpose,
+  flightTrack,
+  importJob,
+  mission,
+  missionLeg,
+  source,
+} from '../src/db/schema.js'
 import { env } from '../src/lib/env.js'
 
 const { db } = await getDb()
@@ -57,6 +69,28 @@ const flights = await db
     purposeSourceUrl: flightPurpose.sourceUrl,
     purposeSourcePublisher: flightPurpose.sourcePublisher,
     purposeSourcePublishedAt: flightPurpose.sourcePublishedAt,
+    blockSeconds: flight.blockSeconds,
+    costDirectLow: flightCost.directLow,
+    costDirectMid: flightCost.directMid,
+    costDirectHigh: flightCost.directHigh,
+    costFixedLow: flightCost.fixedLow,
+    costFixedMid: flightCost.fixedMid,
+    costFixedHigh: flightCost.fixedHigh,
+    costFullLow: flightCost.fullLow,
+    costFullMid: flightCost.fullMid,
+    costFullHigh: flightCost.fullHigh,
+    costConfidence: flightCost.confidence,
+    costBlockHours: flightCost.blockHours,
+    costBlockEstimated: flightCost.blockHoursEstimated,
+    costPriceYear: flightCost.priceYear,
+    costPriceYearGap: flightCost.priceYearGapYears,
+    costModelVersion: flightCost.costModelVersion,
+    costEngineVersion: flightCost.engineVersion,
+    costMissing: flightCost.missing,
+    costWarnings: flightCost.warnings,
+    costTrace: flightCost.trace,
+    costComponents: flightCost.components,
+    costValidationWarning: flightCost.validationWarning,
   })
   .from(flight)
   .innerJoin(aircraft, eq(aircraft.id, flight.aircraftId))
@@ -66,9 +100,35 @@ const flights = await db
   .leftJoin(arrP, eq(arrP.id, flight.probableArrivalAirportId))
   .leftJoin(flightTrack, eq(flightTrack.flightId, flight.id))
   .leftJoin(flightPurpose, eq(flightPurpose.flightId, flight.id))
+  .leftJoin(flightCost, and(eq(flightCost.flightId, flight.id), eq(flightCost.isCurrent, true)))
   .orderBy(asc(flight.departureTime))
 
 const fleet = await db.select().from(aircraft).orderBy(aircraft.registration)
+
+const missions = await db
+  .select({
+    publicId: mission.publicId,
+    registration: aircraft.registration,
+    startedAt: mission.startedAt,
+    endedAt: mission.endedAt,
+    legCount: mission.legCount,
+    routeKey: mission.routeKey,
+    grouping: mission.grouping,
+    groupingConfidence: mission.groupingConfidence,
+    airborneSeconds: mission.airborneSeconds,
+    distanceKm: mission.distanceKm,
+  })
+  .from(mission)
+  .leftJoin(aircraft, eq(aircraft.id, mission.aircraftId))
+  .orderBy(asc(mission.startedAt))
+
+const missionLegs = await db
+  .select({ missionId: missionLeg.missionId, publicId: flight.publicId, legIndex: missionLeg.legIndex })
+  .from(missionLeg)
+  .innerJoin(flight, eq(flight.id, missionLeg.flightId))
+
+const models = await db.select().from(costModel).orderBy(asc(costModel.validFrom))
+const sources = await db.select().from(source)
 const jobs = await db
   .select({
     day: importJob.rangeFrom,
@@ -94,7 +154,14 @@ writeFileSync(
     flights,
     fleet,
     days,
+    missions,
+    missionLegs,
+    costModels: models,
+    sources,
   }),
 )
-console.log(`exported ${flights.length} flights, ${fleet.length} aircraft, ${days.length} import jobs`)
+console.log(
+  `exported ${flights.length} flights, ${fleet.length} aircraft, ${days.length} import jobs, ` +
+    `${missions.length} missions, ${models.length} cost models`,
+)
 await closeDb()
