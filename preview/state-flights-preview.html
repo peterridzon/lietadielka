@@ -1,0 +1,1039 @@
+<title>State Flights Slovakia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* ---------------------------------------------------------------------------
+   Palette: cool instrument slate with an aeronautical-chart magenta.
+   Light is the base; the two dark blocks redefine tokens only.
+   --------------------------------------------------------------------------- */
+:root {
+  --ground: #ebeef1;
+  --surface: #ffffff;
+  --surface-2: #f4f6f8;
+  --ink: #131c25;
+  --ink-2: #5c6e7e;
+  --ink-3: #8496a4;
+  --rule: #ccd5dc;
+  --rule-strong: #a9b7c2;
+  --accent: #b00060;
+  --accent-soft: rgba(176, 0, 96, 0.10);
+  --land: #dbe1e5;
+  --land-edge: #b6c1c9;
+  --border-line: #aab6bf;
+  --ok: #1c6f53;
+  --ok-soft: rgba(28, 111, 83, 0.12);
+  --warn: #8a5f09;
+  --warn-soft: rgba(138, 95, 9, 0.14);
+  --weak: #9c4b3a;
+  --weak-soft: rgba(156, 75, 58, 0.13);
+  --none: #b3bfc8;
+
+  --display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --body: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+  --data: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --wide: 1160px;
+  --prose: 64ch;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0e151c;
+    --surface: #17212b;
+    --surface-2: #1d2833;
+    --ink: #dfe6ec;
+    --ink-2: #94a5b3;
+    --ink-3: #6d7f8d;
+    --rule: #27333e;
+    --rule-strong: #3a4a58;
+    --accent: #ff62a6;
+    --accent-soft: rgba(255, 98, 166, 0.14);
+    --land: #212e39;
+    --land-edge: #35434f;
+    --border-line: #3f4e5b;
+    --ok: #4fbf95;
+    --ok-soft: rgba(79, 191, 149, 0.14);
+    --warn: #d2a33f;
+    --warn-soft: rgba(210, 163, 63, 0.15);
+    --weak: #d98570;
+    --weak-soft: rgba(217, 133, 112, 0.15);
+    --none: #3d4d5a;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground: #0e151c;
+  --surface: #17212b;
+  --surface-2: #1d2833;
+  --ink: #dfe6ec;
+  --ink-2: #94a5b3;
+  --ink-3: #6d7f8d;
+  --rule: #27333e;
+  --rule-strong: #3a4a58;
+  --accent: #ff62a6;
+  --accent-soft: rgba(255, 98, 166, 0.14);
+  --land: #212e39;
+  --land-edge: #35434f;
+  --border-line: #3f4e5b;
+  --ok: #4fbf95;
+  --ok-soft: rgba(79, 191, 149, 0.14);
+  --warn: #d2a33f;
+  --warn-soft: rgba(210, 163, 63, 0.15);
+  --weak: #d98570;
+  --weak-soft: rgba(217, 133, 112, 0.15);
+  --none: #3d4d5a;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: var(--wide); margin: 0 auto; padding: 0 24px; }
+.prose { max-width: var(--prose); }
+
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+
+.eyebrow {
+  font-family: var(--data);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.num { font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--data); font-variant-numeric: tabular-nums; }
+
+/* --- preview banner ------------------------------------------------------ */
+.preview-note {
+  background: var(--accent-soft);
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--data);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.preview-note .wrap { padding-block: 9px; display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.preview-note b { color: var(--accent); font-weight: 600; letter-spacing: 0.06em; }
+
+/* --- masthead ------------------------------------------------------------ */
+header.masthead { border-bottom: 1px solid var(--rule-strong); background: var(--surface); }
+header.masthead .wrap { padding-block: 56px 40px; display: grid; gap: 36px; grid-template-columns: minmax(0, 1fr) minmax(0, 320px); align-items: end; }
+
+.wordmark { font-family: var(--display); font-weight: 700; font-size: clamp(38px, 6.2vw, 68px); line-height: 0.98; letter-spacing: -0.025em; }
+.wordmark span { display: block; color: var(--ink-3); }
+.thesis { margin-top: 20px; font-size: 17px; color: var(--ink-2); max-width: 46ch; }
+.thesis strong { color: var(--ink); font-weight: 500; }
+
+.embargo {
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--accent);
+  background: var(--surface-2);
+  padding: 16px 18px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.embargo .eyebrow { display: block; margin-bottom: 8px; color: var(--accent); }
+
+/* --- sections ------------------------------------------------------------ */
+section { padding-block: 52px; border-bottom: 1px solid var(--rule); }
+section > .wrap > .sec-head { margin-bottom: 28px; }
+.sec-head h2 { font-size: 24px; font-weight: 600; letter-spacing: -0.012em; margin-top: 6px; }
+.sec-head p { margin: 10px 0 0; color: var(--ink-2); font-size: 15px; max-width: var(--prose); }
+
+/* --- KPI ----------------------------------------------------------------- */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.kpi { background: var(--surface); padding: 22px 20px 20px; display: flex; flex-direction: column; gap: 6px; }
+.kpi .v { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 4vw, 44px); line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.kpi .v small { font-size: 0.44em; font-weight: 600; color: var(--ink-3); margin-left: 4px; letter-spacing: 0; }
+.kpi .v.unavailable { font-size: 20px; font-weight: 600; color: var(--ink-3); letter-spacing: 0; font-family: var(--body); line-height: 1.25; }
+.kpi .note { font-size: 12.5px; color: var(--ink-3); }
+
+/* --- coverage grid ------------------------------------------------------- */
+.cov-scroll { overflow-x: auto; padding-bottom: 6px; }
+.cov { border-collapse: separate; border-spacing: 0; font-family: var(--data); font-size: 11px; }
+.cov th { font-weight: 500; color: var(--ink-2); text-align: left; padding: 0 10px 8px 0; white-space: nowrap; }
+.cov td { padding: 0; }
+.cov .cell { width: 15px; height: 22px; border-right: 1px solid var(--surface); display: block; }
+.cov .reg { padding-right: 14px; white-space: nowrap; font-weight: 500; }
+.cov .month-label { width: 15px; padding: 0 0 4px; position: relative; height: 16px; }
+.cov .month-label b { position: absolute; left: 0; bottom: 4px; font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); white-space: nowrap; }
+.c-flew { background: var(--accent); }
+.c-quiet { background: var(--none); }
+.c-nodata { background: repeating-linear-gradient(45deg, var(--weak-soft), var(--weak-soft) 3px, transparent 3px, transparent 6px); box-shadow: inset 0 0 0 1px var(--weak-soft); }
+.legend { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 18px; font-size: 12.5px; color: var(--ink-2); }
+.legend span { display: flex; align-items: center; gap: 8px; }
+.legend i { width: 22px; height: 12px; display: block; flex: none; }
+
+/* --- fleet --------------------------------------------------------------- */
+.fleet { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.ac { background: var(--surface); padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 4px; }
+.ac .reg { font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: -0.01em; }
+.ac .type { font-size: 13.5px; color: var(--ink-2); }
+.ac .stat { margin-top: 12px; font-family: var(--data); font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.ac .stat b { color: var(--ink); font-weight: 600; }
+.tag { align-self: flex-start; margin-top: 10px; font-family: var(--data); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 7px; border: 1px solid currentColor; }
+.tag.unverified { color: var(--warn); }
+.tag.retired { color: var(--ink-3); }
+</style>
+
+<style>
+/* --- flight strips -------------------------------------------------------
+   Modelled on the paper progress strips used in air traffic control: fixed
+   fields in a monospaced grid, one strip per flight, annotated at the edges.
+   The left rail carries overall confidence; the right edge carries coverage.
+   ------------------------------------------------------------------------- */
+.strips { border: 1px solid var(--rule); border-bottom: none; }
+
+.strip { border-bottom: 1px solid var(--rule); background: var(--surface); }
+
+.strip-btn {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 4px 96px 92px minmax(200px, 1.5fr) 78px 96px 108px 26px;
+  align-items: center;
+  gap: 0 16px;
+  padding: 0 16px 0 0;
+  background: none;
+  border: 0;
+  border-left: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.strip-btn:hover { background: var(--surface-2); }
+.strip-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+
+.rail { align-self: stretch; }
+.rail.high { background: var(--ok); }
+.rail.medium { background: var(--warn); }
+.rail.low { background: var(--weak); }
+
+.f-date { font-family: var(--data); font-size: 13px; font-variant-numeric: tabular-nums; padding: 14px 0; }
+.f-ac { font-family: var(--data); font-size: 13px; font-weight: 600; }
+.f-ac em { display: block; font-style: normal; font-weight: 400; font-size: 11.5px; color: var(--ink-3); }
+
+.f-route { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.f-port { font-family: var(--data); font-size: 15px; font-weight: 600; white-space: nowrap; }
+.f-port em { font-style: normal; font-weight: 400; font-size: 11.5px; color: var(--ink-3); margin-left: 5px; }
+.f-port.unknown { color: var(--ink-3); font-weight: 500; }
+.f-port.probable::after { content: '?'; color: var(--warn); font-weight: 700; margin-left: 1px; }
+.f-arrow { color: var(--ink-3); flex: none; }
+
+.f-dur, .f-dist { font-family: var(--data); font-size: 13px; font-variant-numeric: tabular-nums; text-align: right; }
+.f-dist em { font-style: normal; color: var(--ink-3); font-size: 11px; margin-left: 3px; }
+
+.f-cov { display: flex; align-items: center; gap: 8px; }
+.f-cov .bar { flex: 1; height: 5px; background: var(--rule); position: relative; }
+.f-cov .bar i { position: absolute; inset: 0 auto 0 0; background: var(--ink-2); display: block; }
+.f-cov .pct { font-family: var(--data); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--ink-2); width: 34px; text-align: right; }
+
+.chev { color: var(--ink-3); transition: transform 0.18s ease; justify-self: end; }
+.strip[open-state="1"] .chev { transform: rotate(90deg); }
+
+/* --- expanded detail ----------------------------------------------------- */
+.detail { display: none; border-top: 1px dashed var(--rule); background: var(--surface-2); }
+.strip[open-state="1"] .detail { display: block; }
+.detail-in { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 0; }
+.detail-map { padding: 20px; border-right: 1px solid var(--rule); min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+.detail-map svg { width: 100%; height: auto; display: block; background: var(--surface); border: 1px solid var(--rule); }
+.map-key { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; font-size: 12px; color: var(--ink-2); font-family: var(--data); }
+.map-key span { display: flex; align-items: center; gap: 7px; }
+.map-key svg { width: 26px; height: 8px; border: 0; background: none; }
+
+.detail-facts { padding: 20px; display: grid; gap: 18px; align-content: start; }
+.fact-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 20px; }
+.fact { display: flex; flex-direction: column; gap: 2px; }
+.fact dt { font-family: var(--data); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
+.fact dd { margin: 0; font-family: var(--data); font-size: 14px; font-variant-numeric: tabular-nums; }
+.fact dd.soft { color: var(--ink-3); }
+
+.quality { border-top: 1px solid var(--rule); padding-top: 16px; display: grid; gap: 9px; }
+.qrow { display: grid; grid-template-columns: 132px 1fr 42px; align-items: center; gap: 12px; font-size: 12.5px; }
+.qrow .lbl { font-family: var(--data); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.qrow .track { height: 6px; background: var(--rule); position: relative; }
+.qrow .track i { position: absolute; inset: 0 auto 0 0; display: block; }
+.qrow .val { font-family: var(--data); font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; }
+.q-high i { background: var(--ok); } .q-high .val { color: var(--ok); }
+.q-med i { background: var(--warn); } .q-med .val { color: var(--warn); }
+.q-low i { background: var(--weak); } .q-low .val { color: var(--weak); }
+
+.caveat { font-size: 13px; color: var(--ink-2); border-left: 2px solid var(--warn); padding-left: 12px; line-height: 1.5; }
+.caveat b { color: var(--ink); font-weight: 600; }
+
+/* --- routes -------------------------------------------------------------- */
+.routes { display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.route { background: var(--surface); display: grid; grid-template-columns: minmax(0, 260px) 1fr 60px; align-items: center; gap: 18px; padding: 13px 18px; }
+.route .pair { font-family: var(--data); font-size: 14px; font-weight: 600; }
+.route .pair em { font-style: normal; font-weight: 400; color: var(--ink-3); font-size: 12px; display: block; }
+.route .meter { height: 10px; background: var(--rule); position: relative; }
+.route .meter i { position: absolute; inset: 0 auto 0 0; background: var(--accent); display: block; }
+.route .n { font-family: var(--data); font-size: 14px; font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; }
+.route.unknown .pair, .route.unknown .n { color: var(--ink-3); }
+.route.unknown .meter i { background: var(--none); }
+
+/* --- prose / footer ------------------------------------------------------ */
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 32px; }
+.note h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+.note p { margin: 0 0 10px; font-size: 14px; color: var(--ink-2); line-height: 1.55; }
+.note p:last-child { margin-bottom: 0; }
+.note code { font-family: var(--data); font-size: 0.88em; background: var(--surface-2); padding: 1px 5px; border: 1px solid var(--rule); }
+
+footer { padding-block: 40px 60px; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 20px 40px; justify-content: space-between; align-items: baseline; font-size: 12.5px; color: var(--ink-3); font-family: var(--data); }
+
+@media (max-width: 900px) {
+  header.masthead .wrap { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .detail-in { grid-template-columns: minmax(0, 1fr); }
+  .detail-map { border-right: 0; border-bottom: 1px solid var(--rule); }
+  /* Three stacked rows. Every cell is placed explicitly — auto-placement with only
+     an explicit row set puts items wherever it likes. */
+  .strip-btn { grid-template-columns: 4px minmax(0, 1fr) minmax(0, 1fr) 20px; gap: 0 12px; padding-right: 12px; }
+  .rail { grid-area: 1 / 1 / 4 / 2; }
+  .f-date { grid-area: 1 / 2 / 2 / 3; padding: 12px 0 0; }
+  .f-ac { grid-area: 1 / 3 / 2 / 4; text-align: right; padding-top: 12px; }
+  .f-route { grid-area: 2 / 2 / 3 / 4; padding-block: 5px; flex-wrap: wrap; gap: 4px 8px; }
+  .f-dur { grid-area: 3 / 2 / 4 / 3; text-align: left; padding-bottom: 12px; }
+  .f-dist { grid-area: 3 / 3 / 4 / 4; padding-bottom: 12px; }
+  .chev { grid-area: 1 / 4 / 4 / 5; align-self: center; }
+  .f-cov { display: none; }
+  .route { grid-template-columns: minmax(0, 1fr) 56px; }
+  .route .meter { display: none; }
+  .fact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+</style>
+<style>
+.map-key .k-solid { stroke: var(--accent); stroke-width: 2.4; }
+.map-key .k-dashed { stroke: var(--accent); stroke-width: 1.6; stroke-dasharray: 3 5; opacity: 0.62; }
+</style>
+
+<div class="preview-note">
+  <div class="wrap">
+    <b>DESIGN PREVIEW</b>
+    <span>Static page built from the project's own database. Real detected flights, real coverage, no fabricated values. The live application is not built yet.</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div>
+      <p class="eyebrow">Lietadielka &middot; pipeline output</p>
+      <h1 class="wordmark">State flights<span>Slovakia</span></h1>
+      <p class="thesis">
+        Public aircraft, public data, public money. Every flight below was reconstructed
+        from volunteer ADS-B observations by an open pipeline, and carries
+        <strong>the evidence for it and the uncertainty around it</strong>.
+      </p>
+    </div>
+    <aside class="embargo">
+      <span class="eyebrow">Not a flight tracker</span>
+      Positions of state aircraft are never published in real time. A flight appears only
+      after it has ended, and only once <span class="mono" id="delay-hours">6</span> hours have
+      passed since the detected landing.
+    </aside>
+  </div>
+</header>
+
+<section id="sec-totals">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Observed window</p>
+      <h2 id="window-heading">Detected activity</h2>
+      <p id="window-sub"></p>
+    </div>
+    <div class="kpis" id="kpis"></div>
+  </div>
+</section>
+
+<section id="sec-coverage">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Dataset completeness</p>
+      <h2>A quiet day and a missing day are not the same thing</h2>
+      <p>
+        Each cell is one aircraft on one UTC day. The archive this pipeline reads keeps only
+        about 40 days and answers identically whether an aircraft did not fly or the day is
+        no longer held, so the collector proves each day separately before recording it as quiet.
+        Days it could not prove are excluded from every figure on this page rather than counted as zero.
+      </p>
+    </div>
+    <div class="cov-scroll"><table class="cov" id="cov"></table></div>
+    <div class="legend">
+      <span><i class="c-flew"></i> Flights detected</span>
+      <span><i class="c-quiet"></i> Archive held the day, aircraft not seen</span>
+      <span><i class="c-nodata"></i> Day not retrievable &mdash; excluded, not zero</span>
+    </div>
+  </div>
+</section>
+
+<section id="sec-fleet">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Registry</p>
+      <h2>Tracked aircraft</h2>
+      <p>
+        Only aircraft in the project's registry are ever collected. Each identity rests on the
+        sources recorded with it; none has yet been confirmed against a primary state register,
+        so all four are marked unverified.
+      </p>
+    </div>
+    <div class="fleet" id="fleet"></div>
+  </div>
+</section>
+
+<section id="sec-flights">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Reconstructed flights</p>
+      <h2 id="flights-heading">Flight log</h2>
+      <p>
+        One strip per flight. The left edge carries overall confidence, the right edge the share
+        of the flight actually covered by observations. Select a strip for the reconstructed track
+        and the full data-quality breakdown. A question mark marks an airport identified below the
+        confidence threshold; <span class="mono">~</span> marks a time we inferred rather than watched.
+      </p>
+    </div>
+    <div class="strips" id="strips"></div>
+  </div>
+</section>
+
+<section id="sec-routes">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">City pairs</p>
+      <h2>Where the fleet went</h2>
+      <p>
+        Direction-insensitive pairs across the observed window. Legs whose origin or destination
+        was never observed are listed separately rather than being attributed to a guess.
+      </p>
+    </div>
+    <div class="routes" id="routes"></div>
+  </div>
+</section>
+
+<section id="sec-method">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Reading these numbers</p>
+      <h2>What the pipeline can and cannot tell you</h2>
+    </div>
+    <div class="notes">
+      <div class="note">
+        <h3>Flight time is airborne time</h3>
+        <p>
+          Departure is the last moment observed on the ground before the climb; arrival is the
+          first moment observed back on it. That is wheels-up to wheels-down, so it is shorter
+          than block time and not comparable to a published schedule.
+        </p>
+      </div>
+      <div class="note">
+        <h3>Distance is a lower bound</h3>
+        <p>
+          Where coverage is lost, the aircraft is assumed to have flown straight, which it did not.
+          The kilometres contributed by gaps are reported separately on every affected flight.
+        </p>
+      </div>
+      <div class="note">
+        <h3>Some stops are inferred</h3>
+        <p>
+          Surface positions often are not received outside dense receiver coverage, so a turnaround
+          can look like a hole in a cruise. Where a long gap is bracketed by low, slow fixes that
+          barely moved, the pipeline splits the track &mdash; and labels both legs as estimates.
+        </p>
+      </div>
+      <div class="note">
+        <h3>Costs are absent on purpose</h3>
+        <p>
+          No sourced operating figure for this fleet has been obtained, so no cost is shown. The
+          engine is designed to publish an interval with a full breakdown and a citation for every
+          input; until those exist it returns <code>data unavailable</code> rather than a plausible number.
+        </p>
+      </div>
+      <div class="note">
+        <h3>Purpose is never inferred</h3>
+        <p>
+          Why a flight took place is entered by hand, with a publisher and a URL, and marked
+          confirmed, probable or unknown. No political conclusion is generated from this data.
+        </p>
+      </div>
+      <div class="note">
+        <h3>Everything is rebuildable</h3>
+        <p>
+          Raw observations are append-only. When the detection algorithm improves, every flight
+          ever recorded is recomputed from the original data rather than re-downloaded &mdash; which
+          matters, because the source archive has already deleted most of it.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span id="foot-generated"></span>
+    <span>Observations: adsb.lol &middot; Aerodromes: OurAirports &middot; Detector <span id="foot-detector"></span></span>
+  </div>
+</footer>
+
+<script type="application/json" id="flight-data">{"generatedAt":"2026-08-22T16:06:34.009Z","publicationDelayHours":6,"flights":[{"publicId":"2026-07-12-om-bya-lzib-kewr","registration":"OM-BYA","model":"A319","variant":"A319-115X CJ","operator":"Letecky utvar Ministerstva vnutra SR","departureTime":"2026-07-12T09:12:48.510Z","arrivalTime":"2026-07-12T17:59:20.980Z","depEst":false,"arrEst":false,"durationSeconds":31592,"distanceKm":7005.4688,"distanceFromGapsKm":3263.111,"greatCircleKm":6864.0664,"maxAltitudeFt":38050,"callsign":"SSG004","dataCoverage":0.5453081,"routeConfidence":0.5453081,"depConf":1,"arrConf":1,"confidence":"medium","positionCount":1470,"maxGapSeconds":13684,"detectorVersion":"fd-1.2.0","publishedAt":"2026-07-12T23:59:20.980Z","depIdent":"LZIB","depIata":"BTS","depCity":"Bratislava","depName":"M. R. Štefánik Airport","depCountry":"SK","arrIdent":"KEWR","arrIata":"EWR","arrCity":"Newark","arrName":"Newark Liberty International Airport","arrCountry":"US","depPIdent":null,"depPIata":null,"depPCity":null,"depPName":null,"arrPIdent":null,"arrPIata":null,"arrPCity":null,"arrPName":null,"track":[[17.2035,48.16363,null,1783847568],[17.29114,48.22463,2825,1783847677],[17.29516,48.24101,3400,1783847695],[17.27952,48.25342,3975,1783847714],[17.22006,48.2466,5150,1783847758],[16.17589,48.31087,19125,1783848234],[14.95908,48.54167,28100,1783848687],[13.69932,48.76579,34000,1783849128],[13.43008,48.83089,34050,1783849224],[11.9989,49.2534,34025,1783849744],[10.4678,49.6756,33975,1783850277],[9.09252,50.03174,34925,1783850746],[7.57702,50.39992,36000,1783851262],[6.87083,50.56136,36000,1783851499],[5.24818,50.89328,36000,1783852032],[4.0331,51.11151,35975,1783852429],[2.99965,51.28572,36025,1783852765],[1.55327,51.48733,36000,1783853231],[-0.05676,51.63411,36000,1783853740],[-1.75009,51.76685,36000,1783854266],[-2.65793,51.93919,36000,1783854555],[-3.72818,52.13127,36000,1783854891],[-4.74587,52.30339,36000,1783855207],[-5.78308,52.46837,36000,1783855523],[-6.76193,52.61455,36000,1783855818],[-7.88933,52.77205,36000,1783856154],[-9.031,52.91914,36000,1783856490],[-10.14114,53.05193,36000,1783856817],[-10.81596,53.16316,33025,1783857016],[-11.87832,53.26316,33025,1783857320],[-12.90525,53.35057,31025,1783857611],[-14.9888,53.50003,30975,1783858199],[-15.97993,53.61589,30975,1783858469],[-17.68645,53.79642,31000,1783858934],[-62.11605,48.48229,37025,1783872617],[-63.62274,47.70278,37000,1783873231],[-64.8287,47.04704,37000,1783873737],[-66.02014,46.36971,38000,1783874246],[-67.48098,45.50062,38000,1783874878],[-69.01023,44.97304,38000,1783875456],[-70.50282,44.42908,38050,1783876051],[-72.15179,43.7929,36000,1783876713],[-73.05186,43.42992,35100,1783877079],[-73.56777,43.21275,24800,1783877288],[-73.60974,43.17824,23700,1783877310],[-73.63957,43.13104,23225,1783877334],[-74.45874,41.25188,6775,1783878456],[-74.45778,41.23053,6500,1783878472],[-74.44292,41.21135,6225,1783878489],[-74.07095,40.89991,2875,1783878870],[-74.06995,40.84341,2800,1783878930],[-74.1676,40.68806,null,1783879160]],"gaps":[{"to":"2026-07-12T12:21:06.050Z","from":"2026-07-12T12:14:29.370Z","seconds":397,"airborne":true,"distanceKm":97.4},{"to":"2026-07-12T16:10:17.890Z","from":"2026-07-12T12:22:14.290Z","seconds":13684,"airborne":true,"distanceKm":3102.3},{"to":"2026-07-12T16:14:12.500Z","from":"2026-07-12T16:10:29.830Z","seconds":223,"airborne":true,"distanceKm":51},{"to":"2026-07-12T17:41:52.590Z","from":"2026-07-12T17:40:50.700Z","seconds":62,"airborne":true,"distanceKm":12.5}],"trackPoints":52,"trackFrom":1470},{"publicId":"2026-07-15-om-byk-unknown-lzib","registration":"OM-BYK","model":"A319","variant":"A319-115X CJ","operator":"Letecky utvar Ministerstva vnutra SR","departureTime":"2026-07-15T14:56:09.320Z","arrivalTime":"2026-07-15T17:50:06.790Z","depEst":true,"arrEst":false,"durationSeconds":10437,"distanceKm":2162.6584,"distanceFromGapsKm":1419.673,"greatCircleKm":2076.9546,"maxAltitudeFt":38050,"callsign":"SSG001","dataCoverage":0.36890742,"routeConfidence":0.2582352,"depConf":0,"arrConf":1,"confidence":"low","positionCount":460,"maxGapSeconds":3266,"detectorVersion":"fd-1.2.0","publishedAt":"2026-07-15T23:50:06.790Z","depIdent":null,"depIata":null,"depCity":null,"depName":null,"depCountry":null,"arrIdent":"LZIB","arrIata":"BTS","arrCity":"Bratislava","arrName":"M. R. Štefánik Airport","arrCountry":"SK","depPIdent":null,"depPIata":null,"depPCity":null,"depPName":null,"arrPIdent":null,"arrPIata":null,"arrPCity":null,"arrPName":null,"track":[[41.81085,41.28182,36000,1784127369],[39.86901,41.00628,36000,1784128199],[39.76276,41.00098,36000,1784128243],[38.37604,41.12324,36000,1784128812],[36.09371,41.38247,37975,1784129749],[28.01403,43.8503,38050,1784133015],[26.81364,44.39063,38000,1784133551],[21.55926,46.4978,34000,1784135736],[20.33999,46.93038,31550,1784136206],[19.07336,47.3595,23325,1784136700],[18.05645,47.75859,12000,1784137158],[17.68376,47.91994,7000,1784137379],[17.53933,47.9621,5025,1784137465],[17.21961,48.16563,null,1784137806]],"gaps":[{"to":"2026-07-15T15:06:26.420Z","from":"2026-07-15T15:04:07.920Z","seconds":139,"airborne":true,"distanceKm":27.5},{"to":"2026-07-15T15:07:37.390Z","from":"2026-07-15T15:06:26.420Z","seconds":71,"airborne":true,"distanceKm":14.1},{"to":"2026-07-15T15:35:38.530Z","from":"2026-07-15T15:20:12.510Z","seconds":926,"airborne":true,"distanceKm":190.7},{"to":"2026-07-15T16:30:15.740Z","from":"2026-07-15T15:35:49.420Z","seconds":3266,"airborne":true,"distanceKm":715.4},{"to":"2026-07-15T17:15:36.980Z","from":"2026-07-15T16:39:11.780Z","seconds":2185,"airborne":true,"distanceKm":472}],"trackPoints":14,"trackFrom":460},{"publicId":"2026-07-15-om-bya-kewr-lzib","registration":"OM-BYA","model":"A319","variant":"A319-115X CJ","operator":"Letecky utvar Ministerstva vnutra SR","departureTime":"2026-07-15T22:37:25.520Z","arrivalTime":"2026-07-16T06:34:38.720Z","depEst":false,"arrEst":false,"durationSeconds":28633,"distanceKm":7026.372,"distanceFromGapsKm":3275.3027,"greatCircleKm":6864.3164,"maxAltitudeFt":37050,"callsign":"SSG004","dataCoverage":0.54332036,"routeConfidence":0.54332036,"depConf":1,"arrConf":1,"confidence":"medium","positionCount":1398,"maxGapSeconds":10858,"detectorVersion":"fd-1.2.0","publishedAt":"2026-07-16T12:34:38.720Z","depIdent":"KEWR","depIata":"EWR","depCity":"Newark","depName":"Newark Liberty International Airport","depCountry":"US","arrIdent":"LZIB","arrIata":"BTS","arrCity":"Bratislava","arrName":"M. R. Štefánik Airport","arrCountry":"SK","depPIdent":null,"depPIata":null,"depPCity":null,"depPName":null,"arrPIdent":null,"arrPIata":null,"arrPCity":null,"arrPName":null,"track":[[-74.16499,40.69819,null,1784155045],[-74.20491,40.62861,2275,1784155138],[-74.22424,40.62035,2500,1784155155],[-74.24756,40.62588,2800,1784155175],[-74.25678,40.65179,3325,1784155202],[-74.23413,40.67931,4050,1784155229],[-73.94242,40.79899,9225,1784155404],[-73.13954,41.37903,21050,1784155847],[-72.1278,41.82807,28250,1784156242],[-70.55732,42.39285,34975,1784156771],[-69.11918,42.8855,35025,1784157245],[-67.97062,43.26045,35000,1784157617],[-66.94774,43.58137,34950,1784157936],[-66.07018,43.88548,35000,1784158210],[-64.98132,44.24634,35000,1784158540],[-63.4228,44.73819,35000,1784159018],[-62.2001,45.10381,35025,1784159391],[-61.31182,45.35783,35000,1784159656],[-53.52422,47.21178,35000,1784161874],[-52.01808,47.49706,34975,1784162299],[-51.73297,47.56943,35000,1784162382],[-15.15389,52.00319,35000,1784173240],[-14.95895,51.99971,34950,1784173300],[-13.75834,52.03223,35000,1784173675],[-12.68497,52.0502,35000,1784174010],[-10.65321,52.05765,35000,1784174643],[-8.80868,52.03418,35000,1784175213],[-7.82249,52.00983,35000,1784175509],[-6.50179,51.9637,35025,1784175904],[-4.75886,51.85496,35000,1784176416],[-2.9885,51.71805,35000,1784176929],[-1.13869,51.54534,35000,1784177462],[0.64589,51.34969,35000,1784177976],[2.64275,51.10449,35000,1784178548],[4.29655,50.8775,35000,1784179021],[6.02333,50.61276,35025,1784179514],[7.91892,50.29108,37000,1784180056],[9.48828,50.19891,37025,1784180494],[10.94691,50.095,37025,1784180903],[12.16357,49.88305,37000,1784181265],[13.39233,49.65381,37000,1784181640],[14.95866,49.34038,34625,1784182120],[16.25103,49.06137,30425,1784182514],[17.0986,48.86618,19075,1784182808],[17.13931,48.8411,18375,1784182828],[17.16462,48.80816,17650,1784182849],[17.50973,48.11018,4025,1784183349],[17.50932,48.08052,3375,1784183374],[17.45631,48.04234,2975,1784183420],[17.41939,48.0414,2700,1784183445],[17.22199,48.16412,null,1784183678]],"gaps":[{"to":"2026-07-16T00:31:14.930Z","from":"2026-07-15T23:54:16.310Z","seconds":2219,"airborne":true,"distanceKm":632.6},{"to":"2026-07-16T03:40:40.010Z","from":"2026-07-16T00:39:42.430Z","seconds":10858,"airborne":true,"distanceKm":2642.7}],"trackPoints":51,"trackFrom":1398},{"publicId":"2026-07-20-om-bya-lzib-lkpr","registration":"OM-BYA","model":"A319","variant":"A319-115X CJ","operator":"Letecky utvar Ministerstva vnutra SR","departureTime":"2026-07-20T05:58:50.820Z","arrivalTime":"2026-07-20T06:40:40.930Z","depEst":false,"arrEst":false,"durationSeconds":2510,"distanceKm":346.10593,"distanceFromGapsKm":0,"greatCircleKm":302.47073,"maxAltitudeFt":24025,"callsign":"SSG006","dataCoverage":1,"routeConfidence":1,"depConf":1,"arrConf":1,"confidence":"high","positionCount":529,"maxGapSeconds":20,"detectorVersion":"fd-1.2.0","publishedAt":"2026-07-20T12:40:40.930Z","depIdent":"LZIB","depIata":"BTS","depCity":"Bratislava","depName":"M. R. Štefánik Airport","depCountry":"SK","arrIdent":"LKPR","arrIata":"PRG","arrCity":"Prague","arrName":"Václav Havel Airport Prague","arrCountry":"CZ","depPIdent":null,"depPIata":null,"depPCity":null,"depPName":null,"arrPIdent":null,"arrPIata":null,"arrPCity":null,"arrPName":null,"track":[[17.2041,48.16406,null,1784527130],[17.31452,48.24312,5175,1784527258],[17.4971,48.44482,13900,1784527421],[17.53382,48.59248,18950,1784527510],[17.52573,48.61935,19850,1784527527],[17.50298,48.64238,20975,1784527545],[17.14853,48.86261,24000,1784527761],[16.20621,49.29263,24000,1784528289],[15.93616,49.41197,23600,1784528443],[15.06797,49.70429,12600,1784528936],[14.27399,50.09419,null,1784529640]],"gaps":[],"trackPoints":11,"trackFrom":529},{"publicId":"2026-07-25-om-bya-lkpr-lzib","registration":"OM-BYA","model":"A319","variant":"A319-115X CJ","operator":"Letecky utvar Ministerstva vnutra SR","departureTime":"2026-07-25T16:09:31.820Z","arrivalTime":"2026-07-25T16:39:59.510Z","depEst":false,"arrEst":false,"durationSeconds":1828,"distanceKm":330.9525,"distanceFromGapsKm":0,"greatCircleKm":303.46027,"maxAltitudeFt":25000,"callsign":"SSG006","dataCoverage":1,"routeConfidence":1,"depConf":1,"arrConf":1,"confidence":"high","positionCount":517,"maxGapSeconds":20,"detectorVersion":"fd-1.2.0","publishedAt":"2026-07-25T22:39:59.510Z","depIdent":"LKPR","depIata":"PRG","depCity":"Prague","depName":"Václav Havel Airport Prague","depCountry":"CZ","arrIdent":"LZIB","arrIata":"BTS","arrCity":"Bratislava","arrName":"M. R. Štefánik Airport","arrCountry":"SK","depPIdent":null,"depPIata":null,"depPCity":null,"depPName":null,"arrPIdent":null,"arrPIata":null,"arrPCity":null,"arrPName":null,"track":[[14.26226,50.09984,null,1784995771],[14.42808,50.01617,6225,1784995925],[15.62345,49.52316,24625,1784996409],[16.80936,49.00896,16600,1784996841],[17.4096,48.32991,4250,1784997331],[17.39544,48.29741,3650,1784997363],[17.21547,48.17195,null,1784997599]],"gaps":[],"trackPoints":7,"trackFrom":517},{"publicId":"2026-07-26-om-bya-lzib-unknown","registration":"OM-BYA","model":"A319","variant":"A319-115X CJ","operator":"Letecky utvar Ministerstva vnutra SR","departureTime":"2026-07-26T20:12:05.550Z","arrivalTime":"2026-07-27T06:48:46.390Z","depEst":false,"arrEst":true,"durationSeconds":38201,"distanceKm":8062.025,"distanceFromGapsKm":6986.3604,"greatCircleKm":7362.464,"maxAltitudeFt":35050,"callsign":"SSG001","dataCoverage":0.13031022,"routeConfidence":0.09121715,"depConf":1,"arrConf":0,"confidence":"low","positionCount":711,"maxGapSeconds":16885,"detectorVersion":"fd-1.2.0","publishedAt":"2026-07-27T12:48:46.390Z","depIdent":"LZIB","depIata":"BTS","depCity":"Bratislava","depName":"M. R. Štefánik Airport","depCountry":"SK","arrIdent":null,"arrIata":null,"arrCity":null,"arrName":null,"arrCountry":null,"depPIdent":null,"depPIata":null,"depPCity":null,"depPName":null,"arrPIdent":null,"arrPIata":null,"arrPCity":null,"arrPName":null,"track":[[17.20255,48.16298,null,1785096725],[17.29114,48.22124,3150,1785096832],[17.35136,48.22618,3775,1785096871],[18.70655,47.81534,22025,1785097482],[19.39953,47.47695,25850,1785097757],[20.50852,47.09704,33625,1785098144],[21.89669,46.59828,35025,1785098651],[23.22423,46.09593,35025,1785099125],[24.38216,45.63735,34975,1785099533],[25.6029,45.1323,35000,1785099965],[26.43768,44.75981,35000,1785100266],[27.43397,44.30132,35025,1785100627],[76.91924,43.2925,3900,1785117512],[76.94249,43.30405,3525,1785117539],[114.21033,40.49744,30150,1785133877],[115.51941,40.43385,14825,1785134513],[115.59369,40.41257,14800,1785134557],[116.21222,40.40176,7875,1785134926]],"gaps":[{"to":"2026-07-27T01:58:32.320Z","from":"2026-07-26T21:17:07.540Z","seconds":16885,"airborne":true,"distanceKm":3911.9},{"to":"2026-07-27T06:31:17.150Z","from":"2026-07-27T01:58:59.050Z","seconds":16338,"airborne":true,"distanceKm":3074.4}],"trackPoints":18,"trackFrom":711},{"publicId":"2026-07-29-om-bya-unknown-unknown","registration":"OM-BYA","model":"A319","variant":"A319-115X CJ","operator":"Letecky utvar Ministerstva vnutra SR","departureTime":"2026-07-29T10:21:06.640Z","arrivalTime":"2026-07-29T14:56:51.660Z","depEst":true,"arrEst":true,"durationSeconds":16545,"distanceKm":3391.6814,"distanceFromGapsKm":3290.4377,"greatCircleKm":3314.845,"maxAltitudeFt":24725,"callsign":"SSG001","dataCoverage":0.029184008,"routeConfidence":0.014592004,"depConf":0,"arrConf":0.14238985,"confidence":"low","positionCount":52,"maxGapSeconds":15745,"detectorVersion":"fd-1.2.0","publishedAt":"2026-07-29T20:56:51.660Z","depIdent":null,"depIata":null,"depCity":null,"depName":null,"depCountry":null,"arrIdent":null,"arrIata":null,"arrCity":null,"arrName":null,"arrCountry":null,"depPIdent":null,"depPIata":null,"depPCity":null,"depPName":null,"arrPIdent":null,"arrPIata":null,"arrPCity":null,"arrPName":null,"track":[[117.06363,40.15238,15350,1785320466],[117.01669,40.44794,17800,1785320619],[116.99921,40.51204,18200,1785320651],[116.86908,40.61247,19150,1785320721],[116.63165,40.7449,20275,1785320828],[116.58289,40.79535,20700,1785320857],[116.56018,40.85376,21175,1785320885],[116.5379,41.09193,22300,1785320995],[116.42025,41.37358,23825,1785321129],[116.34094,41.47334,24725,1785321182],[76.88079,43.27336,4450,1785336927],[76.95278,43.30902,3325,1785337011]],"gaps":[{"to":"2026-07-29T10:23:18.070Z","from":"2026-07-29T10:21:19.060Z","seconds":119,"airborne":true,"distanceKm":25.7},{"to":"2026-07-29T10:25:21.110Z","from":"2026-07-29T10:24:17.540Z","seconds":64,"airborne":true,"distanceKm":14.4},{"to":"2026-07-29T10:32:09.620Z","from":"2026-07-29T10:29:55.380Z","seconds":134,"airborne":true,"distanceKm":32.8},{"to":"2026-07-29T14:55:27.940Z","from":"2026-07-29T10:33:02.590Z","seconds":15745,"airborne":true,"distanceKm":3217.5}],"trackPoints":12,"trackFrom":52},{"publicId":"2026-07-29-om-bya-unknown-lzib","registration":"OM-BYA","model":"A319","variant":"A319-115X CJ","operator":"Letecky utvar Ministerstva vnutra SR","departureTime":"2026-07-29T21:42:06.020Z","arrivalTime":"2026-07-29T22:58:07.300Z","depEst":true,"arrEst":false,"durationSeconds":4561,"distanceKm":922.7548,"distanceFromGapsKm":0,"greatCircleKm":921.0149,"maxAltitudeFt":36050,"callsign":"SSG001","dataCoverage":1,"routeConfidence":0.7,"depConf":0,"arrConf":1,"confidence":"low","positionCount":486,"maxGapSeconds":40,"detectorVersion":"fd-1.2.0","publishedAt":"2026-07-30T04:58:07.300Z","depIdent":null,"depIata":null,"depCity":null,"depName":null,"depCountry":null,"arrIdent":"LZIB","arrIata":"BTS","arrCity":"Bratislava","arrName":"M. R. Štefánik Airport","arrCountry":"SK","depPIdent":null,"depPIata":null,"depPCity":null,"depPName":null,"arrPIdent":null,"arrPIata":null,"arrPCity":null,"arrPName":null,"track":[[27.37825,43.81265,36025,1785361326],[26.58593,44.19635,36000,1785361679],[25.18924,44.84801,36000,1785362286],[24.44143,45.18495,34000,1785362607],[23.37569,45.65172,33975,1785363057],[21.81992,46.30032,34000,1785363714],[20.51221,46.81906,34000,1785364248],[19.1445,47.33501,28250,1785364792],[18.43691,47.55675,16125,1785365075],[18.29766,47.62875,13700,1785365144],[17.44306,48.02243,2500,1785365641],[17.21905,48.16601,null,1785365887]],"gaps":[],"trackPoints":12,"trackFrom":486},{"publicId":"2026-08-01-om-byk-lzib-lzib","registration":"OM-BYK","model":"A319","variant":"A319-115X CJ","operator":"Letecky utvar Ministerstva vnutra SR","departureTime":"2026-08-01T10:51:53.830Z","arrivalTime":"2026-08-01T11:11:08.090Z","depEst":false,"arrEst":false,"durationSeconds":1154,"distanceKm":120.95233,"distanceFromGapsKm":0,"greatCircleKm":0.68812627,"maxAltitudeFt":3325,"callsign":"SSG006","dataCoverage":1,"routeConfidence":1,"depConf":1,"arrConf":1,"confidence":"high","positionCount":486,"maxGapSeconds":52,"detectorVersion":"fd-1.2.0","publishedAt":"2026-08-01T17:11:08.090Z","depIdent":"LZIB","depIata":"BTS","depCity":"Bratislava","depName":"M. R. Štefánik Airport","depCountry":"SK","arrIdent":"LZIB","arrIata":"BTS","arrCity":"Bratislava","arrName":"M. R. Štefánik Airport","arrCountry":"SK","depPIdent":null,"depPIata":null,"depPCity":null,"depPName":null,"arrPIdent":null,"arrPIata":null,"arrPCity":null,"arrPName":null,"track":[[17.21383,48.16938,null,1785581513],[17.23903,48.15499,1025,1785581542],[17.28164,48.16159,1600,1785581570],[17.40162,48.21774,2875,1785581658],[17.54589,48.3128,1950,1785581775],[17.59656,48.387,1550,1785581855],[17.52777,48.46738,1500,1785581958],[17.54553,48.46833,1425,1785581970],[17.56909,48.45073,1525,1785581996],[17.56855,48.44147,1450,1785582011],[17.54589,48.44096,925,1785582036],[17.53447,48.46823,1125,1785582088],[17.54348,48.4747,1350,1785582099],[17.53909,48.48327,1625,1785582111],[17.51777,48.48335,1625,1785582129],[17.51263,48.46628,1100,1785582151],[17.63362,48.41414,3325,1785582240],[17.64454,48.39967,3050,1785582256],[17.63833,48.38593,3025,1785582271],[17.5515,48.32625,2975,1785582355],[17.31762,48.23822,2050,1785582527],[17.2191,48.17448,null,1785582668]],"gaps":[],"trackPoints":22,"trackFrom":486},{"publicId":"2026-08-07-om-byk-lzib-unknown","registration":"OM-BYK","model":"A319","variant":"A319-115X CJ","operator":"Letecky utvar Ministerstva vnutra SR","departureTime":"2026-08-07T06:22:15.020Z","arrivalTime":"2026-08-07T07:38:01.640Z","depEst":false,"arrEst":true,"durationSeconds":4547,"distanceKm":881.28577,"distanceFromGapsKm":0,"greatCircleKm":824.7381,"maxAltitudeFt":38025,"callsign":"SSG006","dataCoverage":1,"routeConfidence":0.7,"depConf":1,"arrConf":0.45,"confidence":"low","positionCount":638,"maxGapSeconds":20,"detectorVersion":"fd-1.2.0","publishedAt":"2026-08-07T13:38:01.640Z","depIdent":"LZIB","depIata":"BTS","depCity":"Bratislava","depName":"M. R. Štefánik Airport","depCountry":"SK","arrIdent":null,"arrIata":null,"arrCity":null,"arrName":null,"arrCountry":null,"depPIdent":null,"depPIata":null,"depPCity":null,"depPName":null,"arrPIdent":"EDDL","arrPIata":"DUS","arrPCity":"Düsseldorf","arrPName":"Düsseldorf Airport","track":[[17.21125,48.16902,null,1786083735],[17.3072,48.23795,4075,1786083856],[17.33079,48.26459,5200,1786083883],[17.33502,48.28665,6300,1786083902],[17.18952,48.75046,19675,1786084200],[17.13008,48.82164,21325,1786084245],[17.04733,48.87909,22550,1786084288],[16.95957,48.91653,24050,1786084325],[16.73732,48.98387,26875,1786084410],[15.82757,49.25226,37400,1786084740],[14.69355,49.57301,38025,1786085159],[13.72706,49.83444,38000,1786085514],[12.67743,50.10548,38025,1786085889],[10.85565,50.53441,37975,1786086523],[9.81413,50.76361,34475,1786086875],[8.78609,50.98004,25500,1786087216],[8.65856,51.02385,25000,1786087265],[8.56028,51.07361,24100,1786087307],[8.46527,51.1428,22575,1786087356],[8.31717,51.28249,18725,1786087449],[8.25415,51.30904,17550,1786087477],[7.39142,51.3924,8450,1786087854],[7.01158,51.39372,2725,1786088063],[6.9561,51.37617,2525,1786088105],[6.79245,51.29889,0,1786088281]],"gaps":[],"trackPoints":25,"trackFrom":638},{"publicId":"2026-08-07-om-byk-unknown-lzib","registration":"OM-BYK","model":"A319","variant":"A319-115X CJ","operator":"Letecky utvar Ministerstva vnutra SR","departureTime":"2026-08-07T08:25:51.830Z","arrivalTime":"2026-08-07T09:37:30.920Z","depEst":true,"arrEst":false,"durationSeconds":4299,"distanceKm":935.5035,"distanceFromGapsKm":0,"greatCircleKm":827.48395,"maxAltitudeFt":39050,"callsign":"SSG006","dataCoverage":1,"routeConfidence":0.7,"depConf":0.45,"arrConf":1,"confidence":"low","positionCount":722,"maxGapSeconds":20,"detectorVersion":"fd-1.2.0","publishedAt":"2026-08-07T15:37:30.920Z","depIdent":null,"depIata":null,"depCity":null,"depName":null,"depCountry":null,"arrIdent":"LZIB","arrIata":"BTS","arrCity":"Bratislava","arrName":"M. R. Štefánik Airport","arrCountry":"SK","depPIdent":"EDDL","depPIata":"DUS","depPCity":"Düsseldorf","depPName":"Düsseldorf Airport","arrPIdent":null,"arrPIata":null,"arrPCity":null,"arrPName":null,"track":[[6.75674,51.28181,225,1786091151],[6.65649,51.23493,4200,1786091244],[6.63742,51.21798,5125,1786091262],[6.64032,51.1684,7550,1786091301],[6.67122,51.13943,9550,1786091328],[6.71989,51.13018,10775,1786091352],[7.0517,51.14355,14850,1786091472],[7.1086,51.13866,15625,1786091490],[7.68434,50.98054,19775,1786091682],[7.73913,50.955,20500,1786091702],[8.53912,50.47031,31975,1786092019],[8.62405,50.43942,33300,1786092048],[9.71451,50.18871,37025,1786092395],[11.00281,49.97113,39025,1786092784],[12.54082,49.69,39000,1786093249],[13.39356,49.55328,39025,1786093501],[14.46125,49.36954,39000,1786093818],[15.86334,49.11118,33600,1786094240],[16.8479,48.91719,23125,1786094544],[16.91,48.88994,21625,1786094568],[16.95669,48.84961,20425,1786094593],[17.50149,48.11385,3425,1786095104],[17.50411,48.07766,2850,1786095132],[17.45558,48.04223,2450,1786095173],[17.41981,48.04093,2375,1786095198],[17.22338,48.16323,null,1786095450]],"gaps":[],"trackPoints":26,"trackFrom":722},{"publicId":"2026-08-15-om-bya-lzib-lzib","registration":"OM-BYA","model":"A319","variant":"A319-115X CJ","operator":"Letecky utvar Ministerstva vnutra SR","departureTime":"2026-08-15T16:56:37.140Z","arrivalTime":"2026-08-15T17:38:30.890Z","depEst":false,"arrEst":false,"durationSeconds":2514,"distanceKm":359.68307,"distanceFromGapsKm":14.183795,"greatCircleKm":0.3718973,"maxAltitudeFt":12050,"callsign":"SSG006","dataCoverage":0.80879164,"routeConfidence":0.80879164,"depConf":1,"arrConf":1,"confidence":"high","positionCount":613,"maxGapSeconds":481,"detectorVersion":"fd-1.2.0","publishedAt":"2026-08-15T23:38:30.890Z","depIdent":"LZIB","depIata":"BTS","depCity":"Bratislava","depName":"M. R. Štefánik Airport","depCountry":"SK","arrIdent":"LZIB","arrIata":"BTS","arrCity":"Bratislava","arrName":"M. R. Štefánik Airport","arrCountry":"SK","depPIdent":null,"depPIata":null,"depPCity":null,"depPName":null,"arrPIdent":null,"arrPIata":null,"arrPCity":null,"arrPName":null,"track":[[17.21406,48.16921,null,1786812997],[17.25163,48.15242,1550,1786813038],[17.32999,48.17654,3500,1786813085],[17.50855,48.18851,6900,1786813173],[19.44753,48.2722,3600,1786813946],[19.58985,48.35772,4650,1786814427],[17.30452,48.2168,1550,1786815389],[17.26833,48.20801,1200,1786815424],[17.21598,48.1723,null,1786815510]],"gaps":[{"to":"2026-08-15T17:20:27.070Z","from":"2026-08-15T17:12:26.420Z","seconds":481,"airborne":true,"distanceKm":14.2}],"trackPoints":9,"trackFrom":613},{"publicId":"2026-08-19-om-byk-lzib-unknown","registration":"OM-BYK","model":"A319","variant":"A319-115X CJ","operator":"Letecky utvar Ministerstva vnutra SR","departureTime":"2026-08-19T06:15:30.000Z","arrivalTime":"2026-08-19T09:41:09.070Z","depEst":false,"arrEst":true,"durationSeconds":12339,"distanceKm":2970.89,"distanceFromGapsKm":789.5336,"greatCircleKm":2421.4448,"maxAltitudeFt":37050,"callsign":"SSG006","dataCoverage":0.7308509,"routeConfidence":0.5115956,"depConf":1,"arrConf":0.1289682,"confidence":"low","positionCount":888,"maxGapSeconds":2682,"detectorVersion":"fd-1.2.0","publishedAt":"2026-08-19T15:41:09.070Z","depIdent":"LZIB","depIata":"BTS","depCity":"Bratislava","depName":"M. R. Štefánik Airport","depCountry":"SK","arrIdent":null,"arrIata":null,"arrCity":null,"arrName":null,"arrCountry":null,"depPIdent":null,"depPIata":null,"depPCity":null,"depPName":null,"arrPIdent":null,"arrPIata":null,"arrPCity":null,"arrPName":null,"track":[[17.20889,48.17252,null,1787120130],[17.58135,47.92575,10650,1787120436],[18.23371,46.97949,24025,1787120947],[18.85968,46.03816,32150,1787121372],[18.97359,45.90944,33600,1787121432],[19.06717,45.83304,34600,1787121473],[20.39377,44.86127,35000,1787122017],[21.50299,44.01086,35000,1787122485],[22.6197,43.11823,35000,1787122976],[23.306,42.54469,34975,1787123292],[23.45881,42.40685,35000,1787123366],[24.07635,41.60294,35000,1787123743],[24.85272,40.22351,35000,1787124376],[25.50954,39.00778,34975,1787124957],[28.74875,33.72862,37000,1787127735],[29.04252,33.45255,36975,1787127905],[30.09776,32.49206,36975,1787128511],[31.09153,31.55939,37000,1787129092],[31.19455,31.48572,37000,1787129145],[32.58114,30.64682,37000,1787129813],[33.42596,30.1213,37025,1787130227],[34.72439,29.46235,36975,1787130829],[34.81993,29.43437,37000,1787130870],[34.88655,29.43088,36975,1787130897],[34.98137,29.44679,36975,1787130935],[35.06314,29.48372,36975,1787130971],[35.13132,29.53757,37000,1787131006],[35.19803,29.61566,37000,1787131049],[35.23687,29.68669,37025,1787131083],[35.34066,29.95664,37000,1787131206],[35.94023,30.9227,25000,1787131698],[36.21875,31.18112,19100,1787131897],[36.31929,31.50343,8300,1787132095],[36.27002,31.72856,4600,1787132274],[36.25747,31.74564,4550,1787132293],[36.23404,31.74925,4550,1787132312],[36.06833,31.72712,3150,1787132469]],"gaps":[{"to":"2026-08-19T07:26:12.780Z","from":"2026-08-19T07:23:12.540Z","seconds":180,"airborne":true,"distanceKm":46.8},{"to":"2026-08-19T07:35:03.560Z","from":"2026-08-19T07:33:37.550Z","seconds":86,"airborne":true,"distanceKm":21.3},{"to":"2026-08-19T08:21:14.180Z","from":"2026-08-19T07:36:32.510Z","seconds":2682,"airborne":true,"distanceKm":631.5},{"to":"2026-08-19T08:25:05.000Z","from":"2026-08-19T08:22:15.390Z","seconds":170,"airborne":true,"distanceKm":41},{"to":"2026-08-19T08:36:16.830Z","from":"2026-08-19T08:35:11.600Z","seconds":65,"airborne":true,"distanceKm":15.6},{"to":"2026-08-19T08:56:53.150Z","from":"2026-08-19T08:54:34.860Z","seconds":138,"airborne":true,"distanceKm":33.4}],"trackPoints":37,"trackFrom":888},{"publicId":"2026-08-19-om-byk-unknown-ebbr","registration":"OM-BYK","model":"A319","variant":"A319-115X CJ","operator":"Letecky utvar Ministerstva vnutra SR","departureTime":"2026-08-19T10:55:07.290Z","arrivalTime":"2026-08-19T16:16:29.840Z","depEst":true,"arrEst":false,"durationSeconds":19283,"distanceKm":4016.3635,"distanceFromGapsKm":1730.9238,"greatCircleKm":3343.827,"maxAltitudeFt":38050,"callsign":"SSG006","dataCoverage":0.5745656,"routeConfidence":0.40219593,"depConf":0.45,"arrConf":0.8,"confidence":"low","positionCount":1090,"maxGapSeconds":4538,"detectorVersion":"fd-1.2.0","publishedAt":"2026-08-19T22:16:29.840Z","depIdent":null,"depIata":null,"depCity":null,"depName":null,"depCountry":null,"arrIdent":"EBBR","arrIata":"BRU","arrCity":"Zaventem","arrName":"Brussels Airport","arrCountry":"BE","depPIdent":"OJAI","depPIata":"AMM","depPCity":"Amman","depPName":"Queen Alia International Airport","arrPIdent":null,"arrPIata":null,"arrPCity":null,"arrPName":null,"track":[[35.98092,31.71428,2900,1787136907],[35.75366,31.68919,8875,1787137097],[35.73287,31.67862,9525,1787137115],[35.72339,31.66214,9875,1787137130],[35.7857,30.90994,23725,1787137620],[35.77708,30.82494,24150,1787137668],[35.7424,30.73045,24575,1787137723],[34.96393,29.40486,30000,1787138443],[34.81605,29.21809,30000,1787138549],[34.75292,29.16394,30000,1787138586],[34.55623,29.09605,30000,1787138673],[34.49379,29.09552,30000,1787138699],[34.41821,29.10718,30000,1787138729],[32.65427,29.60843,36025,1787139483],[31.93069,29.77323,36000,1787139789],[31.84672,29.80618,36000,1787139827],[31.77058,29.84673,36025,1787139863],[31.45386,30.05035,35975,1787140021],[31.34356,30.13408,35975,1787140080],[30.36077,31.03889,36000,1787140653],[30.28854,31.11291,36025,1787140697],[29.37262,32.35483,36000,1787141362],[28.25907,33.81159,35975,1787142156],[24.45061,39.84412,38000,1787145359],[23.51733,41.30745,38025,1787146209],[23.05666,42.0106,38000,1787146622],[22.20299,43.27354,37975,1787147366],[21.45751,44.33333,38000,1787147996],[20.57693,45.53124,38000,1787148709],[19.86321,46.45182,38025,1787149264],[9.44709,50.25288,37450,1787153802],[8.18459,50.40485,34000,1787154257],[7.02761,50.53241,25600,1787154684],[5.83389,50.75311,15975,1787155167],[5.27679,50.84231,8575,1787155452],[5.18347,50.88547,7300,1787155519],[5.09172,51.03969,5500,1787155663],[5.06106,51.05539,5050,1787155689],[4.7554,50.98592,2600,1787155918],[4.48757,50.90814,null,1787156189]],"gaps":[{"to":"2026-08-19T11:24:33.360Z","from":"2026-08-19T11:23:06.060Z","seconds":87,"airborne":true,"distanceKm":20.5},{"to":"2026-08-19T12:01:30.810Z","from":"2026-08-19T12:00:24.050Z","seconds":67,"airborne":true,"distanceKm":16.5},{"to":"2026-08-19T12:05:07.060Z","from":"2026-08-19T12:03:14.170Z","seconds":113,"airborne":true,"distanceKm":27.6},{"to":"2026-08-19T12:19:50.730Z","from":"2026-08-19T12:18:31.180Z","seconds":80,"airborne":true,"distanceKm":19.2},{"to":"2026-08-19T12:21:52.030Z","from":"2026-08-19T12:20:38.190Z","seconds":74,"airborne":true,"distanceKm":17.8},{"to":"2026-08-19T12:58:40.020Z","from":"2026-08-19T12:22:36.940Z","seconds":2163,"airborne":true,"distanceKm":523.1},{"to":"2026-08-19T13:01:30.820Z","from":"2026-08-19T12:59:14.940Z","seconds":136,"airborne":true,"distanceKm":30.8},{"to":"2026-08-19T13:30:09.950Z","from":"2026-08-19T13:24:41.880Z","seconds":328,"airborne":true,"distanceKm":69.2},{"to":"2026-08-19T13:51:06.750Z","from":"2026-08-19T13:49:35.430Z","seconds":91,"airborne":true,"distanceKm":19.2},{"to":"2026-08-19T13:56:57.300Z","from":"2026-08-19T13:53:47.920Z","seconds":189,"airborne":true,"distanceKm":39.2},{"to":"2026-08-19T14:11:49.500Z","from":"2026-08-19T14:10:40.710Z","seconds":69,"airborne":true,"distanceKm":14.5},{"to":"2026-08-19T14:14:32.930Z","from":"2026-08-19T14:12:50.800Z","seconds":102,"airborne":true,"distanceKm":21.4},{"to":"2026-08-19T14:19:13.370Z","from":"2026-08-19T14:16:26.790Z","seconds":167,"airborne":true,"distanceKm":34.9},{"to":"2026-08-19T15:36:42.190Z","from":"2026-08-19T14:21:04.300Z","seconds":4538,"airborne":true,"distanceKm":877}],"trackPoints":40,"trackFrom":1090},{"publicId":"2026-08-19-om-byk-ebbr-lzib","registration":"OM-BYK","model":"A319","variant":"A319-115X CJ","operator":"Letecky utvar Ministerstva vnutra SR","departureTime":"2026-08-19T17:11:16.320Z","arrivalTime":"2026-08-19T18:26:36.450Z","depEst":false,"arrEst":false,"durationSeconds":4520,"distanceKm":1032.6844,"distanceFromGapsKm":0,"greatCircleKm":966.7604,"maxAltitudeFt":39075,"callsign":"SSG006","dataCoverage":1,"routeConfidence":1,"depConf":0.8,"arrConf":1,"confidence":"high","positionCount":754,"maxGapSeconds":20,"detectorVersion":"fd-1.2.0","publishedAt":"2026-08-20T00:26:36.450Z","depIdent":"EBBR","depIata":"BRU","depCity":"Zaventem","depName":"Brussels Airport","depCountry":"BE","arrIdent":"LZIB","arrIata":"BTS","arrCity":"Bratislava","arrName":"M. R. Štefánik Airport","arrCountry":"SK","depPIdent":null,"depPIata":null,"depPCity":null,"depPName":null,"arrPIdent":null,"arrPIata":null,"arrPCity":null,"arrPName":null,"track":[[4.47607,50.90481,null,1787159476],[4.41551,50.88369,2675,1787159538],[4.41116,50.87094,3225,1787159554],[4.42393,50.85645,3700,1787159570],[4.74762,50.69311,14400,1787159758],[5.34203,50.57318,22475,1787159969],[6.79749,50.37176,37300,1787160396],[8.75784,50.06451,39000,1787160950],[8.90345,50.05213,38975,1787160990],[10.59704,49.96728,39000,1787161448],[11.68448,49.81871,39000,1787161753],[12.89397,49.64246,38875,1787162092],[13.93384,49.46718,37975,1787162388],[15.48833,49.18524,35550,1787162831],[16.9428,48.89991,15600,1787163272],[17.00367,48.87891,14425,1787163295],[17.04268,48.84677,13425,1787163317],[17.41449,48.32606,3875,1787163727],[17.39882,48.29956,3475,1787163757],[17.21662,48.17277,null,1787163996]],"gaps":[],"trackPoints":20,"trackFrom":754}],"fleet":[{"id":"ac-om-bya","icao24":"505c06","registration":"OM-BYA","manufacturer":"Airbus","model":"A319","variant":"A319-115X CJ","typeCode":"A319","operator":"Letecky utvar Ministerstva vnutra SR","category":"government","activeFrom":"2016-06-14","activeUntil":null,"trackingEnabled":true,"isRotorcraft":false,"costModelKey":"a319cj-gov-sk","verificationStatus":"needs_verification","dataStatus":"real","notes":"Government flying service, operated by the Ministry of Interior air unit. In service since 2016-06-14. ICAO24 from tar1090-db; type and dates from sk/en Wikipedia. Not present in the NSAT civil register (checked 2026-08-21), as expected for a state aircraft.","sourceUrl":"https://sk.wikipedia.org/wiki/Leteck%C3%BD_%C3%BAtvar_Ministerstva_vn%C3%BAtra_Slovenskej_republiky","sourceId":"src-tar1090-db","createdAt":"2026-08-21T21:21:43.370Z","updatedAt":"2026-08-21T21:21:43.370Z"},{"id":"ac-om-byb","icao24":"505c07","registration":"OM-BYB","manufacturer":"Fokker","model":"Fokker 100","variant":"F28 Mark 0100","typeCode":"F100","operator":"Letecky utvar Ministerstva vnutra SR","category":"government","activeFrom":"2017-01-29","activeUntil":null,"trackingEnabled":true,"isRotorcraft":false,"costModelKey":"f100-gov-sk","verificationStatus":"needs_verification","dataStatus":"real","notes":"Remaining airworthy Fokker 100 after OM-BYC was withdrawn in February 2025.","sourceUrl":"https://sk.wikipedia.org/wiki/Leteck%C3%BD_%C3%BAtvar_Ministerstva_vn%C3%BAtra_Slovenskej_republiky","sourceId":"src-tar1090-db","createdAt":"2026-08-21T21:21:43.376Z","updatedAt":"2026-08-21T21:21:43.376Z"},{"id":"ac-om-byc","icao24":"505c08","registration":"OM-BYC","manufacturer":"Fokker","model":"Fokker 100","variant":"F28 Mark 0100","typeCode":"F100","operator":"Letecky utvar Ministerstva vnutra SR","category":"government","activeFrom":"2016-09-26","activeUntil":"2025-02-11","trackingEnabled":true,"isRotorcraft":false,"costModelKey":"f100-gov-sk","verificationStatus":"needs_verification","dataStatus":"real","notes":"Withdrawn from service 2025-02-11 and used for spares. Kept in the registry with activeUntil set so historical flights remain attributable; no positions are expected after that date.","sourceUrl":"https://sita.sk/ministerstvo-vnutra-vyraduje-jedno-z-dvoch-lietadiel-fokker-100-bude-na-nahradne-diely/","sourceId":"src-sita-fokker-withdrawal","createdAt":"2026-08-21T21:21:43.377Z","updatedAt":"2026-08-21T21:21:43.377Z"},{"id":"ac-om-byk","icao24":"505c09","registration":"OM-BYK","manufacturer":"Airbus","model":"A319","variant":"A319-115X CJ","typeCode":"A319","operator":"Letecky utvar Ministerstva vnutra SR","category":"government","activeFrom":"2017-09-02","activeUntil":null,"trackingEnabled":true,"isRotorcraft":false,"costModelKey":"a319cj-gov-sk","verificationStatus":"needs_verification","dataStatus":"real","notes":"Second A319 of the government flying service. Same caveats as OM-BYA.","sourceUrl":"https://en.wikipedia.org/wiki/Slovak_Government_Flying_Service","sourceId":"src-tar1090-db","createdAt":"2026-08-21T21:21:43.375Z","updatedAt":"2026-08-21T21:21:43.375Z"}],"days":[{"day":"2026-07-09","icao":"505c06","status":"unavailable","positions":0},{"day":"2026-07-10","icao":"505c06","status":"unavailable","positions":0},{"day":"2026-07-11","icao":"505c06","status":"unavailable","positions":0},{"day":"2026-07-12","icao":"505c06","status":"completed","positions":1711},{"day":"2026-07-13","icao":"505c09","status":"unavailable","positions":0},{"day":"2026-07-13","icao":"505c08","status":"unavailable","positions":0},{"day":"2026-07-13","icao":"505c06","status":"unavailable","positions":0},{"day":"2026-07-13","icao":"505c07","status":"unavailable","positions":0},{"day":"2026-07-13","icao":"505c06","status":"unavailable","positions":0},{"day":"2026-07-14","icao":"505c06","status":"unavailable","positions":0},{"day":"2026-07-14","icao":"505c08","status":"unavailable","positions":0},{"day":"2026-07-14","icao":"505c06","status":"unavailable","positions":0},{"day":"2026-07-14","icao":"505c09","status":"unavailable","positions":0},{"day":"2026-07-14","icao":"505c07","status":"unavailable","positions":0},{"day":"2026-07-15","icao":"505c06","status":"completed","positions":563},{"day":"2026-07-15","icao":"505c09","status":"completed","positions":639},{"day":"2026-07-15","icao":"505c07","status":"empty","positions":0},{"day":"2026-07-15","icao":"505c08","status":"empty","positions":0},{"day":"2026-07-16","icao":"505c08","status":"empty","positions":0},{"day":"2026-07-16","icao":"505c06","status":"completed","positions":1041},{"day":"2026-07-16","icao":"505c09","status":"empty","positions":0},{"day":"2026-07-16","icao":"505c07","status":"empty","positions":0},{"day":"2026-07-17","icao":"505c08","status":"empty","positions":0},{"day":"2026-07-17","icao":"505c07","status":"empty","positions":0},{"day":"2026-07-17","icao":"505c06","status":"empty","positions":0},{"day":"2026-07-17","icao":"505c09","status":"empty","positions":0},{"day":"2026-07-18","icao":"505c06","status":"empty","positions":0},{"day":"2026-07-18","icao":"505c09","status":"empty","positions":0},{"day":"2026-07-18","icao":"505c08","status":"empty","positions":0},{"day":"2026-07-18","icao":"505c07","status":"empty","positions":0},{"day":"2026-07-19","icao":"505c06","status":"empty","positions":0},{"day":"2026-07-19","icao":"505c08","status":"empty","positions":0},{"day":"2026-07-19","icao":"505c09","status":"empty","positions":0},{"day":"2026-07-19","icao":"505c07","status":"empty","positions":0},{"day":"2026-07-20","icao":"505c09","status":"empty","positions":0},{"day":"2026-07-20","icao":"505c06","status":"completed","positions":815},{"day":"2026-07-20","icao":"505c08","status":"empty","positions":0},{"day":"2026-07-20","icao":"505c07","status":"empty","positions":0},{"day":"2026-07-21","icao":"505c08","status":"empty","positions":0},{"day":"2026-07-21","icao":"505c06","status":"empty","positions":0},{"day":"2026-07-21","icao":"505c07","status":"empty","positions":0},{"day":"2026-07-21","icao":"505c09","status":"empty","positions":0},{"day":"2026-07-22","icao":"505c08","status":"empty","positions":0},{"day":"2026-07-22","icao":"505c06","status":"empty","positions":0},{"day":"2026-07-22","icao":"505c07","status":"empty","positions":0},{"day":"2026-07-22","icao":"505c09","status":"empty","positions":0},{"day":"2026-07-23","icao":"505c09","status":"empty","positions":0},{"day":"2026-07-23","icao":"505c06","status":"empty","positions":0},{"day":"2026-07-23","icao":"505c07","status":"empty","positions":0},{"day":"2026-07-23","icao":"505c08","status":"empty","positions":0},{"day":"2026-07-24","icao":"505c08","status":"empty","positions":0},{"day":"2026-07-24","icao":"505c06","status":"empty","positions":0},{"day":"2026-07-24","icao":"505c09","status":"empty","positions":0},{"day":"2026-07-24","icao":"505c07","status":"empty","positions":0},{"day":"2026-07-25","icao":"505c09","status":"empty","positions":0},{"day":"2026-07-25","icao":"505c08","status":"empty","positions":0},{"day":"2026-07-25","icao":"505c07","status":"empty","positions":0},{"day":"2026-07-25","icao":"505c06","status":"completed","positions":799},{"day":"2026-07-26","icao":"505c06","status":"completed","positions":673},{"day":"2026-07-26","icao":"505c07","status":"empty","positions":0},{"day":"2026-07-26","icao":"505c09","status":"empty","positions":0},{"day":"2026-07-26","icao":"505c08","status":"empty","positions":0},{"day":"2026-07-27","icao":"505c07","status":"empty","positions":0},{"day":"2026-07-27","icao":"505c06","status":"completed","positions":206},{"day":"2026-07-27","icao":"505c09","status":"empty","positions":0},{"day":"2026-07-27","icao":"505c08","status":"empty","positions":0},{"day":"2026-07-28","icao":"505c07","status":"empty","positions":0},{"day":"2026-07-28","icao":"505c06","status":"empty","positions":0},{"day":"2026-07-28","icao":"505c08","status":"empty","positions":0},{"day":"2026-07-28","icao":"505c09","status":"empty","positions":0},{"day":"2026-07-29","icao":"505c06","status":"completed","positions":702},{"day":"2026-07-29","icao":"505c07","status":"empty","positions":0},{"day":"2026-07-29","icao":"505c08","status":"empty","positions":0},{"day":"2026-07-29","icao":"505c09","status":"empty","positions":0},{"day":"2026-07-30","icao":"505c07","status":"empty","positions":0},{"day":"2026-07-30","icao":"505c06","status":"empty","positions":0},{"day":"2026-07-30","icao":"505c08","status":"empty","positions":0},{"day":"2026-07-30","icao":"505c09","status":"empty","positions":0},{"day":"2026-07-31","icao":"505c09","status":"empty","positions":0},{"day":"2026-07-31","icao":"505c07","status":"empty","positions":0},{"day":"2026-07-31","icao":"505c08","status":"empty","positions":0},{"day":"2026-07-31","icao":"505c06","status":"empty","positions":0},{"day":"2026-08-01","icao":"505c06","status":"empty","positions":0},{"day":"2026-08-01","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-01","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-01","icao":"505c09","status":"completed","positions":687},{"day":"2026-08-02","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-02","icao":"505c09","status":"empty","positions":0},{"day":"2026-08-02","icao":"505c06","status":"empty","positions":0},{"day":"2026-08-02","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-03","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-03","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-03","icao":"505c06","status":"empty","positions":0},{"day":"2026-08-03","icao":"505c09","status":"empty","positions":0},{"day":"2026-08-04","icao":"505c06","status":"empty","positions":0},{"day":"2026-08-04","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-04","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-04","icao":"505c09","status":"empty","positions":0},{"day":"2026-08-05","icao":"505c06","status":"empty","positions":0},{"day":"2026-08-05","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-05","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-05","icao":"505c09","status":"empty","positions":0},{"day":"2026-08-06","icao":"505c09","status":"empty","positions":0},{"day":"2026-08-06","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-06","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-06","icao":"505c06","status":"empty","positions":0},{"day":"2026-08-07","icao":"505c09","status":"completed","positions":1574},{"day":"2026-08-07","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-07","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-07","icao":"505c06","status":"empty","positions":0},{"day":"2026-08-08","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-08","icao":"505c06","status":"empty","positions":0},{"day":"2026-08-08","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-08","icao":"505c09","status":"empty","positions":0},{"day":"2026-08-09","icao":"505c09","status":"empty","positions":0},{"day":"2026-08-09","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-09","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-09","icao":"505c06","status":"empty","positions":0},{"day":"2026-08-10","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-10","icao":"505c06","status":"empty","positions":0},{"day":"2026-08-10","icao":"505c09","status":"empty","positions":0},{"day":"2026-08-10","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-11","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-11","icao":"505c06","status":"empty","positions":0},{"day":"2026-08-11","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-11","icao":"505c09","status":"empty","positions":0},{"day":"2026-08-12","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-12","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-12","icao":"505c09","status":"empty","positions":0},{"day":"2026-08-12","icao":"505c06","status":"empty","positions":0},{"day":"2026-08-13","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-13","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-13","icao":"505c09","status":"empty","positions":0},{"day":"2026-08-13","icao":"505c06","status":"empty","positions":0},{"day":"2026-08-14","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-14","icao":"505c06","status":"empty","positions":0},{"day":"2026-08-14","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-14","icao":"505c09","status":"empty","positions":0},{"day":"2026-08-15","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-15","icao":"505c06","status":"completed","positions":806},{"day":"2026-08-15","icao":"505c09","status":"empty","positions":0},{"day":"2026-08-15","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-16","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-16","icao":"505c06","status":"empty","positions":0},{"day":"2026-08-16","icao":"505c09","status":"empty","positions":0},{"day":"2026-08-16","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-17","icao":"505c06","status":"empty","positions":0},{"day":"2026-08-17","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-17","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-17","icao":"505c09","status":"empty","positions":0},{"day":"2026-08-18","icao":"505c09","status":"empty","positions":0},{"day":"2026-08-18","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-18","icao":"505c06","status":"empty","positions":0},{"day":"2026-08-18","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-19","icao":"505c09","status":"completed","positions":3177},{"day":"2026-08-19","icao":"505c06","status":"empty","positions":0},{"day":"2026-08-19","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-19","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-20","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-20","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-20","icao":"505c06","status":"empty","positions":0},{"day":"2026-08-20","icao":"505c09","status":"empty","positions":0},{"day":"2026-08-21","icao":"505c09","status":"empty","positions":0},{"day":"2026-08-21","icao":"505c07","status":"empty","positions":0},{"day":"2026-08-21","icao":"505c08","status":"empty","positions":0},{"day":"2026-08-21","icao":"505c06","status":"empty","positions":0}]}</script>
+<script type="application/json" id="land-data">[[[-59.57,-80.04],[-60.16,-81.0],[-64.49,-80.92],[-66.29,-80.26],[-61.88,-80.39],[-60.61,-79.63],[-59.57,-80.04]],[[-159.21,-79.5],[-161.13,-79.63],[-163.71,-78.6],[-161.25,-78.38],[-159.21,-79.5]],[[-45.15,-78.05],[-43.92,-78.48],[-43.33,-80.03],[-50.48,-81.03],[-54.16,-80.63],[-50.99,-79.61],[-48.66,-78.05],[-45.15,-78.05]],[[-121.21,-73.5],[-118.72,-73.48],[-120.23,-74.09],[-122.62,-73.66],[-121.21,-73.5]],[[-125.56,-73.48],[-124.03,-73.87],[-127.28,-73.46],[-125.56,-73.48]],[[-98.98,-71.93],[-96.79,-71.95],[-96.2,-72.52],[-100.78,-72.5],[-102.33,-71.89],[-98.98,-71.93]],[[-68.45,-70.96],[-68.78,-72.17],[-71.08,-72.5],[-72.39,-72.48],[-71.9,-72.09],[-74.19,-72.37],[-75.01,-71.66],[-72.07,-71.19],[-71.74,-69.51],[-70.25,-68.88],[-68.45,-70.96]],[[-58.61,-64.15],[-62.02,-64.8],[-62.65,-65.48],[-62.12,-66.19],[-63.75,-66.5],[-65.67,-67.95],[-63.2,-69.23],[-61.81,-70.72],[-60.83,-73.7],[-64.35,-75.26],[-70.6,-76.63],[-77.24,-76.71],[-73.66,-77.91],[-77.93,-78.38],[-78.02,-79.18],[-75.36,-80.26],[-59.69,-82.38],[-58.22,-83.22],[-49.76,-81.73],[-42.81,-82.08],[-40.77,-81.36],[-28.55,-80.34],[-29.69,-79.26],[-35.64,-79.46],[-35.78,-78.34],[-28.88,-76.67],[-17.52,-75.13],[-15.7,-74.5],[-15.41,-74.11],[-16.47,-73.87],[-15.45,-73.15],[-12.29,-72.4],[-10.3,-71.27],[-7.42,-71.7],[-6.87,-70.93],[-4.34,-71.46],[-0.66,-71.23],[-0.23,-71.64],[7.74,-69.89],[9.53,-70.01],[10.82,-70.83],[13.42,-69.97],[15.13,-70.4],[19.26,-69.89],[22.57,-70.7],[27.09,-70.46],[31.99,-69.66],[33.87,-68.5],[38.65,-69.78],[54.53,-65.82],[56.36,-65.97],[58.74,-67.29],[61.43,-67.95],[64.05,-67.41],[68.89,-67.93],[69.67,-69.23],[67.81,-70.31],[69.07,-70.68],[67.95,-71.85],[69.87,-72.26],[71.02,-72.09],[73.86,-69.87],[77.64,-69.46],[79.11,-68.33],[82.78,-67.21],[86.75,-67.15],[87.99,-66.21],[89.67,-67.15],[95.78,-67.39],[99.72,-67.25],[102.83,-65.56],[106.18,-66.93],[113.6,-65.88],[115.6,-66.7],[119.83,-67.27],[123.22,-66.48],[128.8,-66.76],[134.76,-66.21],[135.07,-65.31],[137.46,-66.95],[145.49,-66.92],[146.65,-67.9],[148.84,-68.39],[152.5,-68.87],[154.28,-68.56],[161.57,-70.58],[167.31,-70.83],[171.21,-71.7],[169.29,-73.66],[166.09,-74.38],[163.57,-76.24],[163.49,-77.07],[164.74,-78.18],[167.0,-78.75],[161.77,-79.16],[159.79,-80.95],[169.4,-83.83],[180,-84.71],[180,-90],[-180,-90],[-180,-84.71],[-179.06,-84.14],[-174.38,-84.53],[-169.95,-83.88],[-161.93,-85.14],[-148.53,-85.61],[-143.11,-85.04],[-142.89,-84.57],[-153.59,-83.69],[-152.86,-82.04],[-156.84,-81.1],[-150.65,-81.34],[-146.42,-80.34],[-149.53,-79.36],[-155.33,-79.06],[-158.05,-78.03],[-158.37,-76.89],[-151.33,-77.4],[-146.1,-76.48],[-146.2,-75.38],[-135.21,-74.3],[-121.07,-74.52],[-113.94,-73.71],[-112.3,-74.71],[-111.26,-74.42],[-107.56,-75.18],[-100.65,-75.3],[-100.12,-74.87],[-102.55,-74.11],[-103.68,-72.62],[-96.34,-73.62],[-90.09,-73.32],[-89.23,-72.56],[-81.47,-73.85],[-80.3,-73.13],[-74.89,-73.87],[-67.37,-72.48],[-67.25,-71.64],[-68.54,-69.72],[-67.43,-68.15],[-67.74,-67.33],[-63.0,-64.64],[-58.59,-63.39],[-57.22,-63.53],[-58.61,-64.15]],[[-67.75,-53.85],[-65.05,-54.7],[-65.5,-55.2],[-66.96,-54.9],[-68.15,-55.61],[-69.23,-55.5],[-72.26,-54.5],[-74.66,-52.84],[-71.11,-54.07],[-69.35,-52.52],[-68.63,-52.64],[-67.75,-53.85]],[[-58.55,-51.1],[-57.75,-51.55],[-58.05,-51.9],[-60.7,-52.3],[-61.2,-51.85],[-58.55,-51.1]],[[70.28,-49.71],[68.75,-49.77],[68.94,-48.62],[70.53,-49.06],[70.28,-49.71]],[[145.4,-40.79],[148.29,-40.88],[147.91,-43.21],[146.05,-43.55],[144.72,-41.16],[144.74,-40.7],[145.4,-40.79]],[[173.02,-40.92],[173.25,-41.33],[173.96,-40.93],[174.25,-41.77],[172.71,-43.37],[173.08,-43.85],[171.45,-44.24],[170.62,-45.91],[169.33,-46.64],[166.68,-46.22],[167.05,-45.11],[170.52,-43.03],[172.1,-40.96],[172.8,-40.49],[173.02,-40.92]],[[174.61,-36.16],[175.34,-37.21],[175.36,-36.53],[176.76,-37.88],[178.52,-37.7],[177.97,-39.17],[177.21,-39.15],[176.01,-41.29],[175.24,-41.69],[174.65,-41.28],[175.23,-40.46],[174.9,-39.91],[173.82,-39.51],[174.57,-38.8],[174.7,-37.38],[172.64,-34.53],[174.33,-35.27],[174.61,-36.16]],[[167.12,-22.16],[165.47,-21.68],[164.03,-20.11],[167.12,-22.16]],[[178.37,-17.34],[178.55,-18.15],[177.38,-18.16],[177.67,-17.38],[178.37,-17.34]],[[179.36,-16.8],[178.6,-16.64],[180,-16.07],[179.36,-16.8]],[[167.11,-14.93],[167.27,-15.74],[166.79,-15.67],[166.63,-14.63],[167.11,-14.93]],[[50.06,-13.56],[50.38,-15.71],[49.67,-15.71],[49.77,-16.88],[47.1,-24.94],[45.41,-25.6],[44.04,-24.99],[43.25,-22.06],[44.37,-20.07],[43.96,-17.41],[44.45,-16.22],[46.31,-15.78],[47.71,-14.59],[49.19,-12.04],[50.06,-13.56]],[[143.56,-13.76],[143.92,-14.55],[144.56,-14.17],[145.37,-14.98],[146.39,-18.96],[148.85,-20.39],[149.68,-22.34],[150.73,-22.4],[150.9,-23.46],[153.14,-26.07],[153.57,-28.11],[153.09,-30.92],[150.33,-35.67],[150.0,-37.43],[146.32,-39.04],[144.88,-38.42],[145.03,-37.9],[143.61,-38.81],[140.64,-38.02],[139.57,-36.14],[138.12,-35.61],[138.21,-34.38],[136.83,-35.26],[137.89,-33.64],[137.81,-32.9],[135.99,-34.89],[135.21,-34.48],[134.27,-32.62],[131.33,-31.5],[126.15,-32.22],[124.22,-32.96],[123.66,-33.89],[119.89,-33.98],[118.02,-35.06],[116.63,-35.03],[115.03,-34.2],[115.71,-33.26],[115.69,-31.61],[113.34,-26.12],[113.78,-26.55],[113.44,-25.62],[114.23,-26.3],[113.39,-24.38],[114.15,-21.76],[114.23,-22.52],[116.71,-20.7],[120.86,-19.68],[123.01,-16.41],[123.43,-17.27],[123.86,-17.07],[123.5,-16.6],[123.82,-16.11],[124.26,-16.33],[125.69,-14.23],[127.07,-13.82],[128.36,-14.87],[129.62,-14.97],[129.41,-14.42],[130.62,-12.54],[132.58,-12.11],[131.82,-11.27],[135.3,-12.25],[136.49,-11.86],[136.95,-12.35],[135.96,-13.32],[135.5,-15.0],[140.22,-17.71],[141.27,-16.39],[141.69,-12.41],[142.52,-10.67],[143.56,-13.76]],[[162.12,-10.48],[162.4,-10.83],[161.7,-10.82],[161.32,-10.2],[162.12,-10.48]],[[120.72,-10.24],[118.97,-9.56],[119.9,-9.36],[120.72,-10.24]],[[160.85,-9.87],[159.85,-9.79],[159.7,-9.24],[160.85,-9.87]],[[124.44,-10.14],[123.46,-10.24],[125.09,-8.66],[127.34,-8.4],[124.44,-10.14]],[[117.9,-8.1],[119.13,-8.71],[116.74,-9.03],[117.9,-8.1]],[[122.9,-8.09],[122.76,-8.65],[119.92,-8.81],[120.72,-8.24],[122.9,-8.09]],[[108.62,-6.78],[110.54,-6.88],[110.76,-6.47],[115.71,-8.37],[114.56,-8.75],[105.37,-6.85],[106.05,-5.9],[108.62,-6.78]],[[134.72,-6.21],[134.21,-6.9],[134.5,-5.45],[134.72,-6.21]],[[155.88,-6.82],[155.17,-6.54],[154.51,-5.14],[155.88,-6.82]],[[151.98,-5.48],[150.24,-6.32],[148.32,-5.75],[149.85,-5.51],[150.14,-5.0],[150.24,-5.53],[150.81,-5.46],[151.65,-4.76],[151.54,-4.17],[152.14,-4.15],[151.98,-5.48]],[[127.25,-3.46],[126.87,-3.79],[125.99,-3.18],[127.25,-3.46]],[[130.47,-3.09],[130.83,-3.86],[127.9,-3.39],[128.14,-2.84],[130.47,-3.09]],[[153.14,-4.5],[152.83,-4.77],[152.41,-3.79],[150.66,-2.74],[152.24,-3.24],[153.14,-4.5]],[[134.14,-1.15],[134.42,-2.77],[135.46,-3.37],[136.29,-2.31],[138.33,-1.7],[144.58,-3.86],[145.98,-5.47],[147.65,-6.08],[147.89,-6.61],[146.97,-6.72],[147.19,-7.39],[150.69,-10.58],[147.91,-10.13],[146.05,-8.07],[144.74,-7.63],[143.29,-8.25],[143.41,-8.98],[142.63,-9.33],[139.13,-8.1],[137.61,-8.41],[138.67,-7.32],[137.93,-5.39],[133.66,-3.54],[132.98,-4.11],[131.99,-2.82],[133.7,-2.21],[132.23,-2.21],[130.52,-0.94],[132.38,-0.37],[134.14,-1.15]],[[125.24,1.42],[123.69,0.24],[120.18,0.24],[120.04,-0.52],[120.94,-1.41],[123.34,-0.62],[121.51,-1.9],[123.16,-5.34],[122.24,-5.28],[122.72,-4.46],[121.49,-4.57],[120.97,-2.63],[120.31,-2.93],[120.43,-5.53],[119.37,-5.38],[119.5,-3.49],[118.77,-2.8],[120.04,0.57],[120.89,1.31],[122.93,0.88],[125.24,1.42]],[[128.69,1.13],[128.1,-0.9],[127.4,1.01],[127.93,2.17],[128.69,1.13]],[[105.82,-5.85],[104.71,-5.87],[102.58,-4.22],[99.26,0.18],[98.6,1.82],[95.29,5.48],[97.48,5.25],[100.64,2.1],[101.66,2.08],[103.84,0.1],[103.44,-0.71],[106.11,-3.06],[105.82,-5.85]],[[117.88,1.83],[119.0,0.9],[117.81,0.78],[117.52,-0.8],[116.56,-1.49],[116.15,-4.01],[116.0,-3.66],[114.86,-4.11],[113.26,-3.12],[112.07,-3.48],[111.7,-2.99],[110.22,-2.93],[110.07,-1.59],[109.09,-0.46],[109.07,1.34],[109.66,2.01],[111.17,1.85],[111.37,2.7],[113.0,3.1],[116.73,6.92],[119.18,5.41],[117.31,3.23],[117.88,1.83]],[[126.38,8.41],[126.54,7.19],[126.2,6.27],[125.83,7.29],[125.36,6.79],[125.4,5.58],[124.22,6.16],[124.24,7.36],[123.61,7.83],[121.92,7.19],[123.49,8.69],[123.84,8.24],[125.47,8.99],[125.41,9.76],[126.22,9.29],[126.38,8.41]],[[81.22,6.2],[80.35,5.97],[79.87,6.76],[80.15,9.82],[81.79,7.52],[81.22,6.2]],[[-60.94,10.11],[-61.95,10.09],[-61.1,10.89],[-60.94,10.11]],[[123.98,10.28],[123.0,9.02],[122.38,9.71],[122.95,10.88],[123.5,10.94],[123.34,10.27],[124.08,11.23],[123.98,10.28]],[[118.5,9.32],[117.17,8.37],[119.51,11.37],[119.69,10.55],[118.5,9.32]],[[121.88,11.89],[123.12,11.58],[122.0,10.44],[121.88,11.89]],[[125.5,12.16],[125.78,11.05],[125.01,11.31],[125.28,10.36],[124.8,10.13],[124.3,11.5],[124.88,11.79],[124.27,12.56],[125.5,12.16]],[[121.53,13.07],[121.26,12.21],[120.32,13.47],[121.53,13.07]],[[121.32,18.5],[122.25,18.48],[122.52,17.09],[121.66,15.93],[121.73,14.33],[123.95,13.78],[124.08,12.54],[122.93,13.55],[122.67,13.19],[122.03,13.78],[120.63,13.86],[120.99,14.53],[120.07,14.97],[119.88,16.36],[120.29,16.03],[120.72,18.51],[121.32,18.5]],[[-65.59,18.23],[-67.18,17.95],[-67.24,18.37],[-65.59,18.23]],[[-76.9,17.87],[-78.34,18.23],[-76.9,18.4],[-76.2,17.89],[-76.9,17.87]],[[-72.58,19.87],[-69.95,19.65],[-68.32,18.61],[-68.69,18.21],[-70.67,18.43],[-71.4,17.6],[-72.37,18.21],[-74.46,18.34],[-72.33,18.67],[-73.42,19.64],[-72.58,19.87]],[[110.34,18.68],[109.48,18.2],[108.66,18.51],[108.63,19.37],[110.79,20.08],[110.34,18.68]],[[-155.54,19.08],[-155.94,19.06],[-155.86,20.27],[-154.81,19.51],[-155.54,19.08]],[[-79.68,22.77],[-74.18,20.28],[-77.76,19.86],[-77.09,20.41],[-78.14,20.74],[-78.72,21.6],[-82.17,22.39],[-81.8,22.64],[-84.97,21.9],[-82.27,23.19],[-79.68,22.77]],[[-77.53,23.76],[-78.41,24.58],[-78.19,25.21],[-77.53,23.76]],[[121.18,22.79],[120.75,21.97],[120.11,23.56],[121.5,25.3],[121.95,25.0],[121.18,22.79]],[[-77.82,26.58],[-78.91,26.42],[-78.98,26.79],[-77.82,26.58]],[[-77,26.59],[-77.17,25.88],[-77.79,27.04],[-77,26.59]],[[134.64,34.15],[134.2,33.2],[133.79,33.52],[133.01,32.7],[132.36,32.99],[132.92,34.06],[134.64,34.15]],[[34.58,35.67],[32.98,34.57],[32.26,35.1],[34.58,35.67]],[[23.7,35.71],[26.29,35.3],[24.72,34.92],[23.51,35.28],[23.7,35.71]],[[15.52,38.23],[15.1,36.62],[12.43,37.61],[12.57,38.13],[15.52,38.23]],[[9.21,41.21],[9.81,40.5],[9.67,39.18],[8.81,38.91],[8.16,40.95],[9.21,41.21]],[[140.98,37.14],[140.25,35.14],[137.22,34.61],[135.79,33.46],[135.12,33.85],[135.08,34.6],[130.99,33.89],[132.0,33.15],[131.33,31.45],[130.69,31.03],[130.2,31.42],[130.45,32.32],[129.41,33.3],[132.62,35.43],[135.68,35.53],[136.72,37.3],[137.39,36.83],[139.43,38.22],[140.05,39.44],[139.88,40.56],[140.31,41.2],[141.37,41.38],[141.88,39.18],[140.96,38.17],[140.98,37.14]],[[9.56,42.15],[9.23,41.38],[8.54,42.26],[9.39,43.01],[9.56,42.15]],[[143.91,44.17],[145.32,44.38],[145.54,43.26],[144.06,42.99],[143.18,42.0],[141.61,42.68],[141.07,41.58],[139.96,41.57],[139.82,42.56],[140.31,43.33],[141.38,43.39],[141.97,45.55],[143.91,44.17]],[[-63.66,46.55],[-62.01,46.44],[-62.87,45.97],[-64.39,46.73],[-64.01,47.04],[-63.66,46.55]],[[-123.51,48.51],[-125.66,48.83],[-128.06,49.99],[-128.36,50.77],[-125.76,50.3],[-123.51,48.51]],[[-56.13,50.69],[-56.8,49.81],[-56.14,50.15],[-55.47,49.94],[-55.82,49.59],[-53.48,49.25],[-53.79,48.52],[-53.09,48.69],[-52.65,47.54],[-53.07,46.66],[-54.18,46.81],[-54.24,47.75],[-55.4,46.88],[-56.0,46.92],[-55.29,47.39],[-56.25,47.63],[-59.27,47.6],[-58.8,48.25],[-59.23,48.52],[-57.36,50.72],[-55.41,51.59],[-56.13,50.69]],[[-132.71,54.04],[-131.75,54.12],[-132.05,52.98],[-131.18,52.18],[-133.05,53.41],[-133.18,54.17],[-132.71,54.04]],[[143.65,50.75],[144.65,48.98],[143.17,49.31],[142.56,47.86],[143.53,46.84],[143.51,46.14],[142.75,46.74],[142.09,45.97],[142.18,50.95],[141.59,51.94],[141.68,53.3],[142.61,53.76],[142.21,54.23],[142.65,54.37],[143.65,50.75]],[[-6.79,52.26],[-9.98,51.82],[-9.17,52.86],[-9.69,53.88],[-6.73,55.17],[-5.66,54.55],[-6.79,52.26]],[[12.69,55.61],[12.09,54.8],[10.9,55.78],[12.37,56.11],[12.69,55.61]],[[-153.01,57.12],[-154.01,56.73],[-154.67,57.46],[-153.23,57.97],[-152.14,57.59],[-153.01,57.12]],[[-3.01,58.63],[-4.07,57.55],[-1.96,57.68],[-3.12,55.97],[-2.09,55.91],[0.47,52.93],[1.68,52.74],[1.05,51.81],[1.45,51.29],[-5.25,49.96],[-5.78,50.16],[-3.41,51.43],[-5.27,51.99],[-4.22,52.3],[-4.77,52.84],[-4.58,53.5],[-3.09,53.4],[-2.95,53.98],[-4.84,54.79],[-5.05,55.78],[-5.59,55.31],[-6.15,56.79],[-5.01,58.63],[-3.01,58.63]],[[-165.58,59.91],[-167.46,60.21],[-165.67,60.29],[-165.58,59.91]],[[-79.27,62.16],[-79.66,61.63],[-80.36,62.02],[-79.27,62.16]],[[-81.9,62.71],[-83.07,62.16],[-83.99,62.45],[-83.25,62.91],[-81.9,62.71]],[[-171.73,63.78],[-168.69,63.3],[-169.53,62.98],[-171.55,63.32],[-171.73,63.78]],[[-85.16,65.66],[-80.1,63.73],[-80.99,63.41],[-83.11,64.1],[-85.52,63.05],[-85.87,63.64],[-87.22,63.54],[-86.35,64.04],[-85.88,65.74],[-85.16,65.66]],[[-14.51,66.46],[-14.74,65.81],[-13.61,65.13],[-18.66,63.5],[-22.76,63.96],[-21.78,64.4],[-23.96,64.89],[-22.23,65.38],[-24.33,65.61],[-23.65,66.26],[-22.13,66.41],[-20.58,65.73],[-19.06,66.28],[-14.51,66.46]],[[-75.87,67.15],[-76.99,67.1],[-77.24,67.59],[-76.81,68.15],[-75.11,68.01],[-75.87,67.15]],[[-175.01,66.58],[-174.34,66.34],[-174.57,67.06],[-171.86,66.91],[-169.9,65.98],[-172.53,65.44],[-172.96,64.25],[-176.21,65.36],[-178.36,65.39],[-178.69,66.11],[-179.88,65.87],[-179.43,65.4],[-180,64.98],[-180,68.96],[-174.93,67.21],[-175.01,66.58]],[[-95.65,69.11],[-96.27,68.76],[-99.8,69.4],[-98.22,70.14],[-95.65,69.11]],[[180,70.83],[178.73,71.1],[180,71.52],[180,70.83]],[[-178.69,70.89],[-180,70.83],[-180,71.52],[-177.58,71.27],[-178.69,70.89]],[[-90.55,69.5],[-90.55,68.48],[-89.22,69.26],[-88.02,68.62],[-88.32,67.87],[-87.35,67.2],[-85.58,68.78],[-85.52,69.88],[-82.62,69.66],[-81.28,69.16],[-81.96,68.13],[-81.26,67.6],[-81.39,67.11],[-83.34,66.41],[-85.77,66.56],[-87.32,64.78],[-89.91,64.03],[-90.7,63.61],[-90.77,62.96],[-93.16,62.02],[-94.24,60.9],[-94.68,58.95],[-93.22,58.78],[-92.3,57.09],[-90.9,57.28],[-85.01,55.3],[-82.27,55.15],[-82.12,53.28],[-79.91,51.21],[-78.6,52.56],[-79.83,54.67],[-78.23,55.14],[-76.54,56.53],[-77.3,58.05],[-78.52,58.8],[-77.34,59.85],[-78.11,62.32],[-73.84,62.44],[-71.37,61.14],[-69.59,61.06],[-69.29,58.96],[-67.65,58.21],[-66.2,58.77],[-64.58,60.34],[-61.4,56.97],[-61.8,56.34],[-57.33,54.63],[-56.94,53.78],[-55.76,53.27],[-55.68,52.15],[-60.03,50.24],[-66.4,50.23],[-71.1,46.82],[-68.65,48.3],[-65.06,49.23],[-64.17,48.74],[-65.12,48.07],[-64.47,46.24],[-61.52,45.88],[-60.52,47.01],[-59.8,45.92],[-65.36,43.55],[-66.12,43.62],[-66.16,44.47],[-64.43,45.29],[-67.14,45.14],[-66.96,44.81],[-70.69,43.03],[-70.83,42.34],[-69.97,41.64],[-73.71,40.93],[-71.95,40.93],[-73.95,40.75],[-74.91,38.94],[-75.53,39.5],[-75.06,38.4],[-75.94,37.22],[-75.72,37.94],[-76.35,39.15],[-76.33,38.08],[-76.96,38.23],[-76.3,37.92],[-75.73,35.55],[-81.34,31.44],[-80.06,26.88],[-80.38,25.21],[-81.17,25.2],[-81.71,25.87],[-82.86,27.89],[-82.93,29.1],[-84.1,30.09],[-85.11,29.64],[-86.4,30.4],[-89.18,30.32],[-89.6,30.18],[-89.22,29.29],[-90.15,29.12],[-93.85,29.71],[-96.59,28.31],[-97.37,27.38],[-97.14,25.87],[-97.87,22.44],[-96.29,19.32],[-94.43,18.14],[-92.04,18.7],[-90.77,19.28],[-90.28,21.0],[-87.05,21.54],[-86.85,20.85],[-87.84,18.26],[-88.3,18.5],[-88.36,16.53],[-88.93,15.89],[-84.98,16.0],[-83.41,15.27],[-83.81,11.1],[-82.21,9.0],[-81.44,8.79],[-79.57,9.61],[-76.84,8.64],[-75.67,9.44],[-74.91,11.08],[-73.41,11.23],[-71.75,12.44],[-71.14,12.11],[-71.95,11.42],[-71.7,9.07],[-71.04,9.86],[-71.4,10.97],[-70.16,11.38],[-69.94,12.16],[-68.19,10.55],[-66.23,10.65],[-64.89,10.08],[-64.32,10.64],[-61.88,10.72],[-62.73,10.42],[-62.39,9.95],[-60.83,9.38],[-60.67,8.58],[-59.1,8.0],[-57.15,5.97],[-53.96,5.76],[-51.32,4.2],[-50.51,1.9],[-49.97,1.74],[-50.7,0.22],[-50.39,-0.08],[-48.62,-0.24],[-48.58,-1.24],[-47.82,-0.58],[-44.91,-1.55],[-44.58,-2.69],[-43.42,-2.38],[-39.98,-2.87],[-37.22,-4.82],[-35.6,-5.15],[-34.73,-7.34],[-35.13,-9.0],[-38.67,-13.06],[-39.27,-17.87],[-40.94,-21.94],[-41.99,-22.97],[-44.65,-23.35],[-47.65,-24.89],[-48.5,-25.88],[-48.89,-28.67],[-53.81,-34.4],[-56.22,-34.86],[-58.43,-33.91],[-58.5,-34.43],[-57.23,-35.29],[-56.79,-36.9],[-57.75,-38.18],[-59.23,-38.72],[-62.34,-38.83],[-62.15,-40.68],[-62.75,-41.03],[-65.12,-41.06],[-64.98,-42.06],[-63.76,-42.04],[-63.46,-42.56],[-65.18,-43.5],[-65.57,-45.04],[-67.29,-45.55],[-67.58,-46.3],[-65.64,-47.24],[-65.99,-48.13],[-69.14,-50.73],[-68.15,-52.35],[-70.85,-52.9],[-71.01,-53.83],[-74.95,-52.26],[-75.61,-48.67],[-74.13,-46.94],[-75.64,-46.65],[-74.69,-45.76],[-74.35,-44.1],[-73.24,-44.45],[-72.72,-42.38],[-73.39,-42.12],[-73.7,-43.37],[-74.33,-43.22],[-73.22,-39.26],[-73.59,-37.16],[-73.17,-37.12],[-71.44,-32.42],[-71.49,-28.86],[-70.91,-27.64],[-70.16,-19.76],[-70.37,-18.35],[-71.46,-17.36],[-76.01,-14.65],[-79.76,-7.19],[-81.25,-6.14],[-80.93,-5.69],[-81.41,-4.74],[-79.77,-2.66],[-80.97,-2.25],[-80.93,-1.06],[-80.09,0.77],[-78.86,1.38],[-78.43,2.63],[-77.13,3.85],[-78.18,8.32],[-79.56,8.93],[-80.48,8.09],[-80.0,7.55],[-80.89,7.22],[-81.06,7.82],[-83.51,8.45],[-84.98,10.09],[-85.11,9.56],[-85.66,9.93],[-85.71,11.09],[-87.67,12.91],[-87.49,13.3],[-91.23,13.93],[-94.69,16.2],[-96.56,15.65],[-103.5,18.29],[-105.49,19.95],[-105.27,21.42],[-106.03,22.77],[-109.26,25.58],[-109.29,26.44],[-110.64,27.86],[-112.23,28.95],[-113.15,31.17],[-114.78,31.8],[-114.67,30.16],[-111.62,26.66],[-110.66,24.3],[-109.41,23.36],[-110.03,22.82],[-112.18,24.74],[-112.3,26.01],[-115.06,27.72],[-114.16,28.57],[-115.52,29.56],[-117.3,33.05],[-118.52,34.03],[-120.62,34.61],[-124.4,40.31],[-124.53,42.77],[-123.9,45.52],[-124.69,48.18],[-123.12,48.04],[-122.59,47.1],[-122.84,49.0],[-127.44,50.83],[-127.85,52.33],[-129.13,52.76],[-129.31,53.56],[-131.97,55.5],[-134.08,58.12],[-136.63,58.21],[-139.87,59.54],[-147.11,60.88],[-148.22,60.67],[-148.02,59.98],[-151.72,59.16],[-151.41,60.73],[-150.35,61.03],[-150.62,61.28],[-154.02,59.35],[-153.29,58.86],[-154.23,58.15],[-158.43,55.99],[-164.79,54.4],[-157.72,57.57],[-157.04,58.92],[-159.06,58.42],[-160.36,59.07],[-161.97,58.67],[-161.87,59.63],[-163.82,59.8],[-166.12,61.5],[-164.56,63.15],[-160.77,63.77],[-161.52,64.4],[-160.78,64.79],[-164.96,64.45],[-168.11,65.67],[-164.47,66.58],[-163.65,66.58],[-163.79,66.08],[-161.68,66.12],[-166.76,68.36],[-163.17,69.37],[-161.91,70.33],[-156.58,71.36],[-154.34,70.7],[-143.59,70.15],[-136.5,68.9],[-129.79,70.19],[-129.11,69.78],[-128.14,70.48],[-125.76,69.48],[-124.42,70.16],[-124.29,69.4],[-121.47,69.8],[-113.9,68.4],[-115.3,67.9],[-109.95,67.98],[-108.88,67.38],[-107.79,67.89],[-108.81,68.31],[-108.17,68.65],[-106.15,68.8],[-101.45,67.65],[-98.44,67.78],[-98.56,68.4],[-97.67,68.58],[-96.12,68.24],[-96.13,67.29],[-95.49,68.09],[-94.68,68.06],[-94.23,69.07],[-96.47,70.09],[-96.39,71.19],[-95.21,71.92],[-92.88,71.32],[-91.52,70.19],[-92.41,69.7],[-90.55,69.5]],[[-114.17,73.12],[-114.67,72.65],[-112.44,72.96],[-111.05,72.45],[-109.92,72.96],[-108.19,71.65],[-107.69,72.07],[-108.4,73.09],[-106.52,73.08],[-105.4,72.67],[-104.46,70.99],[-100.98,70.02],[-101.09,69.58],[-102.73,69.5],[-102.09,69.12],[-102.43,68.75],[-105.96,69.18],[-113.31,68.54],[-117.34,69.96],[-112.42,70.37],[-117.9,70.54],[-118.43,70.91],[-116.11,71.31],[-119.4,71.56],[-117.87,72.71],[-114.17,73.12]],[[-104.5,73.42],[-105.38,72.76],[-106.94,73.46],[-104.5,73.42]],[[-76.34,73.1],[-79.49,72.74],[-80.88,73.33],[-80.35,73.76],[-78.06,73.65],[-76.34,73.1]],[[-86.56,73.16],[-85.77,72.53],[-84.85,73.34],[-82.32,73.75],[-80.6,72.72],[-80.75,72.06],[-77.82,72.75],[-74.23,71.77],[-74.1,71.33],[-72.24,71.56],[-68.79,70.53],[-66.97,69.19],[-68.81,68.72],[-61.85,66.86],[-63.92,65.0],[-66.72,66.39],[-68.02,66.26],[-68.14,65.69],[-65.32,64.38],[-64.67,63.39],[-65.01,62.67],[-68.78,63.75],[-66.17,61.93],[-71.02,62.91],[-74.83,64.68],[-77.71,64.23],[-78.56,64.57],[-77.9,65.31],[-73.96,65.45],[-74.29,65.81],[-72.65,67.28],[-72.93,67.73],[-76.87,68.89],[-76.23,69.15],[-78.96,70.17],[-81.31,69.74],[-84.94,69.97],[-88.68,70.41],[-89.51,70.76],[-88.47,71.22],[-89.89,71.22],[-90.21,72.24],[-89.44,73.13],[-85.83,73.8],[-86.56,73.16]],[[-100.36,73.84],[-97.38,73.76],[-97.12,73.47],[-98.05,72.99],[-96.54,72.56],[-96.72,71.66],[-99.32,71.36],[-102.5,72.51],[-100.44,72.71],[-101.54,73.36],[-100.36,73.84]],[[143.6,73.21],[139.86,73.37],[142.06,73.86],[143.6,73.21]],[[-93.2,72.77],[-94.27,72.02],[-95.41,72.06],[-96.02,73.44],[-94.5,74.13],[-90.51,73.86],[-93.2,72.77]],[[-120.46,71.4],[-123.09,70.9],[-125.93,71.87],[-123.94,73.68],[-124.92,74.29],[-117.56,74.19],[-115.51,73.48],[-119.22,72.52],[-120.46,71.4]],[[150.73,75.08],[149.58,74.69],[146.12,75.17],[150.73,75.08]],[[-93.61,74.98],[-94.16,74.59],[-96.82,74.93],[-94.85,75.65],[-93.61,74.98]],[[145.09,75.56],[144.3,74.82],[138.96,74.61],[136.97,75.26],[137.51,75.95],[138.83,76.14],[145.09,75.56]],[[-98.5,76.72],[-97.74,76.26],[-98.16,75],[-102.5,75.56],[-102.57,76.34],[-98.5,76.72]],[[-108.21,76.2],[-105.88,75.97],[-105.7,75.48],[-106.31,75.01],[-112.22,74.42],[-113.87,74.72],[-111.79,75.16],[-117.71,75.22],[-115.4,76.48],[-109.07,75.47],[-110.5,76.43],[-109.58,76.79],[-108.21,76.2]],[[57.54,70.72],[53.68,70.76],[51.6,71.47],[51.46,72.01],[54.43,73.63],[53.51,73.75],[55.9,74.63],[55.63,75.08],[66.21,76.81],[68.85,76.54],[58.48,74.31],[55.42,72.37],[55.62,71.54],[57.54,70.72]],[[-94.68,77.1],[-91.61,76.78],[-90.74,76.45],[-90.97,76.07],[-89.19,75.61],[-81.13,75.71],[-79.83,74.92],[-81.95,74.44],[-89.76,74.52],[-92.42,74.84],[-92.89,75.88],[-93.89,76.32],[-97.12,76.75],[-96.75,77.16],[-94.68,77.1]],[[-116.2,77.65],[-116.34,76.88],[-117.11,76.53],[-122.85,76.12],[-119.1,77.51],[-116.2,77.65]],[[106.97,76.97],[107.24,76.48],[111.08,76.71],[114.13,75.85],[113.89,75.33],[109.4,74.18],[113.02,73.98],[113.53,73.34],[115.57,73.75],[123.2,72.97],[123.26,73.74],[126.98,73.57],[128.59,73.04],[129.05,72.4],[128.46,71.98],[131.29,70.79],[132.25,71.84],[133.86,71.39],[139.87,71.49],[139.15,72.42],[140.47,72.85],[149.5,72.2],[152.97,70.84],[159.0,70.87],[159.83,70.45],[159.71,69.72],[160.94,69.44],[167.84,69.58],[169.58,68.69],[170.82,69.01],[170.01,69.65],[170.45,70.1],[175.72,69.88],[180,68.96],[180,64.98],[177.41,64.61],[179.37,62.98],[179.23,62.3],[177.36,62.52],[173.68,61.65],[170.33,59.88],[168.9,60.57],[166.3,59.79],[165.84,60.16],[163.54,59.87],[162.02,58.24],[163.19,57.62],[163.06,56.16],[162.13,56.12],[161.7,55.29],[162.12,54.86],[160.37,54.34],[160.02,53.2],[158.53,52.96],[158.23,51.94],[156.79,51.01],[155.43,55.38],[155.91,56.77],[156.81,57.83],[158.36,58.06],[163.67,61.14],[164.47,62.55],[163.26,62.47],[162.66,61.64],[160.12,60.54],[159.3,61.77],[156.72,61.43],[154.22,59.76],[155.04,59.15],[151.27,58.78],[151.34,59.5],[149.78,59.66],[148.54,59.16],[142.2,59.04],[135.13,54.73],[136.7,54.6],[138.16,53.76],[139.9,54.19],[141.35,53.09],[141.38,52.24],[140.6,51.24],[140.06,48.45],[138.22,46.31],[134.87,43.4],[133.54,42.81],[132.28,43.28],[129.97,41.94],[129.71,40.88],[127.53,39.76],[127.39,39.21],[129.46,36.78],[129.09,35.08],[126.49,34.39],[126.12,36.73],[126.86,36.89],[126.17,37.75],[124.71,38.11],[125.32,39.55],[124.27,39.93],[121.05,38.9],[122.17,40.42],[121.64,40.95],[119.02,39.25],[118.04,39.2],[117.53,38.74],[118.91,37.45],[119.7,37.16],[120.82,37.87],[122.36,37.45],[122.52,36.93],[121.1,36.65],[119.15,34.91],[120.23,34.36],[121.91,31.69],[121.89,30.95],[121.26,30.68],[122.09,29.83],[121.68,28.23],[121.13,28.14],[118.66,24.55],[115.89,22.78],[110.79,21.4],[110.44,20.34],[109.89,20.28],[109.86,21.4],[108.52,21.72],[105.88,19.75],[105.66,19.06],[108.88,15.28],[109.34,13.43],[109.2,11.67],[105.16,8.6],[105.08,9.92],[103.5,10.63],[102.59,12.19],[100.83,12.63],[100.98,13.41],[100.1,13.41],[99.22,9.24],[99.87,9.21],[100.46,7.43],[103.38,4.86],[103.5,2.79],[104.23,1.29],[103.52,1.23],[101.39,2.76],[100.09,6.46],[98.5,8.38],[98.34,7.79],[98.76,11.44],[97.16,16.93],[95.37,15.71],[94.19,16.04],[94.32,18.21],[91.42,22.77],[90.5,22.81],[90.27,21.84],[86.98,21.5],[86.5,20.15],[85.06,19.48],[82.19,16.56],[80.32,15.9],[79.86,10.36],[77.54,7.97],[76.59,8.9],[73.53,15.99],[72.63,21.36],[70.47,20.88],[69.16,22.09],[69.64,22.45],[69.35,22.84],[67.44,23.94],[66.37,25.43],[61.5,25.08],[57.4,25.74],[56.97,26.97],[54.72,26.48],[51.52,27.87],[50.12,30.15],[47.97,29.98],[48.81,27.69],[50.15,26.69],[50.81,24.75],[51.01,26.01],[51.59,25.8],[51.79,24.02],[54.01,24.12],[56.36,26.4],[56.85,24.24],[58.73,23.57],[59.81,22.31],[57.83,20.24],[57.69,18.94],[55.27,17.23],[52.39,16.38],[52.17,15.6],[48.68,14.0],[43.48,12.64],[42.6,15.21],[42.65,16.77],[39.14,21.29],[38.49,23.69],[37.48,24.29],[35.13,28.06],[34.63,28.06],[34.92,29.5],[33.92,27.65],[32.42,29.85],[35.69,23.93],[35.53,23.1],[36.87,22.0],[37.48,18.61],[38.41,18.0],[39.27,15.92],[43.32,12.39],[42.72,11.74],[44.61,10.44],[51.11,12.02],[51.05,10.64],[47.74,4.22],[40.26,-2.57],[39.2,-4.68],[38.8,-6.48],[39.44,-6.84],[39.19,-8.49],[40.48,-10.77],[40.78,-14.69],[39.45,-16.72],[37.41,-17.59],[34.79,-19.78],[35.61,-23.71],[32.57,-25.73],[32.92,-26.22],[32.2,-28.75],[28.22,-32.77],[25.78,-33.94],[22.57,-33.86],[19.62,-34.82],[18.38,-34.14],[17.93,-32.61],[18.22,-31.66],[15.21,-27.09],[14.26,-22.11],[11.79,-18.07],[11.78,-15.79],[13.63,-12.04],[13.69,-10.73],[11.92,-5.04],[8.8,-1.11],[9.8,3.07],[9.4,3.73],[8.5,4.77],[5.9,4.26],[4.33,6.27],[1.87,6.14],[-1.96,4.71],[-4.65,5.17],[-7.52,4.34],[-9.0,4.83],[-12.43,7.26],[-14.84,10.88],[-16.61,12.17],[-16.71,13.6],[-17.62,14.73],[-16.46,16.14],[-16.15,18.11],[-16.97,21.89],[-14.44,26.25],[-9.56,29.93],[-9.81,31.18],[-9.3,32.56],[-6.91,34.11],[-5.93,35.76],[-2.17,35.17],[1.47,36.61],[9.51,37.35],[10.21,37.23],[10.18,36.72],[11.1,36.9],[10.6,36.41],[10.94,35.7],[10.34,33.79],[15.25,32.27],[15.71,31.38],[19.09,30.27],[20.05,30.99],[20.13,32.24],[21.54,32.84],[28.91,30.87],[30.98,31.56],[31.96,30.93],[33.77,30.97],[34.56,31.55],[36.0,34.64],[36.16,36.65],[34.71,36.8],[32.51,36.11],[31.7,36.64],[29.7,36.14],[27.64,36.66],[26.32,38.21],[26.8,38.99],[26.17,39.46],[27.28,40.42],[28.82,40.46],[29.24,41.22],[31.15,41.09],[33.51,42.02],[35.17,42.04],[38.35,40.95],[40.37,41.01],[41.7,41.96],[41.45,42.65],[36.68,45.24],[38.23,46.24],[37.67,46.64],[39.12,47.26],[34.96,46.27],[35.02,45.65],[36.53,45.47],[36.33,45.11],[33.88,44.36],[33.33,44.56],[33.55,45.03],[32.45,45.33],[33.59,45.85],[33.3,46.08],[30.75,46.58],[29.63,45.04],[28.84,44.91],[27.67,42.58],[28.81,41.05],[27.62,41.0],[26.36,40.15],[26.06,40.82],[24.93,40.95],[23.71,40.69],[24.41,40.13],[23.9,39.96],[22.63,40.26],[24.04,37.66],[23.12,37.92],[23.41,37.41],[22.78,37.31],[23.15,36.42],[22.49,36.41],[21.67,36.85],[21.12,38.31],[19.41,40.25],[19.54,41.72],[16.02,43.51],[14.9,45.08],[13.95,44.8],[13.94,45.59],[13.14,45.74],[12.33,45.38],[12.59,44.09],[15.14,41.96],[15.93,41.96],[15.89,41.54],[18.48,40.17],[18.29,39.81],[16.87,40.44],[16.45,39.8],[17.17,39.42],[17.05,38.9],[16.1,37.99],[15.68,37.91],[16.11,38.96],[15.41,40.05],[12.11,41.7],[10.51,42.93],[10.2,43.92],[8.89,44.37],[6.53,43.13],[3.1,43.08],[3.04,41.89],[0.81,41.01],[-0.28,39.31],[0.11,38.74],[-2.15,36.67],[-4.37,36.68],[-5.38,35.95],[-6.52,36.94],[-8.9,36.87],[-8.84,38.27],[-9.53,38.74],[-8.77,40.76],[-9.39,43.03],[-7.98,43.75],[-1.9,43.42],[-1.38,44.02],[-1.19,46.01],[-2.96,47.57],[-4.49,47.96],[-4.59,48.68],[-1.62,48.64],[-1.93,49.78],[-0.99,49.35],[1.34,50.13],[1.64,50.95],[3.83,51.62],[4.71,53.09],[8.12,53.53],[8.8,54.02],[8.12,55.52],[8.54,57.11],[10.58,57.73],[10.25,56.89],[10.91,56.46],[9.65,55.47],[9.94,54.6],[10.94,54.01],[12.52,54.47],[14.12,53.76],[17.62,54.85],[19.66,54.43],[21.27,55.19],[21.09,56.78],[21.58,57.41],[22.52,57.75],[24.12,57.03],[24.43,58.38],[23.43,58.61],[23.34,59.19],[27.98,59.48],[29.12,60.03],[28.07,60.5],[22.87,59.85],[21.32,60.72],[21.54,61.71],[21.06,62.61],[21.54,63.19],[25.4,65.11],[23.9,66.01],[22.18,65.72],[21.21,65.03],[21.37,64.41],[17.85,62.75],[17.12,61.34],[18.79,60.08],[17.87,58.95],[16.83,58.72],[15.88,56.1],[14.67,56.2],[14.1,55.41],[12.94,55.36],[10.36,59.47],[8.38,58.31],[7.05,58.08],[5.67,58.59],[4.99,61.97],[10.53,64.49],[14.76,67.81],[19.18,69.82],[23.02,70.2],[24.55,71.03],[28.17,71.19],[31.29,70.45],[30.01,70.19],[31.1,69.56],[32.13,69.91],[36.51,69.06],[41.06,67.46],[41.13,66.79],[38.38,66.0],[33.18,66.63],[34.81,65.9],[34.94,64.41],[37.01,63.85],[36.52,64.78],[37.18,65.14],[39.59,64.52],[40.44,64.76],[39.76,65.5],[42.09,66.48],[43.95,66.07],[44.53,66.76],[43.7,67.35],[44.19,67.95],[43.45,68.57],[46.25,68.25],[46.82,67.69],[45.56,67.57],[45.56,67.01],[46.35,66.67],[53.72,68.86],[54.47,68.81],[53.49,68.2],[58.8,68.88],[59.94,68.28],[61.08,68.94],[60.03,69.52],[60.55,69.85],[68.51,68.09],[69.18,68.62],[66.93,69.45],[67.26,69.93],[66.69,71.03],[68.54,71.93],[69.2,72.84],[72.59,72.78],[72.8,72.22],[71.85,71.41],[72.79,70.39],[72.56,69.02],[73.67,68.41],[71.28,66.32],[72.42,66.17],[75.05,67.76],[74.47,68.33],[74.94,68.99],[73.84,69.07],[73.6,69.63],[74.4,70.63],[73.1,71.45],[74.89,72.12],[74.66,72.83],[75.68,72.3],[75.29,71.34],[76.36,71.15],[75.9,71.87],[77.58,72.27],[81.5,71.75],[80.61,72.58],[80.51,73.65],[86.82,73.94],[86.01,74.46],[87.17,75.12],[100.76,76.43],[101.99,77.29],[104.35,77.7],[106.07,77.37],[104.71,77.13],[106.97,76.97]],[[49.11,41.28],[50.39,40.26],[49.57,40.18],[48.86,38.82],[49.2,37.58],[50.84,36.87],[53.83,36.97],[53.88,38.95],[53.1,39.29],[53.36,39.98],[52.69,40.03],[52.92,40.88],[54.74,40.95],[53.72,42.12],[52.92,41.87],[52.81,41.14],[52.5,42.79],[51.34,43.13],[50.31,44.61],[51.28,44.51],[51.32,45.25],[53.04,45.26],[53.04,46.85],[51.19,47.05],[49.1,46.4],[46.68,44.61],[49.11,41.28]],[[-110.19,77.7],[-113.53,77.73],[-109.85,78.0],[-110.19,77.7]],[[24.72,77.85],[20.73,77.68],[21.42,77.94],[20.81,78.25],[22.88,78.45],[24.72,77.85]],[[-109.66,78.6],[-112.54,78.41],[-111.5,78.85],[-109.66,78.6]],[[-95.83,78.06],[-98.12,78.08],[-98.63,78.87],[-95.56,78.42],[-95.83,78.06]],[[-100.06,78.32],[-99.67,77.91],[-105.18,78.38],[-104.21,78.68],[-105.49,79.3],[-100.06,78.32]],[[105.08,78.31],[99.44,77.92],[102.09,79.35],[105.37,78.71],[105.08,78.31]],[[18.25,79.7],[21.54,78.96],[19.03,78.56],[17.12,76.81],[15.91,76.77],[13.76,77.38],[14.67,77.74],[11.22,78.87],[10.44,79.65],[16.99,80.05],[18.25,79.7]],[[25.45,80.41],[27.41,80.06],[23.02,79.4],[17.37,80.32],[25.45,80.41]],[[51.14,80.55],[47.59,80.01],[46.5,80.25],[47.07,80.56],[44.85,80.59],[51.52,80.7],[51.14,80.55]],[[99.94,78.88],[94.97,79.04],[91.18,80.34],[95.94,81.25],[100.19,79.78],[99.94,78.88]],[[-87.02,79.66],[-85.81,79.34],[-90.8,78.22],[-92.88,78.34],[-93.95,78.75],[-93.15,79.38],[-94.97,79.37],[-96.71,80.16],[-94.3,80.98],[-94.74,81.21],[-92.41,81.26],[-87.81,80.32],[-87.02,79.66]],[[-68.5,83.11],[-61.85,82.63],[-67.66,81.5],[-65.48,81.51],[-71.18,79.8],[-76.91,79.32],[-75.53,79.2],[-76.22,79.02],[-75.39,78.53],[-79.76,77.21],[-77.89,76.78],[-80.56,76.18],[-89.49,76.47],[-89.62,76.95],[-87.77,77.18],[-88.26,77.9],[-84.98,77.54],[-87.96,78.37],[-85.09,79.35],[-86.93,80.25],[-81.85,80.46],[-87.6,80.52],[-91.59,81.89],[-85.5,82.65],[-83.18,82.32],[-82.42,82.86],[-79.31,83.13],[-68.5,83.11]],[[-27.1,83.52],[-20.85,82.73],[-31.9,82.2],[-22.07,81.73],[-23.17,81.15],[-15.77,81.91],[-12.21,81.29],[-20.05,80.18],[-17.73,80.13],[-19.7,78.75],[-19.67,77.64],[-18.47,76.99],[-21.68,76.63],[-19.83,76.1],[-19.6,75.25],[-20.67,75.16],[-19.37,74.3],[-21.59,74.22],[-20.43,73.82],[-20.76,73.46],[-23.57,73.31],[-22.3,72.18],[-24.79,72.33],[-22.13,71.47],[-21.75,70.66],[-23.54,70.47],[-25.54,71.43],[-25.2,70.75],[-26.36,70.23],[-22.35,70.13],[-27.75,68.47],[-31.78,68.12],[-34.2,66.68],[-39.81,65.46],[-40.67,64.84],[-41.19,63.48],[-42.82,62.68],[-42.42,61.9],[-43.38,60.1],[-48.26,60.86],[-51.63,63.63],[-52.28,65.18],[-53.66,66.1],[-53.3,66.84],[-53.97,67.19],[-52.98,68.36],[-51.48,68.73],[-50.87,69.93],[-53.46,69.28],[-54.68,69.61],[-54.36,70.82],[-51.39,70.57],[-55.83,71.65],[-54.72,72.59],[-58.59,75.52],[-61.27,76.1],[-68.5,76.06],[-71.4,77.01],[-66.76,77.38],[-73.3,78.04],[-73.16,78.43],[-65.71,79.39],[-65.32,79.76],[-68.02,80.12],[-62.23,81.32],[-62.65,81.77],[-57.21,82.19],[-53.04,81.89],[-50.39,82.44],[-44.52,81.66],[-46.9,82.2],[-46.76,82.63],[-38.62,83.55],[-27.1,83.52]]]</script>
+<script type="application/json" id="border-data">[[[-130.54,54.8],[-129.98,55.28],[-130.01,55.92],[-131.71,56.55],[-133.36,58.41],[-135.48,59.79],[-137.45,58.91],[-139.04,60],[-141.0,60.31],[-140.99,69.71]],[[-117.13,32.54],[-114.72,32.72],[-114.81,32.53],[-111.02,31.33],[-108.24,31.34],[-108.24,31.75],[-106.51,31.75],[-105.04,30.64],[-104.46,29.57],[-103.94,29.27],[-103.11,28.97],[-102.48,29.76],[-101.66,29.78],[-100.96,29.38],[-99.52,27.54],[-99.02,26.37],[-97.14,25.87]],[[-90.1,13.74],[-89.35,14.42]],[[-92.23,14.54],[-92.23,15.25],[-91.75,16.07],[-90.46,16.07],[-90.44,16.41],[-91.45,17.25],[-91.0,17.25],[-91.0,17.82],[-89.14,17.81]],[[-88.93,15.89],[-89.23,15.89],[-89.14,17.81]],[[-89.35,14.42],[-88.5,13.85],[-87.86,13.89],[-87.79,13.38]],[[-87.32,12.98],[-86.73,13.26],[-86.76,13.75],[-86.31,13.77],[-86.1,14.04],[-85.8,13.84],[-84.92,14.79],[-84.45,14.62],[-83.15,15.0]],[[-82.97,8.23],[-82.72,8.93],[-82.93,9.48],[-82.55,9.57]],[[-83.66,10.94],[-83.9,10.73],[-84.67,11.08],[-85.71,11.09]],[[-77.35,8.67],[-77.24,7.94],[-77.43,7.64],[-77.75,7.71],[-77.88,7.22]],[[-71.33,11.78],[-71.97,11.61],[-72.91,10.45],[-73.3,9.15],[-72.79,9.09],[-72.44,8.41],[-72.44,7.42],[-71.96,6.99],[-70.09,6.96],[-69.39,6.1],[-67.7,6.27],[-67.34,6.1],[-67.82,4.5],[-67.3,3.32],[-67.81,2.82],[-67.18,2.25],[-66.88,1.25]],[[-75.37,-0.15],[-75.23,-0.91],[-75.55,-1.56],[-76.64,-2.61],[-77.84,-3.0],[-78.64,-4.55],[-79.21,-4.96],[-79.62,-4.45],[-80.44,-4.43],[-80.47,-4.06],[-80.18,-3.82],[-80.3,-3.4]],[[-69.53,-10.95],[-70.55,-11.01],[-70.48,-9.49],[-71.3,-10.08],[-72.18,-10.05],[-72.56,-9.52],[-73.23,-9.46],[-73.02,-9.03],[-73.99,-7.52],[-73.72,-7.34],[-73.72,-6.92],[-73.12,-6.63],[-73.22,-6.09],[-72.89,-5.27],[-70.79,-4.25],[-69.89,-4.3]],[[-66.96,-54.9],[-68.63,-54.87],[-68.63,-52.64]],[[-68.63,-52.3],[-71.91,-52.01],[-72.33,-51.43],[-72.31,-50.68],[-72.98,-50.74],[-73.33,-50.38],[-73.42,-49.32],[-72.65,-48.88],[-72.33,-48.24],[-72.45,-47.74],[-71.92,-46.88],[-71.55,-45.56],[-71.66,-44.97],[-71.22,-44.78],[-71.33,-44.41],[-71.79,-44.21],[-71.46,-43.79],[-71.92,-43.41],[-72.15,-42.25],[-71.75,-42.05],[-71.92,-40.83],[-71.41,-38.92],[-70.81,-38.55],[-71.12,-36.66],[-70.36,-36.01],[-70.39,-35.17],[-69.82,-34.19],[-69.81,-33.27],[-70.07,-33.09],[-70.54,-31.36],[-69.92,-30.34],[-70.01,-29.37],[-69.66,-28.46],[-68.3,-26.9],[-68.59,-26.51],[-68.39,-26.18],[-68.42,-24.52],[-67.33,-24.03],[-66.99,-22.99],[-67.11,-22.74]],[[-58.43,-33.91],[-57.63,-30.22]],[[-54.63,-25.74],[-54.79,-26.62],[-55.7,-27.39],[-56.49,-27.55],[-58.62,-27.12],[-57.63,-25.6],[-57.78,-25.16],[-60.03,-24.03],[-60.85,-23.88],[-62.69,-22.25]],[[-58.17,-20.18],[-57.87,-20.73],[-57.94,-22.09],[-56.88,-22.28],[-56.47,-22.09],[-55.8,-22.36],[-55.4,-23.96],[-54.65,-23.84],[-54.29,-24.02],[-54.63,-25.74]],[[-59.76,8.37],[-60.55,7.78],[-60.64,7.42],[-60.3,7.04],[-61.16,6.7],[-61.14,6.23],[-61.41,5.96],[-60.73,5.2]],[[-56.54,1.9],[-57.34,1.95],[-58.54,1.27],[-59.03,1.32],[-59.65,1.79],[-59.97,2.76],[-59.54,3.96],[-60.11,4.57],[-59.98,5.01],[-60.21,5.24],[-60.73,5.2]],[[-54.52,2.31],[-55.97,2.51],[-56.0,1.82],[-56.54,1.9]],[[-51.66,4.16],[-52.94,2.12],[-53.42,2.05],[-53.78,2.38],[-54.09,2.11],[-54.52,2.31]],[[115.45,5.45],[115.35,4.32],[114.87,4.35],[114.66,4.01],[114.2,4.53]],[[-6.2,53.87],[-7.57,54.06],[-7.37,54.6],[-7.57,55.13]],[[-16.71,13.59],[-15.62,13.62],[-15.08,13.88],[-14.69,13.63],[-14.05,13.79],[-13.84,13.51],[-14.28,13.28],[-15.14,13.51],[-15.93,13.13],[-16.84,13.15]],[[35.55,32.39],[35.4,31.49]],[[28.98,-28.96],[29.33,-29.26],[28.85,-30.07],[28.29,-30.23],[28.11,-30.55],[27.75,-30.65],[27.0,-29.88],[28.07,-28.85],[28.54,-28.65],[28.98,-28.96]],[[-8.67,27.66],[-8.69,25.88],[-11.97,25.93],[-11.94,23.37],[-12.87,23.28],[-13.12,22.77],[-12.93,21.33],[-16.85,21.33],[-17.06,21.0]],[[-8.68,27.4],[-4.92,24.97]],[[-12.17,14.62],[-11.93,13.42],[-11.55,13.14],[-11.51,12.44]],[[-13.7,12.59],[-13.74,11.81],[-14.69,11.53],[-15.13,11.04]],[[-11.51,12.44],[-11.46,12.08],[-10.87,12.18],[-10.17,11.84],[-9.13,12.31],[-8.38,11.39],[-8.62,10.81],[-8.28,10.79],[-8.34,10.49],[-8.03,10.21]],[[-11.44,6.79],[-10.23,8.41]],[[-8.44,7.69],[-8.39,6.91],[-8.6,6.47],[-7.57,5.71],[-7.71,4.36]],[[8.42,36.95],[8.22,36.43],[8.38,35.48],[8.14,34.66],[7.52,34.1],[7.61,33.34],[9.06,32.1],[9.48,30.31]],[[11.49,33.14],[11.43,32.37],[9.95,31.38],[9.97,30.54],[9.48,30.31]],[[25.16,31.57],[24.8,31.09],[24.96,30.66],[24.7,30.04],[25,29.24],[25,22]],[[4.27,19.16],[4.27,16.85],[3.72,16.18],[3.64,15.57],[1.39,15.32],[1.02,14.97],[0.37,14.93]],[[0.37,14.93],[0.43,13.99],[0.99,13.34],[1.02,12.85],[2.18,12.63],[2.15,11.94]],[[-2.86,4.99],[-2.81,5.39],[-3.24,6.25],[-2.56,8.22],[-2.83,9.64]],[[1.06,5.93],[0.57,6.91],[0.71,8.31],[0.46,8.68],[0.37,10.19],[-0.05,10.71],[0.02,11.02]],[[0.9,11.0],[0.77,10.47],[1.43,9.83],[1.66,9.13],[1.62,6.83],[1.87,6.14]],[[2.15,11.94],[2.85,12.24],[3.61,11.66]],[[3.61,11.66],[3.68,12.55],[4.37,13.75],[5.44,13.87],[6.82,13.12],[7.8,13.34],[9.01,12.83],[10.99,13.39],[12.3,13.04],[13.32,13.56]],[[36.87,22],[25,22]],[[14.85,22.86],[15.1,21.31],[15.9,20.39],[15.3,17.93],[15.25,16.63],[13.97,15.68],[13.54,14.37],[13.96,14.0],[13.95,13.35],[14.6,13.33],[14.5,12.86]],[[23.84,19.58],[23.89,15.61],[23.02,15.68],[22.3,14.33],[22.51,14.09],[22.18,13.79],[22.3,13.37],[21.94,12.59],[22.29,12.65],[22.86,11.14]],[[15.28,7.42],[14.54,6.23],[14.48,4.73],[15.86,3.01],[16.01,2.27]],[[11.28,2.26],[11.29,1.06],[9.49,1.01]],[[13.08,2.27],[13.0,1.83],[13.28,1.31],[14.03,1.4],[14.28,1.2],[13.84,0.04],[14.32,-0.55],[14.3,-2.0],[13.99,-2.47],[13.11,-2.43],[12.58,-1.95],[12.5,-2.39],[11.48,-2.77],[11.86,-3.43],[11.09,-3.98]],[[16.01,2.27],[17.13,3.73],[18.45,3.5]],[[22.86,11.14],[23.55,10.09],[23.39,9.27],[23.81,8.67]],[[36.43,14.42],[37.59,14.21],[37.91,14.96],[38.51,14.51],[39.1,14.74],[40.03,14.52],[40.9,14.12],[42.35,12.54]],[[43.15,11.46],[42.78,10.93]],[[29.58,-1.34],[29.82,-1.44],[30.42,-1.13]],[[30.42,-1.13],[30.82,-1.7],[30.76,-2.29],[30.47,-2.41]],[[23.91,-10.93],[24.02,-12.91],[21.93,-12.9],[21.89,-16.08],[23.22,-17.52]],[[23.22,-17.52],[24.68,-17.35],[25.08,-17.58],[24.93,-17.72]],[[32.07,-26.73],[31.87,-27.18],[31.28,-27.29],[30.69,-26.74],[31.04,-25.73],[31.84,-25.84]],[[25.26,-17.74],[26.16,-19.29],[27.3,-20.39],[27.72,-20.5],[28.02,-21.49],[28.79,-21.64],[29.43,-22.09]],[[30.27,-15.51],[30.34,-15.88],[31.17,-15.86],[32.85,-16.71],[32.66,-20.3],[32.25,-21.12],[31.19,-22.25]],[[32.83,-26.74],[32.07,-26.73]],[[-9.03,41.88],[-8.26,42.28],[-8.01,41.79],[-6.67,41.88],[-6.39,41.38],[-6.85,41.11],[-7.07,39.71],[-7.5,39.63],[-7.1,39.03],[-7.37,38.37],[-7.03,38.08],[-7.54,37.43],[-7.45,37.1]],[[2.99,42.47],[1.83,42.34],[0.7,42.8],[0.34,42.58],[-1.5,43.03],[-1.9,43.42]],[[9.92,54.98],[8.53,54.96]],[[6.19,49.46],[8.1,49.02],[7.59,48.33],[7.47,47.62]],[[14.12,53.76],[14.35,53.25],[14.07,52.98],[14.44,52.62],[14.61,51.75],[15.02,51.11]],[[9.59,47.53],[9.48,47.1],[10.44,46.89]],[[10.44,46.89],[11.05,46.75],[12.15,47.12],[12.38,46.77],[13.81,46.51]],[[19.66,54.43],[22.73,54.33],[23.24,54.22],[23.48,53.91],[23.8,52.69],[23.2,52.49],[24.03,50.71],[23.92,50.42],[23.43,50.31],[22.52,49.48],[22.78,49.03],[21.61,49.47],[19.83,49.22],[19.32,49.57],[18.91,49.44],[18.39,49.99],[17.65,50.05],[17.55,50.36],[16.87,50.47],[16.72,50.22],[16.18,50.42],[16.24,50.7],[15.49,50.78],[15.02,51.11]],[[24.31,57.79],[25.16,57.97],[26.46,57.48],[27.29,57.47]],[[27.98,59.48],[28.13,59.3],[27.42,58.72],[27.72,57.79],[27.29,57.47]],[[28.18,56.17],[29.23,55.92],[29.37,55.67],[29.9,55.79],[30.87,55.55],[30.97,55.08],[30.76,54.81],[31.79,53.97],[31.73,53.79],[32.69,53.35],[31.31,53.07],[31.79,52.1]],[[6.91,53.48],[7.09,53.14],[6.84,52.23],[6.59,51.85],[5.99,51.85],[6.16,50.8]],[[6.16,50.8],[6.04,50.13]],[[6.04,50.13],[6.19,49.46]],[[21.27,55.19],[22.76,54.86],[22.73,54.33]],[[21.06,56.03],[22.2,56.34],[24.86,56.37],[26.49,55.62]],[[18.85,49.5],[16.96,48.6]],[[16.96,48.6],[16.98,48.12]],[[22.09,48.42],[22.64,48.15],[22.71,47.88],[22.1,47.67],[21.02,46.32],[19.6,46.17],[18.46,45.76],[17.63,45.95],[16.2,46.85]],[[18.45,42.48],[18.56,42.65],[17.67,43.03],[15.75,44.82],[15.96,45.23],[16.32,45.0],[17.0,45.23],[19.01,44.86]],[[22.56,49.09],[21.87,48.32],[20.8,48.62],[17.86,47.76],[16.98,48.12]],[[16.56,46.5],[15.77,46.24],[15.33,45.45],[14.6,45.63],[13.72,45.5]],[[26.62,48.22],[28.13,46.81],[28.23,45.49]],[[28.56,43.71],[27.24,44.18],[25.57,43.69],[22.94,43.82],[22.66,44.23]],[[22.66,44.23],[22.41,44.01],[22.5,43.64],[22.99,43.21],[22.36,42.32]],[[22.71,47.88],[23.14,48.1],[24.87,47.74],[26.62,48.22]],[[31.79,52.1],[33.75,52.34],[34.39,51.77],[34.14,51.57],[34.22,51.26],[35.02,51.21],[35.36,50.58],[36.63,50.23],[37.39,50.38],[38.01,49.92],[40.07,49.6],[39.67,48.78],[39.9,48.23],[39.74,47.9],[38.77,47.83],[38.26,47.55],[38.22,47.1]],[[28.0,42.01],[27.14,42.14],[26.12,41.83],[26.11,41.33],[25.2,41.23],[24.49,41.58],[22.95,41.34],[22.88,42.0],[22.38,42.32]],[[22.95,41.34],[21.02,40.84]],[[26.12,41.83],[26.6,41.56],[26.06,40.82]],[[21.02,40.84],[20.15,39.62]],[[41.55,41.54],[42.62,41.58],[43.58,41.09]],[[39.95,43.44],[42.39,43.22],[43.93,42.55],[44.54,42.71],[45.47,42.5],[45.78,42.09],[46.4,41.86],[46.15,41.72],[46.64,41.18],[45.96,41.12],[45.22,41.41],[44.97,41.25]],[[28.59,69.06],[28.45,68.36],[29.98,67.7],[29.05,66.94],[30.22,65.81],[29.54,64.95],[30.44,64.2],[30.04,63.55],[31.52,62.87],[31.14,62.36],[28.07,60.5]],[[35.4,31.48],[34.92,29.5]],[[38.79,33.38],[39.2,32.16]],[[47.97,29.98],[47.3,30.06],[46.57,29.1]],[[48.57,29.93],[48.01,30.45],[48.0,30.99],[47.69,30.98],[47.85,31.71],[47.33,32.47],[46.11,33.02],[45.42,33.97],[45.65,34.75],[46.15,35.09],[46.08,35.68],[45.42,35.98],[44.77,37.17]],[[53.92,37.2],[54.8,37.39],[55.51,37.96],[57.33,38.03],[59.23,37.41],[60.38,36.53],[61.12,36.49],[61.21,35.65]],[[53.11,16.65],[52,19]],[[42.78,16.35],[43.22,16.67],[43.12,17.09],[43.38,17.58],[43.79,17.32],[46.75,17.28],[47,16.95],[47.47,17.12],[48.18,18.17],[49.12,18.62],[52,19]],[[20.65,69.11],[23.54,67.94],[23.57,66.4],[23.9,66.01]],[[48.42,28.55],[47.71,28.53],[47.46,29.0],[46.57,29.1]],[[51.39,24.63],[50.81,24.75]],[[56.07,26.06],[56.26,25.71]],[[56.4,24.92],[55.89,24.92],[55.8,24.27],[55.98,24.13],[55.53,23.93],[55.21,22.71]],[[49.1,46.4],[48.59,46.56],[48.69,47.08],[48.06,47.74],[47.32,47.72],[46.47,48.39],[47.04,49.15],[46.75,49.36],[47.55,50.45],[48.58,49.87],[48.7,50.61],[50.77,51.69],[52.33,51.72],[55.72,50.62],[56.78,51.04],[58.36,51.06],[59.64,50.55],[59.93,50.84],[61.34,50.8],[61.59,51.27],[59.97,51.96],[60.93,52.45],[60.74,52.72],[61.7,52.98],[60.98,53.67],[61.44,54.01],[65.18,54.35],[68.17,54.97],[69.07,55.39],[70.87,55.17],[71.18,54.13],[72.22,54.38],[73.51,54.04],[73.43,53.49],[74.38,53.55],[76.89,54.49],[76.53,54.18],[77.8,53.4],[80.04,50.86],[80.57,51.39],[81.95,50.81],[83.38,51.07],[85.54,49.69],[86.83,49.83],[87.36,49.22]],[[70.96,42.27],[71.26,42.17],[70.42,41.52],[71.16,41.14],[71.87,41.39],[73.06,40.87],[71.77,40.15],[70.6,40.22],[70.46,40.5],[70.67,40.96],[69.33,40.73],[68.54,39.53],[67.7,39.58],[67.44,39.14],[68.18,38.9],[68.39,38.16],[67.83,37.15]],[[66.52,37.36],[65.75,37.66],[65.59,37.31],[64.75,37.11],[64.55,36.31],[63.19,35.86],[62.98,35.4],[62.23,35.27],[61.21,35.65]],[[67.83,37.15],[68.14,37.02],[68.86,37.34],[69.2,37.15],[69.52,37.61],[70.12,37.59],[70.81,38.49],[71.35,38.26],[71.24,37.95],[71.54,37.91],[71.45,37.07],[71.84,36.74],[73.26,37.5],[74.98,37.42]],[[80.26,42.35],[80.12,42.12],[78.54,41.58],[78.19,41.19],[76.9,41.07],[76.53,40.43],[75.47,40.56],[74.78,40.37],[73.82,39.89],[73.96,39.66],[73.68,39.43]],[[73.68,39.43],[73.93,38.51],[74.86,38.38],[74.98,37.42]],[[74.45,32.76],[75.26,32.27]],[[97.33,28.26],[97.4,27.88],[97.05,27.7],[97.13,27.08],[96.42,27.26],[95.12,26.57],[95.16,26.0],[94.11,23.85],[93.33,24.08],[93.17,22.28],[92.67,22.04]],[[88.12,27.88],[85.82,28.2],[84.23,28.84],[83.9,29.32],[82.33,30.12],[81.53,30.42],[81.11,30.18]],[[88.81,27.3],[90.02,28.3],[91.7,27.77]],[[92.37,20.67],[92.3,21.48],[92.65,21.32],[92.67,22.04]],[[97.33,28.26],[97.91,28.34],[98.25,27.75],[98.68,27.51],[98.67,25.92],[97.72,25.08],[97.6,23.9],[98.66,24.06],[98.9,23.14],[99.53,22.95],[99.24,22.12],[100.42,21.56],[101.15,21.85],[101.18,21.44]],[[100.12,20.42],[100.55,20.11],[100.61,19.51],[101.28,19.46],[101.06,17.51],[102.11,18.11],[103.0,17.96],[103.2,18.31],[103.96,18.24],[104.72,17.43],[104.78,16.44],[105.59,15.57],[105.54,14.72],[105.22,14.27],[104.28,14.42],[102.99,14.23],[102.35,13.39],[102.58,12.19]],[[101.18,21.44],[101.27,21.2],[101.8,21.17],[101.65,22.32],[102.17,22.46]],[[107.38,14.2],[107.61,13.54],[107.49,12.34],[105.81,11.57],[106.25,10.96],[105.2,10.89],[104.33,10.49]],[[102.17,22.46],[102.71,22.71],[104.48,22.82],[105.33,23.35],[105.81,22.98],[106.73,22.79],[106.57,22.22],[107.04,21.81],[108.05,21.55]],[[102.14,6.22],[101.81,5.81],[101.15,5.69],[101.08,6.2],[100.26,6.64],[100.09,6.46]],[[117.88,4.14],[115.87,4.31],[114.62,1.43],[113.81,1.22],[112.86,1.5],[112.38,1.41],[111.8,0.9],[110.51,0.77],[109.83,1.34],[109.66,2.01]],[[87.75,49.3],[88.81,49.47],[92.23,50.8],[93.1,50.5],[94.15,50.48],[94.82,50.01],[97.26,49.73],[98.23,50.42],[97.83,51.01],[98.86,52.05],[102.07,51.26],[102.26,50.51],[103.68,50.09],[105.89,50.41],[106.89,50.27],[108.48,49.28],[110.66,49.13],[112.9,49.54],[114.36,50.25],[115.49,49.81],[116.68,49.89]],[[124.27,39.93],[126.18,41.11],[126.87,41.82],[127.34,41.5],[128.21,41.47],[128.05,41.99],[129.6,42.42],[129.99,42.99],[130.64,42.4]],[[128.35,38.61],[128.21,38.37],[127.07,38.26],[126.68,37.8],[126.17,37.75]],[[124.97,-8.89],[125.09,-9.39]],[[141.0,-2.6],[141.03,-9.12]],[[11.91,-5.04],[12.62,-4.44],[13.0,-4.78]],[[19.01,44.86],[19.37,44.86],[19.12,44.42],[19.6,44.04],[19.45,43.57],[19.22,43.52]],[[48.58,41.81],[47.82,41.15],[46.4,41.86]],[[42.35,37.23],[41.84,36.61],[41.29,36.36],[41.38,35.63],[41.01,34.42],[38.79,33.38]],[[35.82,33.28],[35.55,33.26]],[[32.73,35.14],[33.97,35.06]],[[19.22,43.52],[20.26,42.81]],[[44.97,41.25],[45.56,40.81],[45.36,40.56],[45.89,40.22],[45.61,39.9],[46.48,39.46],[46.51,38.77]],[[-122.84,49],[-95.16,49],[-95.16,49.38],[-94.82,49.39],[-94.64,48.84],[-94.33,48.67],[-91.64,48.14],[-90.83,48.27],[-89.27,48.02],[-88.38,48.3],[-84.88,46.9],[-84.6,46.44],[-84.14,46.51],[-83.89,46.12],[-83.47,45.99],[-83.59,45.82],[-82.55,45.35],[-82.14,43.57],[-83.12,42.08],[-82.69,41.68],[-78.94,42.86],[-79.17,43.47],[-78.72,43.63],[-76.82,43.63],[-74.87,45.0],[-71.51,45.01],[-71.41,45.26],[-70.66,45.46],[-70.0,46.69],[-69.24,47.45],[-68.91,47.19],[-68.23,47.35],[-67.79,47.07],[-67.79,45.7],[-67.14,45.14]],[[38.41,18.0],[37.9,17.43],[36.85,16.96],[36.32,14.82],[36.43,14.42]],[[47.79,8.0],[44.96,5.0],[43.66,4.96],[42.77,4.25],[42.13,4.23],[41.86,3.92]],[[41.86,3.92],[41.17,3.92],[40.77,4.26],[39.85,3.84],[39.56,3.42],[38.12,3.6],[36.86,4.45],[36.16,4.45],[35.82,4.78]],[[39.2,-4.68],[37.77,-3.68],[37.7,-3.1],[33.9,-0.95]],[[-8.67,27.66],[-8.79,27.12],[-9.74,26.86],[-11.39,26.88],[-11.72,26.1],[-12.03,26.03],[-12.5,24.77],[-13.89,23.69],[-14.22,22.31],[-14.75,21.5],[-17.0,21.42]],[[11.03,58.86],[12.3,60.12],[12.63,61.29],[11.99,61.8],[11.93,63.13],[12.58,64.07],[13.57,64.05],[13.92,64.45],[13.56,64.79],[16.77,68.01],[17.73,68.01],[17.99,68.57],[19.88,68.41],[20.03,69.07],[20.65,69.11]],[[40.32,-10.32],[39.52,-10.9],[37.83,-11.27],[37.47,-11.57],[36.51,-11.72],[35.31,-11.44],[34.56,-11.52]],[[32.76,-9.23],[33.23,-9.68],[33.49,-10.53],[33.11,-11.61],[33.31,-12.44],[32.69,-13.71],[33.21,-13.97]],[[34.56,-11.52],[34.28,-12.28],[34.56,-13.58],[35.27,-13.89],[35.69,-14.61],[35.77,-15.9],[35.34,-16.11],[35.03,-16.8],[34.38,-16.18],[34.46,-14.61],[34.06,-14.36],[33.79,-14.45],[33.21,-13.97]],[[30.83,3.51],[30.77,2.34],[31.17,2.2],[30.47,1.58],[29.88,0.6],[29.58,-1.34]],[[30.47,-2.41],[30.75,-3.36],[29.75,-4.45],[29.34,-4.5]],[[20.26,42.81],[20.81,43.27],[21.78,42.68],[21.58,42.25]],[[-71.71,18.05],[-71.95,18.62],[-71.7,18.79],[-71.71,19.71]],[[48.95,11.41],[48.94,9.45],[47.79,8.0]],[[-69.59,-17.58],[-69.86,-18.09],[-70.37,-18.35]],[[34.92,29.5],[34.27,31.22]],[[35.72,32.71],[35.55,32.4]],[[35.82,33.28],[36.07,33.82],[36.61,34.2],[36.45,34.59],[36.0,34.64]],[[35.55,32.4],[35.18,32.53],[34.97,31.87],[35.23,31.75],[34.93,31.35],[35.4,31.48]],[[35.7,32.72],[35.82,33.28]],[[29.0,9.6],[30.0,10.29],[30.84,9.71],[31.35,9.81],[32.4,11.08],[32.07,11.97],[32.67,12.02],[32.74,12.25],[33.21,12.18],[33.21,10.72],[33.72,10.33],[33.96,9.46]],[[23.89,8.62],[24.54,8.92],[25.07,10.27],[25.79,10.41],[26.75,9.47],[27.83,9.6]],[[34.01,4.25],[33.39,3.79],[31.88,3.56],[31.25,3.78],[30.83,3.51]],[[27.83,9.6],[27.97,9.4],[28.97,9.4],[29.0,9.6]],[[35.9,4.61],[34.41,4.63],[34.01,4.25]],[[35.82,4.78],[35.82,5.34],[35.3,5.51]],[[33.94,-9.69],[33.74,-9.42],[32.76,-9.23]],[[34.56,-11.52],[34.28,-10.16],[33.94,-9.69]],[[-2.17,35.17],[-1.79,34.53],[-1.39,32.86],[-1.12,32.65],[-1.31,32.26]],[[-1.31,32.26],[-2.62,32.09],[-3.07,31.72],[-3.65,31.64],[-3.69,30.9],[-4.86,30.5],[-5.24,30.0],[-7.06,29.58],[-8.67,28.84],[-8.67,27.66]],[[75.16,37.13],[75.9,36.67]],[[78.81,33.51],[79.21,32.99]],[[77.84,35.49],[78.91,34.32],[78.81,33.51]],[[91.7,27.77],[92.5,27.9],[94.57,29.28],[95.4,29.03],[96.12,29.45],[96.59,28.83],[96.25,28.41],[97.33,28.26]],[[-57.15,5.97],[-57.31,5.07],[-57.91,4.81],[-58.04,4.06],[-57.6,3.33]],[[-53.96,5.76],[-54.48,4.9],[-54.4,4.21],[-54.01,3.62],[-54.18,3.19]],[[-57.6,3.33],[-57.28,3.33],[-56.54,1.9]],[[-54.18,3.19],[-54.52,2.31]],[[42.78,10.93],[42.56,10.57],[43.68,9.18],[46.95,8.0],[47.79,8.0]],[[41.86,3.92],[40.98,2.78],[40.99,-0.86],[41.59,-1.68]],[[77.84,35.49],[77.29,35.05]],[[33.44,45.97],[33.7,46.22],[35.01,45.74]],[[75.26,32.27],[74.41,31.69],[74.42,30.98],[71.78,27.91],[70.62,27.99],[69.51,26.94],[70.17,26.49],[70.28,25.72],[70.84,25.22],[71.04,24.36],[68.84,24.36],[68.18,23.69]],[[-60.73,5.2],[-60.6,4.92],[-60.97,4.54],[-63.09,3.77],[-64.82,4.06],[-64.37,3.8],[-64.27,2.5],[-63.42,2.41],[-63.37,2.2],[-64.08,1.92],[-64.2,1.49],[-65.35,1.1],[-65.55,0.79],[-66.33,0.72],[-66.88,1.25]],[[44.79,39.71],[45.74,39.47],[46.14,38.74]],[[46.51,38.77],[46.14,38.74]],[[44.97,41.25],[43.58,41.09]],[[43.58,41.09],[43.66,40.25],[44.79,39.71]],[[44.79,39.71],[44.11,39.43],[44.42,38.28],[44.23,37.97],[44.77,37.17]],[[44.77,37.17],[44.29,37.0],[43.94,37.26],[42.78,37.39],[42.35,37.23]],[[42.35,37.23],[40.67,37.09],[39.52,36.72],[38.17,36.9],[37.07,36.62],[36.74,36.82],[36.69,36.26],[36.15,35.82]],[[38.79,33.38],[36.83,32.31],[35.7,32.72]],[[39.2,32.16],[37.0,31.51],[38.0,30.51],[37.5,30.0],[36.74,29.87],[36.07,29.2],[34.96,29.36]],[[46.57,29.1],[44.71,29.18],[41.89,31.19],[40.4,31.89],[39.2,32.16]],[[52,19],[55,20],[55.67,22],[55.21,22.71]],[[55.21,22.71],[55.01,22.5],[52.0,23.0],[51.58,24.25]],[[61.21,35.65],[60.53,33.68],[60.96,33.53],[60.54,32.98],[60.94,31.55],[61.7,31.38],[61.78,30.74],[60.87,29.83]],[[60.87,29.83],[61.77,28.7],[62.73,28.26],[62.76,27.38],[63.23,27.22],[63.32,26.76],[61.87,26.24],[61.5,25.08]],[[67.83,37.15],[66.52,37.36]],[[66.52,37.36],[66.55,37.97],[64.17,38.89],[62.37,40.05],[61.88,41.08],[61.55,41.27],[60.47,41.22],[60.08,41.43],[59.98,42.22],[58.63,42.75],[56.93,41.83],[57.1,41.32],[55.97,41.31]],[[74.98,37.42],[75.16,37.13]],[[75.16,37.13],[71.85,36.51],[71.26,36.07],[71.61,35.15],[71.12,34.73],[71.16,34.35],[70.88,33.99],[69.93,34.02],[70.32,33.36],[69.69,33.11],[69.26,32.5],[69.32,31.9],[68.93,31.62],[67.79,31.58],[67.68,31.3],[66.94,31.3],[66.38,30.74],[66.35,29.89],[65.05,29.47],[62.55,29.32],[60.87,29.83]],[[73.68,39.43],[71.78,39.28],[70.55,39.6],[69.46,39.53],[69.56,40.1],[70.65,39.94],[71.01,40.24]],[[87.36,49.22],[86.6,48.55],[85.77,48.46],[85.72,47.45],[85.16,47.0],[83.18,47.33],[82.46,45.54],[79.97,44.92],[80.87,43.18],[80.18,42.92],[80.26,42.35]],[[80.26,42.35],[79.14,42.86],[75.64,42.88],[74.21,43.3],[73.65,43.09],[73.49,42.5],[71.84,42.85],[71.19,42.7],[70.96,42.27]],[[70.96,42.27],[69.07,41.38],[68.63,40.67],[68.26,40.66],[67.99,41.14],[66.71,41.17],[66.51,41.99],[66.02,41.99],[66.1,43.0],[64.9,43.73],[62.01,43.5],[61.06,44.41],[58.5,45.59],[55.93,45.0],[55.97,41.31]],[[55.97,41.31],[55.46,41.26],[54.76,42.04],[54.08,42.32],[52.94,42.12],[52.5,41.78]],[[76.65,35.79],[77.84,35.49]],[[81.11,30.18],[80.48,29.73],[80.09,28.79],[83.3,27.36],[84.68,27.23],[85.25,26.73],[88.06,26.41],[88.12,27.88]],[[88.81,27.3],[88.84,27.1],[89.74,26.72],[92.03,26.84],[92.1,27.45],[91.7,27.77]],[[88.12,27.88],[88.73,28.09],[88.81,27.3]],[[92.67,22.04],[92.15,23.63],[91.87,23.62],[91.71,22.99],[91.16,23.5],[91.47,24.07],[91.92,24.13],[92.38,24.98],[89.92,25.27],[89.83,25.97],[88.56,26.45],[88.21,25.77],[88.93,25.24],[88.08,24.5],[88.7,24.23],[88.53,23.63],[89.03,22.06]],[[101.18,21.44],[100.12,20.42]],[[100.12,20.42],[98.96,19.75],[98.25,19.71],[97.8,18.63],[97.38,18.45],[98.9,16.18],[98.54,15.31],[98.19,15.12],[99.1,13.83],[99.2,12.8],[99.59,11.89],[98.55,9.93]],[[102.17,22.46],[103.2,20.77],[104.44,20.76],[104.82,19.89],[103.9,19.27],[105.09,18.67],[106.56,16.6],[107.31,15.91],[107.56,15.2],[107.38,14.2]],[[107.38,14.2],[106.5,14.57],[106.04,13.88],[105.22,14.27]],[[130.64,42.4],[130.78,42.22]],[[27.29,57.47],[27.77,57.24],[28.18,56.17]],[[28.18,56.17],[26.49,55.62]],[[31.79,52.1],[30.93,52.04],[30.62,51.82],[30.56,51.32],[25.33,51.91],[23.53,51.58]],[[26.49,55.62],[26.59,55.17],[25.77,54.85],[25.54,54.28],[24.45,53.91],[23.48,53.91]],[[20.65,69.11],[21.24,69.37],[22.36,68.84],[23.66,68.89],[24.74,68.65],[25.69,69.09],[26.18,69.83],[27.73,70.16],[29.02,69.77],[28.59,69.06]],[[28.59,69.06],[31.1,69.56]],[[26.62,48.22],[27.52,48.47],[28.67,48.12],[29.12,47.85],[29.05,47.51],[29.91,46.67],[30.02,46.42],[29.76,46.35],[28.86,46.44],[28.93,46.26],[28.23,45.49]],[[28.23,45.49],[29.6,45.29]],[[22.66,44.23],[22.47,44.41],[22.71,44.58],[22.46,44.7],[22.15,44.48],[21.56,44.77],[21.48,45.18],[20.87,45.42],[20.22,46.13]],[[21.02,40.84],[20.61,41.09],[20.59,41.86]],[[21.58,42.25],[20.59,41.86]],[[20.59,41.86],[20.52,42.22],[20.07,42.59]],[[20.07,42.59],[19.8,42.5],[19.74,42.69],[19.3,42.2],[19.37,41.88]],[[22.36,42.32],[21.58,42.25]],[[20.26,42.81],[20.07,42.59]],[[19.22,43.52],[18.71,43.2],[18.56,42.65]],[[19.01,44.86],[19.39,45.24],[18.83,45.91]],[[15.02,51.11],[14.31,51.12],[12.24,50.27],[12.52,49.55],[13.6,48.88]],[[13.6,48.88],[12.88,48.29],[12.93,47.47],[12.14,47.7],[10.54,47.57],[10.4,47.3],[9.59,47.53]],[[9.59,47.53],[8.52,47.83],[8.32,47.61],[7.47,47.62]],[[16.96,48.6],[15.25,49.04],[14.34,48.56],[13.6,48.88]],[[16.98,48.12],[16.9,47.71],[16.34,47.71],[16.53,47.5],[16.2,46.85]],[[16.2,46.85],[14.63,46.43],[13.81,46.51]],[[13.81,46.51],[13.7,46.02],[13.94,45.59]],[[10.44,46.89],[10.36,46.48],[9.92,46.31],[9.18,46.44],[8.97,46.04],[8.32,46.16],[7.27,45.78],[6.84,45.99]],[[7.47,47.62],[6.74,47.54],[6.77,47.29],[6.04,46.73],[6.02,46.27],[6.5,46.43],[6.84,45.99]],[[6.84,45.99],[7.1,45.33],[6.75,45.03],[7.01,44.25],[7.55,44.13],[7.44,43.69]],[[6.04,50.13],[5.78,50.09],[5.67,49.53]],[[5.67,49.53],[4.8,49.99],[4.29,49.91],[3.12,50.78],[2.66,50.8],[2.51,51.15]],[[6.16,50.8],[4.97,51.48],[3.31,51.35]],[[-4.92,24.97],[-6.45,24.96],[-5.49,16.33],[-5.32,16.2],[-5.54,15.5],[-9.55,15.49],[-9.7,15.26],[-10.65,15.13],[-11.67,15.39],[-11.83,14.8],[-12.17,14.62]],[[-12.17,14.62],[-13.44,16.04],[-14.58,16.6],[-16.12,16.46],[-16.46,16.14]],[[9.48,30.31],[9.86,28.96],[9.72,26.51],[9.32,26.09],[9.91,25.37],[10.3,24.38],[10.77,24.56],[11.56,24.1],[12.0,23.47]],[[12.0,23.47],[8.57,21.57],[5.68,19.6],[4.27,19.16]],[[4.27,19.16],[3.16,19.06],[3.15,19.69],[2.06,20.14],[1.82,20.61],[-4.92,24.97]],[[14.85,22.86],[14.14,22.49],[13.58,23.04],[12.0,23.47]],[[25,22],[25,20.0],[23.85,20],[23.84,19.58]],[[23.84,19.58],[15.86,23.41],[14.85,22.86]],[[22.86,11.14],[21.72,10.57],[21.0,9.48],[20.06,9.01],[18.81,8.98],[18.91,8.63],[17.96,7.89],[16.71,7.51],[16.29,7.75],[16.11,7.5],[15.28,7.42]],[[15.28,7.42],[15.44,7.69],[14.98,8.8],[13.95,9.55],[14.17,10.02],[15.47,9.98],[14.92,10.89],[14.89,12.22],[14.5,12.86]],[[14.5,12.86],[14.21,12.8],[14.18,12.48]],[[14.18,12.48],[14.58,12.09],[14.42,11.57],[13.57,10.8],[12.75,8.72],[12.22,8.31],[11.75,6.98],[11.06,6.64],[10.5,7.06],[10.12,7.04],[9.52,6.45],[9.23,6.44],[8.5,4.77]],[[-11.51,12.44],[-12.5,12.33],[-13.7,12.59]],[[-8.03,10.21],[-8.31,9.79],[-7.83,8.58],[-8.3,8.32],[-8.28,7.69],[-8.44,7.69]],[[-8.44,7.69],[-9.21,7.31],[-9.76,8.54],[-10.23,8.41]],[[-10.23,8.41],[-10.51,8.35],[-10.62,9.27],[-11.12,10.05],[-12.43,9.84],[-13.25,8.9]],[[0.37,14.93],[-0.52,15.12],[-1.07,14.97],[-2.0,14.56],[-3.1,13.54],[-3.52,13.34],[-4.01,13.47],[-4.43,12.54],[-5.22,11.71],[-5.4,10.37]],[[-5.4,10.37],[-6.05,10.1],[-6.21,10.52],[-6.67,10.43],[-6.85,10.14],[-8.03,10.21]],[[2.15,11.94],[0.9,11.0]],[[0.9,11.0],[0.02,11.02]],[[-2.83,9.64],[-3.51,9.9],[-4.33,9.61],[-5.4,10.37]],[[0.02,11.02],[-2.94,10.96],[-2.83,9.64]],[[3.61,11.66],[3.71,10.06],[2.91,9.14],[2.72,8.51],[2.69,6.26]],[[16.01,2.27],[15.94,1.73],[14.34,2.23],[13.08,2.27]],[[13.08,2.27],[11.28,2.26]],[[11.28,2.26],[9.65,2.28]],[[23.81,8.67],[25.11,7.83],[25.12,7.5],[27.37,5.23]],[[27.37,5.23],[25.65,5.26],[24.81,4.9],[24.41,5.11],[23.3,4.61],[22.84,4.71],[22.41,4.03],[20.93,4.32],[19.47,5.03],[18.54,4.2],[18.45,3.5]],[[36.43,14.42],[35.86,12.58],[35.26,12.08],[34.73,10.91],[34.26,10.63],[33.96,9.58]],[[33.96,9.58],[33.83,8.38],[33.29,8.35],[32.95,7.78],[33.57,7.71],[34.08,7.23],[35.3,5.51]],[[42.35,12.54],[42.78,12.46],[43.08,12.7]],[[42.78,10.93],[42.55,11.11],[41.76,11.05],[41.66,11.63],[42.35,12.54]],[[33.9,-0.95],[33.89,0.11],[35.04,1.91],[34.48,3.56],[34.01,4.25]],[[30.83,3.51],[29.72,4.6],[28.43,4.29],[27.98,4.41],[27.37,5.23]],[[18.45,3.5],[17.9,1.74],[17.64,-0.42],[16.41,-1.74],[15.97,-2.71],[16.01,-3.54],[14.58,-4.97],[14.14,-4.51],[13.6,-4.5],[13.26,-4.88],[13.0,-4.78]],[[13.0,-4.78],[12.63,-4.99],[12.44,-5.68],[12.18,-5.79]],[[29.58,-1.34],[29.29,-1.62],[29.02,-2.84]],[[29.02,-2.84],[29.28,-3.29],[29.34,-4.5]],[[29.34,-4.5],[29.62,-6.52],[30.2,-7.08],[30.74,-8.34]],[[30.74,-8.34],[29.0,-8.41],[28.45,-9.16],[28.67,-9.61],[28.37,-11.79],[29.34,-12.36],[29.62,-12.18],[29.7,-13.26],[28.93,-13.25],[28.16,-12.27],[27.39,-12.13],[27.16,-11.61],[26.55,-11.92],[25.75,-11.78],[25.42,-11.33],[24.31,-11.26],[24.26,-10.95],[23.91,-10.93]],[[23.91,-10.93],[22.16,-11.08],[22.21,-9.89],[21.88,-9.52],[21.95,-8.31],[21.73,-7.29],[20.51,-7.3],[20.6,-6.94],[20.09,-6.94],[20.04,-7.12],[19.42,-7.16],[19.02,-7.99],[18.46,-7.85],[17.47,-8.07],[16.33,-5.88],[13.38,-5.86],[12.32,-6.1]],[[30.47,-2.41],[29.94,-2.35],[29.63,-2.92],[29.02,-2.84]],[[30.42,-1.13],[33.9,-0.95]],[[32.76,-9.23],[30.74,-8.34]],[[33.21,-13.97],[30.18,-14.8],[30.27,-15.51]],[[30.27,-15.51],[29.52,-15.64],[28.95,-16.04],[28.83,-16.39],[28.47,-16.47],[27.04,-17.94],[25.08,-17.66]],[[23.22,-17.52],[21.38,-17.93],[18.96,-17.79],[18.26,-17.31],[14.06,-17.42],[13.46,-16.97],[12.81,-16.94],[11.73,-17.3]],[[24.93,-17.72],[23.58,-18.28],[23.2,-17.87],[20.91,-18.25],[20.88,-21.81],[19.9,-21.85],[19.9,-24.77]],[[29.43,-22.09],[27.12,-23.57],[26.49,-24.62],[25.94,-24.7],[25.66,-25.49],[25.03,-25.72],[24.21,-25.67],[23.31,-25.27],[21.61,-26.73],[20.89,-26.83],[20.67,-26.48],[20.76,-25.87],[19.9,-24.77]],[[31.19,-22.25],[29.43,-22.09]],[[32.07,-26.73],[31.84,-25.84]],[[31.84,-25.84],[31.93,-24.37],[31.19,-22.25]],[[-89.14,17.81],[-88.3,18.5]],[[-89.35,14.42],[-89.15,15.07],[-88.23,15.73]],[[-66.88,1.25],[-67.07,1.13],[-67.54,2.04],[-67.87,1.69],[-69.82,1.71],[-69.8,1.09],[-69.22,0.99],[-69.25,0.6],[-70.02,0.54],[-70.02,-0.19],[-69.58,-0.55],[-69.42,-1.12],[-69.89,-4.3]],[[-69.89,-4.3],[-70.69,-3.74],[-70.05,-2.73],[-70.81,-2.26],[-73.07,-2.31],[-73.66,-1.26],[-75.11,-0.06],[-75.37,-0.15]],[[-75.37,-0.15],[-76.29,0.42],[-76.58,0.26],[-77.42,0.4],[-77.67,0.83],[-78.86,1.38]],[[-67.11,-22.74],[-67.83,-22.87],[-68.76,-20.37],[-68.44,-19.41],[-68.97,-18.98],[-69.1,-18.26],[-69.59,-17.58]],[[-58.17,-20.18],[-58.18,-19.87],[-59.12,-19.36],[-61.79,-19.63],[-62.27,-20.51],[-62.69,-22.25]],[[-54.63,-25.74],[-54.13,-25.55],[-53.63,-26.12],[-53.65,-26.92],[-55.16,-27.88],[-57.63,-30.22]],[[-57.63,-30.22],[-56.98,-30.11],[-53.79,-32.05],[-53.21,-32.73],[-53.65,-33.2],[-53.37,-33.77]],[[-69.59,-17.58],[-68.96,-16.5],[-69.39,-15.66],[-69.16,-15.32],[-69.34,-14.95],[-68.95,-14.45],[-68.88,-12.9],[-68.67,-12.56],[-69.53,-10.95]],[[13.32,13.56],[14.0,12.46],[14.18,12.48]],[[6.19,49.46],[5.67,49.53]],[[46.14,38.74],[45.46,38.87],[44.79,39.71]],[[46.51,38.77],[48.06,39.58],[48.36,39.29],[48.01,38.79],[48.63,38.27],[48.88,38.32]],[[-13.7,12.59],[-15.55,12.63],[-16.68,12.38]],[[19.9,-24.77],[19.89,-28.46],[18.46,-29.05],[17.39,-28.78],[16.82,-28.08],[16.34,-28.58]],[[-62.69,-22.25],[-62.85,-22.03],[-63.99,-21.99],[-64.38,-22.8],[-64.96,-22.08],[-66.27,-21.83],[-67.11,-22.74]],[[-69.53,-10.95],[-68.27,-11.01],[-66.65,-9.93],[-65.34,-9.76],[-65.4,-11.57],[-64.32,-12.46],[-63.2,-12.63],[-61.71,-13.49],[-61.08,-13.48],[-60.5,-13.78],[-60.25,-15.08],[-60.54,-15.09],[-60.16,-16.26],[-58.24,-16.3],[-58.28,-17.27],[-57.73,-17.55],[-57.5,-18.17],[-57.95,-19.4],[-57.85,-19.97],[-58.17,-20.18]],[[-57.85,-19.97],[-58.17,-20.18]],[[75.9,36.67],[76.19,35.9],[76.65,35.79]],[[79.21,32.99],[79.18,32.48]],[[79.18,32.48],[78.46,32.62],[78.55,32.27]],[[78.55,32.27],[78.65,31.85]],[[78.65,31.85],[78.88,31.43]],[[78.88,31.43],[79.37,31.11]],[[79.37,31.11],[79.81,30.84]],[[79.81,30.84],[80.26,30.61]],[[80.26,30.61],[81.11,30.18]],[[36.7,45.61],[36.64,44.95]],[[87.36,49.22],[87.75,49.3],[88.01,48.6],[88.85,48.07],[90.28,47.69],[90.97,46.89],[90.59,45.72],[90.95,45.29],[93.48,44.98],[95.31,44.24],[95.76,43.32],[96.35,42.73],[99.52,42.52],[100.85,42.66],[103.31,41.91],[104.52,41.91],[104.97,41.6],[106.13,42.13],[110.41,42.87],[111.83,43.74],[111.35,44.46],[111.87,45.1],[113.46,44.81],[114.46,45.34],[115.99,45.73],[116.72,46.39],[117.42,46.67],[119.66,46.69],[119.77,47.05],[118.06,48.07],[117.3,47.7],[115.74,47.73],[115.49,48.14],[116.68,49.89]],[[116.68,49.89],[117.88,49.51],[119.29,50.14],[119.28,50.58],[120.18,51.64],[120.74,51.96],[120.73,52.52],[120.18,52.75],[121.0,53.25],[123.57,53.46],[125.95,52.79],[127.29,50.74],[127.66,49.76],[129.4,49.44],[130.58,48.73],[130.99,47.79],[132.51,47.79],[135.03,48.48],[134.11,47.21],[133.77,46.12],[133.1,45.14],[131.88,45.32],[131.03,44.97],[131.29,44.11],[131.14,42.93],[130.63,42.9],[130.64,42.4]],[[35.55,33.26],[35.13,33.09]],[[75.14,34.6],[74.24,34.75],[73.75,34.32],[74.45,32.76]],[[77.29,35.05],[76.87,34.65],[75.14,34.6]]]</script>
+<script>
+(function () {
+  'use strict'
+
+  var DATA = JSON.parse(document.getElementById('flight-data').textContent)
+  var LAND = JSON.parse(document.getElementById('land-data').textContent)
+  var BORDERS = JSON.parse(document.getElementById('border-data').textContent)
+  var SVG_NS = 'http://www.w3.org/2000/svg'
+
+  // --- formatting ---------------------------------------------------------
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+  function pad(n) { return n < 10 ? '0' + n : String(n) }
+  function isoDate(s) { return s.slice(0, 10) }
+  function dayLabel(s) {
+    var d = new Date(s)
+    return pad(d.getUTCDate()) + ' ' + MONTHS[d.getUTCMonth()]
+  }
+  function hhmm(s) {
+    var d = new Date(s)
+    return pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes())
+  }
+  function duration(sec) {
+    if (sec == null) return '—'
+    return pad(Math.floor(sec / 3600)) + ':' + pad(Math.round((sec % 3600) / 60))
+  }
+  /** Gaps span seconds to hours, and "00:00" for a 20-second gap reads as no gap at all. */
+  function gapLength(sec) {
+    if (sec == null) return '—'
+    if (sec < 90) return Math.round(sec) + ' s'
+    if (sec < 5400) return Math.round(sec / 60) + ' min'
+    return Math.floor(sec / 3600) + ' h ' + Math.round((sec % 3600) / 60) + ' min'
+  }
+  function km(n) { return n == null ? '—' : Math.round(n).toLocaleString('en-GB') }
+  function pct(x) { return x == null ? '—' : Math.round(x * 100) + '%' }
+  function grade(x) { return x >= 0.75 ? 'q-high' : x >= 0.5 ? 'q-med' : 'q-low' }
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag)
+    if (cls) node.className = cls
+    if (text != null) node.textContent = text
+    return node
+  }
+
+  /** Accepted airport, else the probable one, else nothing — never a guess dressed up. */
+  function endpoint(f, side) {
+    var p = side === 'dep'
+      ? { code: f.depIata || f.depIdent, city: f.depCity, name: f.depName, ident: f.depIdent }
+      : { code: f.arrIata || f.arrIdent, city: f.arrCity, name: f.arrName, ident: f.arrIdent }
+    if (p.ident) return { code: p.code, city: p.city, name: p.name, state: 'known' }
+    var q = side === 'dep'
+      ? { code: f.depPIata || f.depPIdent, city: f.depPCity, name: f.depPName, ident: f.depPIdent }
+      : { code: f.arrPIata || f.arrPIdent, city: f.arrPCity, name: f.arrPName, ident: f.arrPIdent }
+    if (q.ident) return { code: q.code, city: q.city, name: q.name, state: 'probable' }
+    return { code: 'UNKN', city: null, name: 'Not identified', state: 'unknown' }
+  }
+
+  // --- headline figures ---------------------------------------------------
+  var flights = DATA.flights
+  var totalSeconds = flights.reduce(function (s, f) { return s + (f.durationSeconds || 0) }, 0)
+  var totalKm = flights.reduce(function (s, f) { return s + (f.distanceKm || 0) }, 0)
+  var gapKm = flights.reduce(function (s, f) { return s + (f.distanceFromGapsKm || 0) }, 0)
+
+  document.getElementById('delay-hours').textContent = DATA.publicationDelayHours
+
+  var days = DATA.days.slice().sort(function (a, b) { return a.day < b.day ? -1 : 1 })
+  var firstDay = days.length ? days[0].day : isoDate(flights[0].departureTime)
+  var lastDay = days.length ? days[days.length - 1].day : isoDate(flights[flights.length - 1].departureTime)
+
+  document.getElementById('window-sub').textContent =
+    'Every state aircraft in the registry, ' + dayLabel(firstDay) + ' to ' + dayLabel(lastDay) +
+    ' ' + new Date(lastDay).getUTCFullYear() + '. Figures cover only the days the archive could actually serve.'
+
+  var kpiDefs = [
+    { v: String(flights.length), unit: '', label: 'Flights detected', note: flights.length + ' reconstructed from ' + flights.reduce(function (s, f) { return s + f.positionCount }, 0).toLocaleString('en-GB') + ' observations' },
+    { v: (totalSeconds / 3600).toFixed(1), unit: 'h', label: 'Airborne time', note: 'Wheels-up to wheels-down, not block time' },
+    { v: km(totalKm), unit: 'km', label: 'Distance flown', note: km(gapKm) + ' km of it bridged across coverage gaps' },
+    { unavailable: 'Data unavailable', label: 'Estimated cost', note: 'No sourced operating figure has been obtained' },
+  ]
+  var kpis = document.getElementById('kpis')
+  kpiDefs.forEach(function (d) {
+    var box = el('div', 'kpi')
+    box.appendChild(el('p', 'eyebrow', d.label))
+    if (d.unavailable) {
+      box.appendChild(el('div', 'v unavailable', d.unavailable))
+    } else {
+      var v = el('div', 'v')
+      v.appendChild(document.createTextNode(d.v))
+      if (d.unit) v.appendChild(el('small', null, d.unit))
+      box.appendChild(v)
+    }
+    box.appendChild(el('div', 'note', d.note))
+    kpis.appendChild(box)
+  })
+
+  // --- coverage grid ------------------------------------------------------
+  // One run may retry a day, so keep the best-informed answer per aircraft-day.
+  var RANK = { unavailable: 0, empty: 1, completed: 2 }
+  var byCell = {}
+  var dayKeys = []
+  days.forEach(function (d) {
+    if (dayKeys.indexOf(d.day) === -1) dayKeys.push(d.day)
+    var key = d.icao + '|' + d.day
+    if (!byCell[key] || RANK[d.status] > RANK[byCell[key]]) byCell[key] = d.status
+  })
+  dayKeys.sort()
+
+  var flightsByIcaoDay = {}
+  var fleetByReg = {}
+  DATA.fleet.forEach(function (a) { fleetByReg[a.registration] = a })
+  flights.forEach(function (f) {
+    var icao = fleetByReg[f.registration] ? fleetByReg[f.registration].icao24 : ''
+    flightsByIcaoDay[icao + '|' + isoDate(f.departureTime)] = true
+  })
+
+  var table = document.getElementById('cov')
+  var headRow = el('tr')
+  headRow.appendChild(el('th', 'reg', ''))
+  var lastMonth = null
+  dayKeys.forEach(function (day) {
+    var m = day.slice(0, 7)
+    // The label is absolutely positioned so a wide month name cannot widen its column.
+    var th = el('th', 'month-label')
+    if (m !== lastMonth) th.appendChild(el('b', null, MONTHS[Number(day.slice(5, 7)) - 1]))
+    lastMonth = m
+    headRow.appendChild(th)
+  })
+  table.appendChild(headRow)
+
+  DATA.fleet.forEach(function (ac) {
+    var row = el('tr')
+    row.appendChild(el('th', 'reg', ac.registration))
+    dayKeys.forEach(function (day) {
+      var td = el('td')
+      var status = byCell[ac.icao24 + '|' + day]
+      var cls = 'c-nodata', title = 'no data retrievable'
+      if (status === 'completed' || flightsByIcaoDay[ac.icao24 + '|' + day]) {
+        cls = 'c-flew'; title = 'flights detected'
+      } else if (status === 'empty') {
+        cls = 'c-quiet'; title = 'archive held the day, aircraft not seen'
+      }
+      var cell = el('span', 'cell ' + cls)
+      cell.title = ac.registration + ' · ' + day + ' · ' + title
+      td.appendChild(cell)
+      row.appendChild(td)
+    })
+    table.appendChild(row)
+  })
+
+  // --- fleet --------------------------------------------------------------
+  var fleetBox = document.getElementById('fleet')
+  DATA.fleet.forEach(function (ac) {
+    var mine = flights.filter(function (f) { return f.registration === ac.registration })
+    var hours = mine.reduce(function (s, f) { return s + (f.durationSeconds || 0) }, 0) / 3600
+    var card = el('div', 'ac')
+    card.appendChild(el('div', 'reg', ac.registration))
+    card.appendChild(el('div', 'type', (ac.variant || ac.model || '') + (ac.manufacturer ? '' : '')))
+    var stat = el('div', 'stat')
+    if (mine.length) {
+      stat.innerHTML = '<b>' + mine.length + '</b> flights · <b>' + hours.toFixed(1) + '</b> h'
+    } else {
+      stat.textContent = 'not seen in this window'
+    }
+    card.appendChild(stat)
+    if (ac.activeUntil) {
+      card.appendChild(el('span', 'tag retired', 'withdrawn ' + ac.activeUntil))
+    } else if (ac.verificationStatus === 'needs_verification') {
+      card.appendChild(el('span', 'tag unverified', 'identity unverified'))
+    }
+    fleetBox.appendChild(card)
+  })
+
+  // --- map ----------------------------------------------------------------
+  function buildMap(f) {
+    var track = f.track || []
+    if (track.length < 2) return null
+
+    var lons = track.map(function (p) { return p[0] })
+    var lats = track.map(function (p) { return p[1] })
+    var minLon = Math.min.apply(null, lons), maxLon = Math.max.apply(null, lons)
+    var minLat = Math.min.apply(null, lats), maxLat = Math.max.apply(null, lats)
+
+    var padLon = Math.max((maxLon - minLon) * 0.14, 1.6)
+    var padLat = Math.max((maxLat - minLat) * 0.22, 1.6)
+    minLon -= padLon; maxLon += padLon; minLat -= padLat; maxLat += padLat
+
+    // Equirectangular, x compressed by the cosine of the view's centre latitude,
+    // which keeps shapes honest over the span of a single flight.
+    var k = Math.cos(((minLat + maxLat) / 2) * Math.PI / 180)
+    var w = (maxLon - minLon) * k
+    var h = maxLat - minLat
+    var W = 720
+    var H = Math.max(220, Math.min(460, Math.round(W * h / w)))
+    var sx = W / w, sy = H / h
+    var s = Math.min(sx, sy)
+    var ox = (W - w * s) / 2, oy = (H - h * s) / 2
+
+    function px(lon, lat) {
+      return [ox + (lon - minLon) * k * s, oy + (maxLat - lat) * s]
+    }
+
+    var svg = document.createElementNS(SVG_NS, 'svg')
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H)
+    svg.setAttribute('role', 'img')
+
+    var dep = endpoint(f, 'dep'), arr = endpoint(f, 'arr')
+    svg.setAttribute('aria-label',
+      'Reconstructed track, ' + dep.code + ' to ' + arr.code +
+      ', ' + pct(f.dataCoverage) + ' of the flight covered by observations')
+
+    // Land, drawn flat with a hairline edge — a chart base, not a basemap.
+    var landGroup = document.createElementNS(SVG_NS, 'g')
+    LAND.forEach(function (ring) {
+      var inView = false
+      for (var i = 0; i < ring.length; i++) {
+        if (ring[i][0] > minLon - 20 && ring[i][0] < maxLon + 20 &&
+            ring[i][1] > minLat - 20 && ring[i][1] < maxLat + 20) { inView = true; break }
+      }
+      if (!inView) return
+      var d = ring.map(function (pt, i) {
+        var q = px(pt[0], pt[1])
+        return (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1)
+      }).join('') + 'Z'
+      var path = document.createElementNS(SVG_NS, 'path')
+      path.setAttribute('d', d)
+      path.style.setProperty('fill', 'var(--land)')
+      path.style.setProperty('stroke', 'var(--land-edge)')
+      path.setAttribute('stroke-width', '0.7')
+      landGroup.appendChild(path)
+    })
+    svg.appendChild(landGroup)
+
+    var borderGroup = document.createElementNS(SVG_NS, 'g')
+    BORDERS.forEach(function (line) {
+      var inView = false
+      for (var i = 0; i < line.length; i++) {
+        if (line[i][0] > minLon - 6 && line[i][0] < maxLon + 6 &&
+            line[i][1] > minLat - 6 && line[i][1] < maxLat + 6) { inView = true; break }
+      }
+      if (!inView) return
+      var d = line.map(function (pt, i) {
+        var q = px(pt[0], pt[1])
+        return (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1)
+      }).join('')
+      var path = document.createElementNS(SVG_NS, 'path')
+      path.setAttribute('d', d)
+      path.setAttribute('fill', 'none')
+      path.style.setProperty('stroke', 'var(--border-line)')
+      path.setAttribute('stroke-width', '0.8')
+      borderGroup.appendChild(path)
+    })
+    svg.appendChild(borderGroup)
+
+    // Segments the aircraft was observed on, and segments inferred across a gap.
+    var gaps = (f.gaps || []).map(function (g) {
+      return [Date.parse(g.from) / 1000, Date.parse(g.to) / 1000]
+    })
+    function bridged(t1, t2) {
+      for (var i = 0; i < gaps.length; i++) {
+        if (gaps[i][0] < t2 && gaps[i][1] > t1) return true
+      }
+      return false
+    }
+
+    for (var i = 1; i < track.length; i++) {
+      var a = track[i - 1], b = track[i]
+      var p1 = px(a[0], a[1]), p2 = px(b[0], b[1])
+      var line = document.createElementNS(SVG_NS, 'line')
+      line.setAttribute('x1', p1[0].toFixed(1)); line.setAttribute('y1', p1[1].toFixed(1))
+      line.setAttribute('x2', p2[0].toFixed(1)); line.setAttribute('y2', p2[1].toFixed(1))
+      line.style.setProperty('stroke', 'var(--accent)')
+      line.setAttribute('stroke-linecap', 'round')
+      if (bridged(a[3], b[3])) {
+        line.setAttribute('stroke-width', '1.6')
+        line.setAttribute('stroke-dasharray', '3 5')
+        line.setAttribute('opacity', '0.62')
+      } else {
+        line.setAttribute('stroke-width', '2.4')
+      }
+      svg.appendChild(line)
+    }
+
+    ;[[track[0], dep], [track[track.length - 1], arr]].forEach(function (pair) {
+      var q = px(pair[0][0], pair[0][1])
+      var known = pair[1].state === 'known'
+      var c = document.createElementNS(SVG_NS, 'circle')
+      c.setAttribute('cx', q[0].toFixed(1)); c.setAttribute('cy', q[1].toFixed(1))
+      c.setAttribute('r', '4.5')
+      c.style.setProperty('fill', known ? 'var(--accent)' : 'var(--surface)')
+      c.style.setProperty('stroke', known ? 'var(--surface)' : 'var(--accent)')
+      c.setAttribute('stroke-width', '2')
+      if (!known) c.setAttribute('stroke-dasharray', '2.5 2')
+      svg.appendChild(c)
+
+      var label = document.createElementNS(SVG_NS, 'text')
+      label.setAttribute('x', (q[0] + 9).toFixed(1))
+      label.setAttribute('y', (q[1] + 4).toFixed(1))
+      label.style.setProperty('font-family', 'var(--data)')
+      label.setAttribute('font-size', '12')
+      label.setAttribute('font-weight', '600')
+      label.style.setProperty('fill', 'var(--ink)')
+      label.setAttribute('paint-order', 'stroke')
+      label.style.setProperty('stroke', 'var(--surface)')
+      label.setAttribute('stroke-width', '3.5')
+      label.setAttribute('stroke-linejoin', 'round')
+      label.textContent = pair[1].code + (known ? '' : ' ?')
+      svg.appendChild(label)
+    })
+
+    return svg
+  }
+
+  // --- flight strips ------------------------------------------------------
+  function portNode(p, estimated) {
+    var node = el('span', 'f-port' + (p.state === 'unknown' ? ' unknown' : p.state === 'probable' ? ' probable' : ''))
+    node.appendChild(document.createTextNode(p.code))
+    if (p.city) node.appendChild(el('em', null, p.city))
+    if (estimated) node.appendChild(el('em', null, '~'))
+    return node
+  }
+
+  function factList(pairs) {
+    var dl = el('dl', 'fact-grid')
+    pairs.forEach(function (p) {
+      var wrap = el('div', 'fact')
+      wrap.appendChild(el('dt', null, p[0]))
+      wrap.appendChild(el('dd', p[2] ? 'soft' : null, p[1]))
+      dl.appendChild(wrap)
+    })
+    return dl
+  }
+
+  function qualityRow(label, value) {
+    var row = el('div', 'qrow ' + grade(value))
+    row.appendChild(el('span', 'lbl', label))
+    var track = el('span', 'track')
+    var fill = el('i')
+    fill.style.width = Math.max(2, Math.round(value * 100)) + '%'
+    track.appendChild(fill)
+    row.appendChild(track)
+    row.appendChild(el('span', 'val', pct(value)))
+    return row
+  }
+
+  function caveatFor(f, dep, arr) {
+    var lines = []
+    if (dep.state !== 'known' && arr.state !== 'known') {
+      lines.push('Neither end of this flight was identified. The track begins and ends in the air.')
+    } else if (dep.state === 'unknown') {
+      lines.push('The origin was never observed — coverage begins with the aircraft already airborne.')
+    } else if (arr.state === 'unknown') {
+      lines.push('The destination was never observed — coverage ends with the aircraft still airborne.')
+    } else if (dep.state === 'probable' || arr.state === 'probable') {
+      lines.push('An airport marked <b>?</b> was identified from an airborne fix only, not from the aircraft on the ground.')
+    }
+    if ((f.distanceFromGapsKm || 0) > 100) {
+      lines.push('<b>' + km(f.distanceFromGapsKm) + ' km</b> of the distance was bridged across gaps in coverage, so the figure is a lower bound.')
+    }
+    if (f.depEst || f.arrEst) {
+      lines.push('Times marked <b>~</b> were inferred from the first or last airborne fix rather than watched.')
+    }
+    return lines
+  }
+
+  var stripsBox = document.getElementById('strips')
+  document.getElementById('flights-heading').textContent = flights.length + ' flights, oldest first'
+
+  flights.forEach(function (f, index) {
+    var dep = endpoint(f, 'dep'), arr = endpoint(f, 'arr')
+
+    var strip = el('div', 'strip')
+    strip.setAttribute('open-state', '0')
+
+    var btn = el('button', 'strip-btn')
+    btn.type = 'button'
+    btn.setAttribute('aria-expanded', 'false')
+    btn.setAttribute('aria-controls', 'detail-' + index)
+
+    btn.appendChild(el('span', 'rail ' + f.confidence))
+
+    var date = el('span', 'f-date')
+    date.appendChild(document.createTextNode(dayLabel(f.departureTime)))
+    btn.appendChild(date)
+
+    var ac = el('span', 'f-ac', f.registration)
+    ac.appendChild(el('em', null, f.callsign || '—'))
+    btn.appendChild(ac)
+
+    var route = el('span', 'f-route')
+    route.appendChild(portNode(dep, f.depEst))
+    route.appendChild(el('span', 'f-arrow', '→'))
+    route.appendChild(portNode(arr, f.arrEst))
+    btn.appendChild(route)
+
+    btn.appendChild(el('span', 'f-dur', duration(f.durationSeconds)))
+
+    var dist = el('span', 'f-dist')
+    dist.appendChild(document.createTextNode(km(f.distanceKm)))
+    dist.appendChild(el('em', null, 'km'))
+    btn.appendChild(dist)
+
+    var cov = el('span', 'f-cov')
+    var bar = el('span', 'bar')
+    var fill = el('i')
+    fill.style.width = Math.max(2, Math.round((f.dataCoverage || 0) * 100)) + '%'
+    bar.appendChild(fill)
+    cov.appendChild(bar)
+    cov.appendChild(el('span', 'pct', pct(f.dataCoverage)))
+    btn.appendChild(cov)
+
+    btn.appendChild(el('span', 'chev', '›'))
+    strip.appendChild(btn)
+
+    var detail = el('div', 'detail')
+    detail.id = 'detail-' + index
+    strip.appendChild(detail)
+
+    var built = false
+    btn.addEventListener('click', function () {
+      var open = strip.getAttribute('open-state') === '1'
+      strip.setAttribute('open-state', open ? '0' : '1')
+      btn.setAttribute('aria-expanded', open ? 'false' : 'true')
+      if (built || open) return
+      built = true
+
+      var inner = el('div', 'detail-in')
+
+      var mapCell = el('div', 'detail-map')
+      var svg = buildMap(f)
+      if (svg) {
+        mapCell.appendChild(svg)
+        var key = el('div', 'map-key')
+        key.innerHTML =
+          '<span><svg viewBox="0 0 26 8"><line class="k-solid" x1="1" y1="4" x2="25" y2="4"/></svg> observed</span>' +
+          '<span><svg viewBox="0 0 26 8"><line class="k-dashed" x1="1" y1="4" x2="25" y2="4"/></svg> bridged across a gap</span>' +
+          '<span>' + f.trackPoints + ' of ' + f.trackFrom.toLocaleString('en-GB') + ' fixes drawn</span>'
+        mapCell.appendChild(key)
+      } else {
+        mapCell.appendChild(el('p', 'caveat', 'No track geometry stored for this flight.'))
+      }
+      inner.appendChild(mapCell)
+
+      var facts = el('div', 'detail-facts')
+      facts.appendChild(factList([
+        ['Departure', hhmm(f.departureTime) + (f.depEst ? ' ~' : '') + ' UTC'],
+        ['Arrival', hhmm(f.arrivalTime) + (f.arrEst ? ' ~' : '') + ' UTC'],
+        ['From', dep.name || '—', dep.state !== 'known'],
+        ['To', arr.name || '—', arr.state !== 'known'],
+        ['Airborne', duration(f.durationSeconds)],
+        ['Track flown', km(f.distanceKm) + ' km'],
+        ['Direct distance', km(f.greatCircleKm) + ' km'],
+        ['Maximum altitude', f.maxAltitudeFt ? f.maxAltitudeFt.toLocaleString('en-GB') + ' ft' : '—'],
+        ['Observations', f.positionCount.toLocaleString('en-GB')],
+        ['Longest gap', gapLength(f.maxGapSeconds)],
+        ['Aircraft', (f.variant || f.model || '') + ''],
+        ['Estimated cost', 'data unavailable', true],
+      ]))
+
+      var quality = el('div', 'quality')
+      quality.appendChild(el('p', 'eyebrow', 'Data quality'))
+      quality.appendChild(qualityRow('ADS-B coverage', f.dataCoverage || 0))
+      quality.appendChild(qualityRow('Route', f.routeConfidence || 0))
+      quality.appendChild(qualityRow('Origin airport', f.depConf || 0))
+      quality.appendChild(qualityRow('Destination airport', f.arrConf || 0))
+      facts.appendChild(quality)
+
+      var lines = caveatFor(f, dep, arr)
+      if (lines.length) {
+        var caveat = el('div', 'caveat')
+        caveat.innerHTML = lines.join(' ')
+        facts.appendChild(caveat)
+      }
+
+      inner.appendChild(facts)
+      detail.appendChild(inner)
+    })
+
+    stripsBox.appendChild(strip)
+  })
+
+  // --- city pairs ---------------------------------------------------------
+  var pairs = {}
+  var unknownLegs = 0
+  flights.forEach(function (f) {
+    var dep = endpoint(f, 'dep'), arr = endpoint(f, 'arr')
+    if (dep.state !== 'known' || arr.state !== 'known') { unknownLegs++; return }
+    var sameField = dep.code === arr.code
+    var codes = [dep.code, arr.code].sort()
+    var key = sameField ? dep.code + ' ⟲' : codes.join(' ⇄ ')
+    if (!pairs[key]) {
+      pairs[key] = {
+        key: key,
+        n: 0,
+        cities: sameField
+          ? (dep.city || dep.code) + ' — returned to the airport it left'
+          : [dep, arr].sort(function (a, b) { return a.code < b.code ? -1 : 1 })
+              .map(function (p) { return p.city }).join(' – '),
+      }
+    }
+    pairs[key].n++
+  })
+
+  var list = Object.keys(pairs).map(function (k) { return pairs[k] })
+  list.sort(function (a, b) { return b.n - a.n })
+  var max = Math.max.apply(null, list.map(function (p) { return p.n }).concat([unknownLegs, 1]))
+
+  var routesBox = document.getElementById('routes')
+  list.forEach(function (p) {
+    var row = el('div', 'route')
+    var pair = el('div', 'pair', p.key)
+    pair.appendChild(el('em', null, p.cities))
+    row.appendChild(pair)
+    var meter = el('div', 'meter')
+    var fill = el('i')
+    fill.style.width = Math.round((p.n / max) * 100) + '%'
+    meter.appendChild(fill)
+    row.appendChild(meter)
+    row.appendChild(el('div', 'n', String(p.n)))
+    routesBox.appendChild(row)
+  })
+
+  if (unknownLegs) {
+    var row = el('div', 'route unknown')
+    var pair = el('div', 'pair', 'One or both ends unknown')
+    pair.appendChild(el('em', null, 'not attributed to any airport'))
+    row.appendChild(pair)
+    var meter = el('div', 'meter')
+    var fill = el('i')
+    fill.style.width = Math.round((unknownLegs / max) * 100) + '%'
+    meter.appendChild(fill)
+    row.appendChild(meter)
+    row.appendChild(el('div', 'n', String(unknownLegs)))
+    routesBox.appendChild(row)
+  }
+
+  // --- footer -------------------------------------------------------------
+  var gen = new Date(DATA.generatedAt)
+  document.getElementById('foot-generated').textContent =
+    'Built from the pipeline database on ' + pad(gen.getUTCDate()) + ' ' + MONTHS[gen.getUTCMonth()] + ' ' + gen.getUTCFullYear()
+  document.getElementById('foot-detector').textContent = flights.length ? flights[0].detectorVersion : '—'
+})()
+
+</script>

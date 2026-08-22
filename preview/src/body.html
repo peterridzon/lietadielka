@@ -1,0 +1,167 @@
+<div class="preview-note">
+  <div class="wrap">
+    <b>DESIGN PREVIEW</b>
+    <span>Static page built from the project's own database. Real detected flights, real coverage, no fabricated values. The live application is not built yet.</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div>
+      <p class="eyebrow">Lietadielka &middot; pipeline output</p>
+      <h1 class="wordmark">State flights<span>Slovakia</span></h1>
+      <p class="thesis">
+        Public aircraft, public data, public money. Every flight below was reconstructed
+        from volunteer ADS-B observations by an open pipeline, and carries
+        <strong>the evidence for it and the uncertainty around it</strong>.
+      </p>
+    </div>
+    <aside class="embargo">
+      <span class="eyebrow">Not a flight tracker</span>
+      Positions of state aircraft are never published in real time. A flight appears only
+      after it has ended, and only once <span class="mono" id="delay-hours">6</span> hours have
+      passed since the detected landing.
+    </aside>
+  </div>
+</header>
+
+<section id="sec-totals">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Observed window</p>
+      <h2 id="window-heading">Detected activity</h2>
+      <p id="window-sub"></p>
+    </div>
+    <div class="kpis" id="kpis"></div>
+  </div>
+</section>
+
+<section id="sec-coverage">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Dataset completeness</p>
+      <h2>A quiet day and a missing day are not the same thing</h2>
+      <p>
+        Each cell is one aircraft on one UTC day. The archive this pipeline reads keeps only
+        about 40 days and answers identically whether an aircraft did not fly or the day is
+        no longer held, so the collector proves each day separately before recording it as quiet.
+        Days it could not prove are excluded from every figure on this page rather than counted as zero.
+      </p>
+    </div>
+    <div class="cov-scroll"><table class="cov" id="cov"></table></div>
+    <div class="legend">
+      <span><i class="c-flew"></i> Flights detected</span>
+      <span><i class="c-quiet"></i> Archive held the day, aircraft not seen</span>
+      <span><i class="c-nodata"></i> Day not retrievable &mdash; excluded, not zero</span>
+    </div>
+  </div>
+</section>
+
+<section id="sec-fleet">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Registry</p>
+      <h2>Tracked aircraft</h2>
+      <p>
+        Only aircraft in the project's registry are ever collected. Each identity rests on the
+        sources recorded with it; none has yet been confirmed against a primary state register,
+        so all four are marked unverified.
+      </p>
+    </div>
+    <div class="fleet" id="fleet"></div>
+  </div>
+</section>
+
+<section id="sec-flights">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Reconstructed flights</p>
+      <h2 id="flights-heading">Flight log</h2>
+      <p>
+        One strip per flight. The left edge carries overall confidence, the right edge the share
+        of the flight actually covered by observations. Select a strip for the reconstructed track
+        and the full data-quality breakdown. A question mark marks an airport identified below the
+        confidence threshold; <span class="mono">~</span> marks a time we inferred rather than watched.
+      </p>
+    </div>
+    <div class="strips" id="strips"></div>
+  </div>
+</section>
+
+<section id="sec-routes">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">City pairs</p>
+      <h2>Where the fleet went</h2>
+      <p>
+        Direction-insensitive pairs across the observed window. Legs whose origin or destination
+        was never observed are listed separately rather than being attributed to a guess.
+      </p>
+    </div>
+    <div class="routes" id="routes"></div>
+  </div>
+</section>
+
+<section id="sec-method">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Reading these numbers</p>
+      <h2>What the pipeline can and cannot tell you</h2>
+    </div>
+    <div class="notes">
+      <div class="note">
+        <h3>Flight time is airborne time</h3>
+        <p>
+          Departure is the last moment observed on the ground before the climb; arrival is the
+          first moment observed back on it. That is wheels-up to wheels-down, so it is shorter
+          than block time and not comparable to a published schedule.
+        </p>
+      </div>
+      <div class="note">
+        <h3>Distance is a lower bound</h3>
+        <p>
+          Where coverage is lost, the aircraft is assumed to have flown straight, which it did not.
+          The kilometres contributed by gaps are reported separately on every affected flight.
+        </p>
+      </div>
+      <div class="note">
+        <h3>Some stops are inferred</h3>
+        <p>
+          Surface positions often are not received outside dense receiver coverage, so a turnaround
+          can look like a hole in a cruise. Where a long gap is bracketed by low, slow fixes that
+          barely moved, the pipeline splits the track &mdash; and labels both legs as estimates.
+        </p>
+      </div>
+      <div class="note">
+        <h3>Costs are absent on purpose</h3>
+        <p>
+          No sourced operating figure for this fleet has been obtained, so no cost is shown. The
+          engine is designed to publish an interval with a full breakdown and a citation for every
+          input; until those exist it returns <code>data unavailable</code> rather than a plausible number.
+        </p>
+      </div>
+      <div class="note">
+        <h3>Purpose is never inferred</h3>
+        <p>
+          Why a flight took place is entered by hand, with a publisher and a URL, and marked
+          confirmed, probable or unknown. No political conclusion is generated from this data.
+        </p>
+      </div>
+      <div class="note">
+        <h3>Everything is rebuildable</h3>
+        <p>
+          Raw observations are append-only. When the detection algorithm improves, every flight
+          ever recorded is recomputed from the original data rather than re-downloaded &mdash; which
+          matters, because the source archive has already deleted most of it.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span id="foot-generated"></span>
+    <span>Observations: adsb.lol &middot; Aerodromes: OurAirports &middot; Detector <span id="foot-detector"></span></span>
+  </div>
+</footer>

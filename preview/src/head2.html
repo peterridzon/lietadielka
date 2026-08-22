@@ -1,0 +1,135 @@
+<style>
+/* --- flight strips -------------------------------------------------------
+   Modelled on the paper progress strips used in air traffic control: fixed
+   fields in a monospaced grid, one strip per flight, annotated at the edges.
+   The left rail carries overall confidence; the right edge carries coverage.
+   ------------------------------------------------------------------------- */
+.strips { border: 1px solid var(--rule); border-bottom: none; }
+
+.strip { border-bottom: 1px solid var(--rule); background: var(--surface); }
+
+.strip-btn {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 4px 96px 92px minmax(200px, 1.5fr) 78px 96px 108px 26px;
+  align-items: center;
+  gap: 0 16px;
+  padding: 0 16px 0 0;
+  background: none;
+  border: 0;
+  border-left: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.strip-btn:hover { background: var(--surface-2); }
+.strip-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+
+.rail { align-self: stretch; }
+.rail.high { background: var(--ok); }
+.rail.medium { background: var(--warn); }
+.rail.low { background: var(--weak); }
+
+.f-date { font-family: var(--data); font-size: 13px; font-variant-numeric: tabular-nums; padding: 14px 0; }
+.f-ac { font-family: var(--data); font-size: 13px; font-weight: 600; }
+.f-ac em { display: block; font-style: normal; font-weight: 400; font-size: 11.5px; color: var(--ink-3); }
+
+.f-route { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.f-port { font-family: var(--data); font-size: 15px; font-weight: 600; white-space: nowrap; }
+.f-port em { font-style: normal; font-weight: 400; font-size: 11.5px; color: var(--ink-3); margin-left: 5px; }
+.f-port.unknown { color: var(--ink-3); font-weight: 500; }
+.f-port.probable::after { content: '?'; color: var(--warn); font-weight: 700; margin-left: 1px; }
+.f-arrow { color: var(--ink-3); flex: none; }
+
+.f-dur, .f-dist { font-family: var(--data); font-size: 13px; font-variant-numeric: tabular-nums; text-align: right; }
+.f-dist em { font-style: normal; color: var(--ink-3); font-size: 11px; margin-left: 3px; }
+
+.f-cov { display: flex; align-items: center; gap: 8px; }
+.f-cov .bar { flex: 1; height: 5px; background: var(--rule); position: relative; }
+.f-cov .bar i { position: absolute; inset: 0 auto 0 0; background: var(--ink-2); display: block; }
+.f-cov .pct { font-family: var(--data); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--ink-2); width: 34px; text-align: right; }
+
+.chev { color: var(--ink-3); transition: transform 0.18s ease; justify-self: end; }
+.strip[open-state="1"] .chev { transform: rotate(90deg); }
+
+/* --- expanded detail ----------------------------------------------------- */
+.detail { display: none; border-top: 1px dashed var(--rule); background: var(--surface-2); }
+.strip[open-state="1"] .detail { display: block; }
+.detail-in { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 0; }
+.detail-map { padding: 20px; border-right: 1px solid var(--rule); min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+.detail-map svg { width: 100%; height: auto; display: block; background: var(--surface); border: 1px solid var(--rule); }
+.map-key { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; font-size: 12px; color: var(--ink-2); font-family: var(--data); }
+.map-key span { display: flex; align-items: center; gap: 7px; }
+.map-key svg { width: 26px; height: 8px; border: 0; background: none; }
+
+.detail-facts { padding: 20px; display: grid; gap: 18px; align-content: start; }
+.fact-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 20px; }
+.fact { display: flex; flex-direction: column; gap: 2px; }
+.fact dt { font-family: var(--data); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
+.fact dd { margin: 0; font-family: var(--data); font-size: 14px; font-variant-numeric: tabular-nums; }
+.fact dd.soft { color: var(--ink-3); }
+
+.quality { border-top: 1px solid var(--rule); padding-top: 16px; display: grid; gap: 9px; }
+.qrow { display: grid; grid-template-columns: 132px 1fr 42px; align-items: center; gap: 12px; font-size: 12.5px; }
+.qrow .lbl { font-family: var(--data); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.qrow .track { height: 6px; background: var(--rule); position: relative; }
+.qrow .track i { position: absolute; inset: 0 auto 0 0; display: block; }
+.qrow .val { font-family: var(--data); font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; }
+.q-high i { background: var(--ok); } .q-high .val { color: var(--ok); }
+.q-med i { background: var(--warn); } .q-med .val { color: var(--warn); }
+.q-low i { background: var(--weak); } .q-low .val { color: var(--weak); }
+
+.caveat { font-size: 13px; color: var(--ink-2); border-left: 2px solid var(--warn); padding-left: 12px; line-height: 1.5; }
+.caveat b { color: var(--ink); font-weight: 600; }
+
+/* --- routes -------------------------------------------------------------- */
+.routes { display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.route { background: var(--surface); display: grid; grid-template-columns: minmax(0, 260px) 1fr 60px; align-items: center; gap: 18px; padding: 13px 18px; }
+.route .pair { font-family: var(--data); font-size: 14px; font-weight: 600; }
+.route .pair em { font-style: normal; font-weight: 400; color: var(--ink-3); font-size: 12px; display: block; }
+.route .meter { height: 10px; background: var(--rule); position: relative; }
+.route .meter i { position: absolute; inset: 0 auto 0 0; background: var(--accent); display: block; }
+.route .n { font-family: var(--data); font-size: 14px; font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; }
+.route.unknown .pair, .route.unknown .n { color: var(--ink-3); }
+.route.unknown .meter i { background: var(--none); }
+
+/* --- prose / footer ------------------------------------------------------ */
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 32px; }
+.note h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+.note p { margin: 0 0 10px; font-size: 14px; color: var(--ink-2); line-height: 1.55; }
+.note p:last-child { margin-bottom: 0; }
+.note code { font-family: var(--data); font-size: 0.88em; background: var(--surface-2); padding: 1px 5px; border: 1px solid var(--rule); }
+
+footer { padding-block: 40px 60px; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 20px 40px; justify-content: space-between; align-items: baseline; font-size: 12.5px; color: var(--ink-3); font-family: var(--data); }
+
+@media (max-width: 900px) {
+  header.masthead .wrap { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .detail-in { grid-template-columns: minmax(0, 1fr); }
+  .detail-map { border-right: 0; border-bottom: 1px solid var(--rule); }
+  /* Three stacked rows. Every cell is placed explicitly — auto-placement with only
+     an explicit row set puts items wherever it likes. */
+  .strip-btn { grid-template-columns: 4px minmax(0, 1fr) minmax(0, 1fr) 20px; gap: 0 12px; padding-right: 12px; }
+  .rail { grid-area: 1 / 1 / 4 / 2; }
+  .f-date { grid-area: 1 / 2 / 2 / 3; padding: 12px 0 0; }
+  .f-ac { grid-area: 1 / 3 / 2 / 4; text-align: right; padding-top: 12px; }
+  .f-route { grid-area: 2 / 2 / 3 / 4; padding-block: 5px; flex-wrap: wrap; gap: 4px 8px; }
+  .f-dur { grid-area: 3 / 2 / 4 / 3; text-align: left; padding-bottom: 12px; }
+  .f-dist { grid-area: 3 / 3 / 4 / 4; padding-bottom: 12px; }
+  .chev { grid-area: 1 / 4 / 4 / 5; align-self: center; }
+  .f-cov { display: none; }
+  .route { grid-template-columns: minmax(0, 1fr) 56px; }
+  .route .meter { display: none; }
+  .fact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+</style>
+<style>
+.map-key .k-solid { stroke: var(--accent); stroke-width: 2.4; }
+.map-key .k-dashed { stroke: var(--accent); stroke-width: 1.6; stroke-dasharray: 3 5; opacity: 0.62; }
+</style>
