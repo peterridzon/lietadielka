@@ -5,9 +5,10 @@
  * quality attached to every line. Shows everything in the database by default;
  * pass --public to apply the publication delay exactly as the public site will.
  */
-import { and, asc, eq, isNotNull, lte, sql } from 'drizzle-orm'
+import { and, asc, eq, sql } from 'drizzle-orm'
 import { closeDb, getDb } from '../db/client.js'
 import { findAircraft } from '../db/repositories/aircraft.js'
+import { publishedOnly } from '../db/repositories/flights.js'
 import { aircraft, airport, flight } from '../db/schema.js'
 import { env } from '../lib/env.js'
 import { flag, optionalString, parseArgs, runCli } from '../lib/cli.js'
@@ -39,10 +40,8 @@ async function main(): Promise<void> {
     if (!target) throw new Error(`Aircraft "${identifier}" is not in the registry`)
     filters.push(eq(flight.aircraftId, target.id))
   }
-  if (publicOnly) {
-    filters.push(isNotNull(flight.publishedAt))
-    filters.push(lte(flight.publishedAt, new Date()))
-  }
+  // One implementation of the publication rule, shared with every other reader.
+  if (publicOnly) filters.push(publishedOnly())
 
   const rows = await db
     .select({
