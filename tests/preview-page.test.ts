@@ -135,13 +135,19 @@ describe('design preview', () => {
     }
   })
 
-  it('keeps the photographs to thumbnail size', () => {
-    // They are a scale reference, not the point of the card.
+  it('gives every card the same image band', () => {
     const figures = $$('.ac figure')
     expect(figures.length).toBe(5)
     for (const figure of figures) {
       expect(figure.querySelector('img')?.getAttribute('loading')).toBe('lazy')
     }
+    const styles = [...dom.window.document.querySelectorAll('style')].map((s) => s.textContent).join('\n')
+    // A fixed module rather than auto-fit: a group of two must not stretch its cards to
+    // half the page while a group of three sits at a third.
+    expect(styles).toMatch(/\.fleet \{[^}]*repeat\(3, minmax\(0, 1fr\)\)/)
+    expect(styles).not.toMatch(/\.fleet \{[^}]*auto-fit/)
+    // Every band is 3:2 and the image is fitted into it, so nothing is cut off.
+    expect(styles).toMatch(/\.ac img[^}]*aspect-ratio: 3 \/ 2/)
   })
 
   it('does not clutter the cards with uniform caveats', () => {

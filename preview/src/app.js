@@ -735,6 +735,8 @@
       img.alt = (ac.model || 'Lietadlo') + ' ' + ac.registration
       img.setAttribute('loading', 'lazy')
       fig.appendChild(img)
+      // Attribution sits on the image, where a licence credit belongs, instead of
+      // competing with the registration for the reader's eye.
       var cap = el('figcaption')
       cap.innerHTML =
         '<a href="' + photo.page + '" target="_blank" rel="noopener noreferrer">' + photo.author + '</a>' +
