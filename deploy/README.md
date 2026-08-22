@@ -16,6 +16,64 @@ napadnúť, nie je odkiaľ vytiahnuť surové ADS-B dáta ani nepublikované let
 
 ---
 
+## Odporúčané: GitHub Actions + WebSupport
+
+Zber beží **na GitHube každý deň sám**, váš počítač s tým nemá nič spoločné. Na WebSupport
+sa nahráva hotová stránka.
+
+```
+   GitHub Actions, 04:17 UTC denne          WebSupport
+ ┌──────────────────────────────────┐      ┌──────────────┐
+ │ 1. poskladá databázu z gitu      │      │  index.html  │
+ │ 2. stiahne nové dni z adsb.lol   │      │              │
+ │ 3. prestaví lety, misie, náklady │ FTPS │  a nič viac  │
+ │ 4. commitne nové pozorovania     │ ───► │              │
+ │ 5. postaví stránku a nahrá ju    │      │              │
+ └──────────────────────────────────┘      └──────────────┘
+```
+
+**Ako runner prežije reštart.** Nijako — každý beh začína prázdny. Preto sa surové
+pozorovania commitujú do repozitára ako `data/observations/<icao24>/<dátum>.ndjson.gz`
+a databáza sa z nich pri každom behu poskladá nanovo. Sedí to na architektúru, ktorú
+projekt má odjakživa: *surové dáta sa nemažú, všetko ostatné je odvodené a prepočítateľné.*
+
+Overené: zahodenie celej databázy a jej obnova zo súborov dá presne rovnaký výsledok —
+21 787 pozícií, 23 letov, 20 misií.
+
+**Veľkosť.** 40 dní a 5 lietadiel = 512 kB. Teda **asi 5 MB za rok**. Git to unesie
+desaťročia.
+
+**Vedľajší efekt, ktorý stojí za to.** Surové pozorovania sú tým verejné, verzované
+a nezávisle overiteľné. To je silnejšie tvrdenie o transparentnosti než akýkoľvek dashboard —
+ktokoľvek si môže stiahnuť tie súbory a prepočítať si všetko po svojom.
+
+### Nastavenie
+
+1. Nahrajte repozitár na GitHub (verejný, nech sú Actions zadarmo).
+2. V *Settings → Secrets and variables → Actions* pridajte štyri tajomstvá:
+
+   | | |
+   |---|---|
+   | `WS_HOST` | FTP server z Webadminu |
+   | `WS_USER` | FTP login |
+   | `WS_PASSWORD` | FTP heslo |
+   | `WS_PATH` | cesta k webovému koreňu, napr. `/login/web` |
+
+3. V *Settings → Actions → General* povoľte **Read and write permissions** (workflow
+   commituje nové pozorovania).
+4. V záložke *Actions* spustite **Denný zber** ručne cez *Run workflow* a pozrite výstup.
+
+Bez tých tajomstiev workflow len zbiera a commituje — nahrávanie preskočí. Dá sa to teda
+najprv rozbehnúť naprázdno a FTP doplniť neskôr.
+
+### Bez WebSupportu vôbec
+
+Ak nechcete riešiť FTP, **GitHub Pages** hostuje statickú stránku zadarmo, s HTTPS a
+vlastnou doménou. WebSupport potom slúži len ako registrátor domény, ktorú nasmerujete na
+Pages. Žiadne prihlasovacie údaje, žiadny hosting na zaplatenie.
+
+---
+
 ## Možnosť A — dnešný náhľad (5 minút)
 
 `preview/state-flights-preview.html` je jediný samostatný súbor. Nahrajte ho cez SFTP do
@@ -38,7 +96,7 @@ Funguje na najlacnejšom programe. Žiadna databáza, žiadne PHP, žiadna konfi
 
 ---
 
-## Možnosť B — celá aplikácia, staticky (odporúčané)
+## Možnosť B — celá aplikácia, staticky
 
 Pipeline beží **inde** a na WebSupport sa nahráva len výsledok.
 
@@ -59,7 +117,7 @@ Kde nechať bežať zber:
 
 | | Cena | Poznámka |
 | --- | --- | --- |
-| **GitHub Actions** | zadarmo pre verejné repo | cron workflow, databáza ako artefakt alebo externý Postgres. Najlacnejšie. |
+| **GitHub Actions** | zadarmo pre verejné repo | hotové, viď vyššie |
 | **WebSupport VPS** | od pár € / mesiac | self-managed, plná kontrola, Node aj Postgres bez obmedzení |
 | **Ľubovoľný malý VPS** | podobne | rovnaké ako vyššie |
 
@@ -72,7 +130,16 @@ to, čo sa má zverejniť.
 
 ---
 
-## Možnosť C — VPS, celé na jednom mieste
+## Možnosť C — na vašom počítači
+
+`npm run collect:daily` spraví všetko naraz: dozbiera, prestaví, postaví stránku, a s
+`-- --upload` ju aj nahrá. Funguje, ale **závisí od toho, že počítač beží**. Archív
+adsb.lol drží ~40 dní; keď sa nezbiera dlhšie, tie dni sú nenávratne preč. Týždeň dovolenky
+sa dobehne, dva mesiace vypnutý notebook nie.
+
+Dáva zmysel na skúšanie a na jednorazové dozbieranie, nie ako trvalé riešenie.
+
+## Možnosť D — VPS, celé na jednom mieste
 
 [WebSupport VPS](https://www.websupport.sk/servery/vps/) je self-managed, takže Node aj
 PostgreSQL sú bez obmedzení. `docker-compose.yml` v repozitári spustí databázu, zber sa

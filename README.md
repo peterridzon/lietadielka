@@ -143,18 +143,34 @@ Read these before drawing conclusions from anything this tool prints.
 
 ---
 
+## Unattended collection
+
+The provider keeps about 40 days. A gap longer than that is permanent, so collection has
+to happen whether or not anyone remembers — `.github/workflows/collect.yml` runs it daily.
+
+The runner starts empty every time, so the raw observations are committed to the
+repository as `data/observations/<icao24>/<date>.ndjson.gz` and the database is rebuilt
+from them on each run. That is the architecture the project already had — raw data is
+never deleted, everything else is derived — applied to CI. It also makes the observations
+themselves public, versioned and independently checkable, which is a stronger claim than
+any dashboard.
+
+Forty days of five aircraft is 512 kB, so roughly 5 MB a year.
+
+```bash
+npm run obs:export        # database → committable day files
+npm run obs:import        # day files → database
+npm run collect:daily     # the whole cycle, for running it by hand
+```
+
 ## Nasadenie
 
 WebSupport webhosting is PHP-only, so the collector cannot run there — but this project
 does not need it to. Nothing on the public site changes between recomputations, because
-nothing is published until six hours after a landing. The site is therefore static, the
-pipeline runs elsewhere, and **the database never faces the internet**.
+nothing is published until six hours after a landing. The site is static, the pipeline
+runs in CI, and **the database never faces the internet**.
 
-```bash
-npm run deploy:preview     # single self-contained page over SFTP
-```
-
-See [deploy/README.md](deploy/README.md) for the three options and their trade-offs.
+See [deploy/README.md](deploy/README.md) for the setup and the alternatives.
 
 ## Licence
 

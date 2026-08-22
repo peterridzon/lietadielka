@@ -25,6 +25,9 @@
     "deploy:preview": "npm run preview:build && bash deploy/upload.sh",
     "purpose:set": "tsx src/cli/purpose-set.ts",
     "imports:list": "tsx src/cli/imports-list.ts",
+    "obs:export": "tsx src/cli/observations-export.ts",
+    "obs:import": "tsx src/cli/observations-import.ts",
+    "collect:daily": "bash scripts/daily.sh",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"

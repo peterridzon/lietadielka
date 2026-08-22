@@ -1,0 +1,122 @@
+name: Denný zber
+
+# The provider keeps roughly 40 days of history. A gap longer than that is permanent, so
+# this runs every day whether or not anyone is watching — that is the whole point.
+on:
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+    inputs:
+      backfill_days:
+        description: 'Koľko dní dozadu doplniť (max 40)'
+        required: false
+        default: '39'
+
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # Reference data and provider responses are regenerable, so a cache miss costs time
+      # rather than correctness.
+      - name: Cache reference data
+        uses: actions/cache@v4
+        with:
+          path: data/cache
+          key: adsb-cache-${{ github.run_id }}
+          restore-keys: adsb-cache-
+
+      - run: npm ci
+
+      # The runner starts empty. Everything is rebuilt from what is committed: the
+      # registry, the sourced cost figures, and the raw observations themselves.
+      - name: Restore state from the repository
+        run: |
+          npm run db:migrate
+          npm run seed
+          npm run airports:import
+          npm run obs:import
+
+      - name: Collect
+        run: |
+          DAYS="${{ github.event.inputs.backfill_days || '39' }}"
+          # Recent days are re-fetched: a trace can still be filling in, and a day written
+          # off as empty too early would stay empty for ever.
+          npx tsx src/cli/adsb-backfill.ts --all \
+            --from "$(date -u -d '3 days ago' +%F)" --to "$(date -u -d 'yesterday' +%F)" \
+            --concurrency 6 --force
+          # Then anything untouched since the last run. Already-imported days are skipped.
+          npx tsx src/cli/adsb-backfill.ts --all \
+            --from "$(date -u -d "$DAYS days ago" +%F)" --to "$(date -u -d '4 days ago' +%F)" \
+            --concurrency 6
+
+      - name: Rebuild everything derived
+        run: |
+          npm run obs:export
+          npm run flights:rebuild -- --all
+          npm run missions:rebuild
+          npm run costs:recompute
+          # Re-attaches the hand-entered flight purposes to the rebuilt flights.
+          npm run seed
+
+      - run: npm test
+
+      - name: Build the page
+        run: npm run preview:build
+
+      - name: Commit the new observations
+        run: |
+          git config user.name 'lietadielka-collector'
+          git config user.email 'noreply@users.noreply.github.com'
+          git add data/observations preview/src/export.json preview/state-flights-preview.html
+          if git diff --cached --quiet; then
+            echo 'Nič nové — žiadny commit.'
+          else
+            git commit -m "data: collection $(date -u +%F)"
+            git push
+          fi
+
+      # Optional. Set WS_HOST, WS_USER, WS_PASSWORD and WS_PATH as repository secrets to
+      # publish to WebSupport; without them the workflow just collects and commits.
+      - name: Upload to WebSupport
+        if: ${{ env.WS_HOST != '' }}
+        env:
+          WS_HOST: ${{ secrets.WS_HOST }}
+          WS_USER: ${{ secrets.WS_USER }}
+          WS_PASSWORD: ${{ secrets.WS_PASSWORD }}
+          WS_PATH: ${{ secrets.WS_PATH }}
+        run: |
+          curl --fail --ssl-reqd --ftp-create-dirs \
+            -T preview/state-flights-preview.html \
+            -u "$WS_USER:$WS_PASSWORD" \
+            "ftp://$WS_HOST/${WS_PATH#/}/index.html"
+          echo "Nahraté."
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '## Zber'
+            echo '```'
+            npx tsx src/cli/imports-list.ts 2>/dev/null | head -14 || true
+            echo '```'
+            echo '### Detegované lety'
+            echo '```'
+            npx tsx src/cli/flights-list.ts --limit 8 2>/dev/null | tail -20 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
