@@ -18,7 +18,6 @@
     "adsb:backfill": "tsx src/cli/adsb-backfill.ts",
     "flights:rebuild": "tsx src/cli/flights-rebuild.ts",
     "flights:list": "tsx src/cli/flights-list.ts",
-    "costs:recompute": "tsx src/cli/costs-recompute.ts",
     "imports:list": "tsx src/cli/imports-list.ts",
     "test": "vitest run",
     "test:watch": "vitest",

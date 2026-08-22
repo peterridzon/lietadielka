@@ -63,6 +63,11 @@ export const env = {
   adsbRateLimitRps: num('ADSB_RATE_LIMIT_RPS', 2),
   adsbHttpTimeoutMs: num('ADSB_HTTP_TIMEOUT_MS', 45_000),
   adsbCacheDir: str('ADSB_CACHE_DIR', './data/cache/adsb'),
+  /** Busy airframes used to prove a day exists in the adsb.lol archive. */
+  adsblolDaySentinels: (opt('ADSBLOL_DAY_SENTINELS') ?? '4ca766,4853d2,3c6444')
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean),
 
   openskyClientId: opt('OPENSKY_CLIENT_ID'),
   openskyClientSecret: opt('OPENSKY_CLIENT_SECRET'),

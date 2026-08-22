@@ -5,9 +5,18 @@
  * aircraft per UTC day at
  *   {base}/globe_history/YYYY/MM/DD/traces/{last two hex chars}/trace_full_{icao}.json
  *
- * Measured 2026-08-21: the archive keeps roughly the last 45 days. Older dates answer
- * with 504, which is a retention limit, not "the aircraft did not fly" — the two are
- * reported differently so data coverage never silently absorbs a missing archive.
+ * Measured 2026-08-21/22: the archive keeps roughly the last 40 to 45 days, pruned
+ * continuously, so the boundary moves during a long run.
+ *
+ * The archive answers 504 for ANY trace it does not hold — both "this aircraft did not
+ * fly that day" and "that day is outside retention". Those two mean opposite things for
+ * data coverage, and the HTTP status alone cannot tell them apart.
+ *
+ * We disambiguate with a day sentinel: a handful of airliners that fly almost every day.
+ * If a sentinel trace exists for the day, the archive holds that day, so a 504 for our
+ * aircraft genuinely means it was not seen. If no sentinel exists either, the day itself
+ * is missing and we report it as unavailable rather than as zero flights. When in doubt
+ * the answer is "unavailable" — undercounting coverage is safe, undercounting flights is not.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { gunzipSync } from 'node:zlib'
@@ -46,6 +55,13 @@ const IDX = {
 
 const FLAG_STALE = 1
 
+/**
+ * The default sentinel airframes live in env.adsblolDaySentinels: high-utilisation
+ * short-haul aircraft verified as present on five sampled archive days (2026-08-21).
+ * Any one of them answering proves the day is held. Override with ADSBLOL_DAY_SENTINELS
+ * if those airframes are ever retired or grounded.
+ */
+
 type TracePoint = unknown[]
 type TraceFile = {
   icao: string
@@ -67,11 +83,10 @@ function utcDayKey(date: Date): { y: string; m: string; d: string } {
   }
 }
 
+/** Every UTC day that overlaps [from, to). `to` is exclusive, so a one-day range is one day. */
 function* eachUtcDay(from: Date, to: Date): Generator<Date> {
-  const cursor = new Date(
-    Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate()),
-  )
-  while (cursor <= to) {
+  const cursor = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate()))
+  while (cursor < to) {
     yield new Date(cursor)
     cursor.setUTCDate(cursor.getUTCDate() + 1)
   }
@@ -89,16 +104,52 @@ export class AdsbLolProvider implements AdsbProvider {
   readonly name = 'adsblol'
   readonly capabilities: ProviderCapabilities = {
     history: true,
-    // Measured, not advertised. Re-check with `npm run adsb:probe`.
-    historyWindowDays: 45,
+    // Measured, not advertised, and it drifts: 44 days on 2026-08-21, 40 the next
+    // morning. Treated as a floor, with the day sentinel deciding each day for real.
+    historyWindowDays: 40,
     live: true,
     requiresAuth: false,
   }
 
+  /** Memoised per day key, so one run costs at most one sentinel check per day. */
+  private readonly dayAvailability = new Map<string, boolean>()
+
   constructor(
     private readonly baseUrl = env.adsblolHistoryBaseUrl,
     private readonly cacheDir = env.adsbCacheDir,
+    private readonly sentinels: string[] = env.adsblolDaySentinels,
   ) {}
+
+  /**
+   * Does the archive hold this UTC day at all? Answered by asking for a sentinel
+   * aircraft's trace: one 200 proves the day is present.
+   */
+  async isDayArchived(date: Date): Promise<boolean> {
+    const { y, m, d } = utcDayKey(date)
+    const key = `${y}-${m}-${d}`
+    const memoised = this.dayAvailability.get(key)
+    if (memoised !== undefined) return memoised
+
+    let archived = false
+    for (const sentinel of this.sentinels) {
+      const url = `${this.baseUrl}/globe_history/${y}/${m}/${d}/traces/${sentinel.slice(-2)}/trace_full_${sentinel}.json`
+      try {
+        const body = await fetchWithRetry(url, { attempts: 1, emptyStatuses: [404, 410] })
+        if (body !== null && body.length > 0) {
+          archived = true
+          break
+        }
+      } catch {
+        // A 5xx here just means this sentinel has no trace either; try the next one.
+      }
+    }
+
+    if (!archived) {
+      log.debug(`adsblol: no sentinel trace for ${key} — treating the day as not archived`)
+    }
+    this.dayAvailability.set(key, archived)
+    return archived
+  }
 
   private traceUrl(icao24: string, date: Date): string {
     const { y, m, d } = utcDayKey(date)
@@ -117,23 +168,38 @@ export class AdsbLolProvider implements AdsbProvider {
    */
   async getDay(icao24: string, date: Date): Promise<AdsbLolDayResult> {
     const cache = this.cachePath(icao24, date)
-    let body: Uint8Array | null = null
+    let body: Uint8Array
 
     if (existsSync(cache)) {
       body = readFileSync(cache)
     } else {
-      const url = this.traceUrl(icao24, date)
+      let downloaded: Uint8Array | null = null
       try {
-        body = await fetchWithRetry(url, { emptyStatuses: [404, 410] })
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
-        // 5xx from the archive means the day is outside retention or the backend is
-        // unhappy. Either way we did not observe "no flights", and must say so.
-        return { date, status: 'unavailable', positions: [], detail: message }
+        // Two attempts only: the archive's 504 is an answer, not a flaky failure.
+        downloaded = await fetchWithRetry(this.traceUrl(icao24, date), {
+          attempts: 2,
+          emptyStatuses: [404, 410],
+        })
+      } catch {
+        downloaded = null
       }
-      if (body === null) return { date, status: 'empty', positions: [] }
+
+      if (downloaded === null) {
+        // The trace is absent. Whether that means "did not fly" or "day not kept"
+        // depends on whether the archive holds the day at all.
+        return (await this.isDayArchived(date))
+          ? { date, status: 'empty', positions: [] }
+          : {
+              date,
+              status: 'unavailable',
+              positions: [],
+              detail: 'day not present in the adsb.lol archive (outside retention)',
+            }
+      }
+
       mkdirSync(dirname(cache), { recursive: true })
-      writeFileSync(cache, body)
+      writeFileSync(cache, downloaded)
+      body = downloaded
     }
 
     let file: TraceFile
