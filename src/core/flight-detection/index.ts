@@ -25,6 +25,8 @@ export type DetectedFlight = {
   positions: AdsbPosition[]
   phases: FlightPhase[]
 
+  /** Off-block to on-block, measured from ground movement. Null when not observed. */
+  blockSeconds: number | null
   distanceKm: number
   distanceFromGapsKm: number
   greatCircleKm: number
@@ -141,6 +143,7 @@ export function detectFlights(
         positions: slice,
         phases: phases.slice(measureStart, measureEnd + 1),
 
+        blockSeconds: measureBlockSeconds(segment, span, config),
         distanceKm,
         distanceFromGapsKm: coverage.distanceFromGapsKm,
         greatCircleKm: haversineKm(departureAnchor.position, arrivalAnchor.position),
@@ -163,6 +166,44 @@ export function detectFlights(
   }
 
   return flights
+}
+
+/**
+ * Off-block to on-block, measured rather than assumed.
+ *
+ * The ground runs at each end usually start long before the aircraft moves — it sits on
+ * stand transmitting. So block time runs from the first fix showing taxi speed before
+ * the climb to the last one after the descent. Where either ground run is missing, the
+ * caller falls back to airborne time plus a taxi allowance and says so.
+ */
+const TAXI_SPEED_KT = 3
+
+function measureBlockSeconds(
+  segment: AdsbPosition[],
+  span: { groundBefore: { startIndex: number; endIndex: number } | null; groundAfter: { startIndex: number; endIndex: number } | null },
+  config: DetectionConfig,
+): number | null {
+  void config
+  if (!span.groundBefore || !span.groundAfter) return null
+
+  let offBlock: Date | null = null
+  for (let i = span.groundBefore.startIndex; i <= span.groundBefore.endIndex; i++) {
+    if ((segment[i]?.groundSpeed ?? 0) > TAXI_SPEED_KT) {
+      offBlock = segment[i]!.timestamp
+      break
+    }
+  }
+  let onBlock: Date | null = null
+  for (let i = span.groundAfter.endIndex; i >= span.groundAfter.startIndex; i--) {
+    if ((segment[i]?.groundSpeed ?? 0) > TAXI_SPEED_KT) {
+      onBlock = segment[i]!.timestamp
+      break
+    }
+  }
+  if (!offBlock || !onBlock) return null
+
+  const seconds = (onBlock.getTime() - offBlock.getTime()) / 1000
+  return seconds > 0 ? Math.round(seconds) : null
 }
 
 /**

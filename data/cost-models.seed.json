@@ -1,77 +1,97 @@
 {
   "_readme": [
-    "Cost model seed.",
+    "Cost models. Each is built from rows in data/cost-research.seed.json and points back",
+    "at the source they came from.",
     "",
-    "The brief is explicit: 'Nevymyslaj naklady.' No hourly rate, fuel burn or crew cost is",
-    "entered here unless it comes from a citable source. As of the initial commit we have not",
-    "yet obtained sourced operating figures for the Slovak government fleet, so the models",
-    "below carry structure and sources-to-obtain, not numbers.",
+    "Mode 'blended' means the model is one sourced all-in hourly rate rather than a",
+    "build-up of fuel, maintenance, crew and charges. That is the only mode available for",
+    "the Slovak fleet today, because 3 802 EUR/h is the only sourced direct figure that",
+    "exists. A blended rate REPLACES the components it already contains and is never added",
+    "to them.",
     "",
-    "Consequence by design: with ALLOW_UNVERIFIED_COST_MODELS=false (the default) the cost",
-    "engine returns 'data unavailable' for these aircraft rather than a plausible-looking",
-    "invented figure. That is the correct behaviour until the inputs are sourced.",
+    "The rate applies to the fixed-wing fleet as a whole, not to a type: the source states",
+    "it as the average of the F100 and the A319. Attributing it to one type would be an",
+    "invention.",
     "",
-    "Candidate primary sources to obtain (see COST_MODEL.md):",
-    "  - MV SR budget chapter and annual reports (fixed cost, crew, maintenance contracts)",
-    "  - Public procurement contracts for fuel, maintenance and handling (crz.gov.sk)",
-    "  - Freedom-of-information requests under zakon c. 211/2000 Z. z. for per-hour operating cost",
-    "  - Airport published charges for LZIB and destination airports (handling, landing fees)"
+    "Price year is 2020. Every flight we currently hold is from 2026, so every calculation",
+    "carries a six-year price-year gap and cannot be high confidence."
   ],
 
   "costModels": [
     {
-      "key": "a319cj-gov-sk",
+      "key": "lu-mvsr-fixedwing-direct",
       "version": 1,
-      "label": "Airbus A319-115X CJ - Slovak government flying service",
-      "appliesToTypeCode": "A319",
-      "validFrom": "2016-06-14",
-      "validTo": null,
+      "modelVersion": "LU-MVSR-FW-DIRECT-2019-v1",
+      "label": "Priame prevadzkove naklady letunov LU MV SR (2018-2019)",
+      "appliesToTypeCode": null,
+      "scope": "fleet",
+      "scopeKey": "lu-mvsr-fixedwing",
+      "allocationMethod": "by_flight_hours",
+      "validFrom": "2018-01-01",
+      "validTo": "2020-12-31",
+      "priceYear": 2019,
+      "mode": "blended",
+      "blendedDirectRateLow": 2359.55,
+      "blendedDirectRateMid": 4079,
+      "blendedDirectRateHigh": 5300.75,
+      "taxiAllowanceHours": 0.25,
       "currency": "EUR",
-      "verificationStatus": "needs_verification",
+      "verificationStatus": "verified",
+      "sourceId": "src-rokovania-lu-mvsr",
+      "sourceTier": "A4",
       "params": {
-        "components": {},
-        "unavailable": [
-          "fuelBurnKgPerHour",
-          "fuelPricePerKg",
-          "maintenancePerFlightHour",
-          "maintenancePerCycle",
-          "crewHourlyCost",
-          "fixedAnnualCost",
-          "expectedAnnualFlightHours",
-          "acquisitionCost",
-          "depreciationYears",
-          "airportHandlingCost"
-        ]
+        "researchItemIds": ["cri-lu-direct-hourly-2018-2019", "cri-lu-direct-hourly-spread"],
+        "includes": [
+          "fuel",
+          "navigation",
+          "airport",
+          "handling",
+          "maintenance_hour",
+          "maintenance_cycle",
+          "crew_variable"
+        ],
+        "excludes": ["insurance", "crew_fixed", "training", "facility", "software", "capital", "administration"],
+        "unavailableComponents": []
       },
-      "sources": [],
-      "notes": "Structure only. No figure is entered until it has a citable source."
+      "notes": "Blended direct rate for 2018-2020. Components are not separable from this source."
     },
     {
-      "key": "f100-gov-sk",
-      "version": 1,
-      "label": "Fokker 100 - Slovak government flying service",
-      "appliesToTypeCode": "F100",
-      "validFrom": "2016-09-26",
+      "key": "lu-mvsr-fixedwing-direct",
+      "version": 2,
+      "modelVersion": "LU-MVSR-FW-DIRECT-2021-v1",
+      "label": "Priame prevadzkove naklady letunov LU MV SR (dlhodoby priemer od 2021)",
+      "appliesToTypeCode": null,
+      "scope": "fleet",
+      "scopeKey": "lu-mvsr-fixedwing",
+      "allocationMethod": "by_flight_hours",
+      "validFrom": "2021-01-01",
       "validTo": null,
+      "priceYear": 2020,
+      "mode": "blended",
+      "blendedDirectRateLow": 2359.55,
+      "blendedDirectRateMid": 3802,
+      "blendedDirectRateHigh": 5300.75,
+      "taxiAllowanceHours": 0.25,
       "currency": "EUR",
-      "verificationStatus": "needs_verification",
+      "verificationStatus": "verified",
+      "sourceId": "src-rokovania-lu-mvsr",
+      "sourceTier": "A4",
       "params": {
-        "components": {},
-        "unavailable": [
-          "fuelBurnKgPerHour",
-          "fuelPricePerKg",
-          "maintenancePerFlightHour",
-          "maintenancePerCycle",
-          "crewHourlyCost",
-          "fixedAnnualCost",
-          "expectedAnnualFlightHours",
-          "acquisitionCost",
-          "depreciationYears",
-          "airportHandlingCost"
-        ]
+        "researchItemIds": ["cri-lu-direct-hourly-longterm", "cri-lu-direct-hourly-spread"],
+        "includes": [
+          "fuel",
+          "navigation",
+          "airport",
+          "handling",
+          "maintenance_hour",
+          "maintenance_cycle",
+          "crew_variable"
+        ],
+        "excludes": ["insurance", "crew_fixed", "training", "facility", "software", "capital", "administration"],
+        "unavailableComponents": [],
+        "fixedCostScopeKey": "lu-mvsr-fixedwing"
       },
-      "sources": [],
-      "notes": "Structure only. No figure is entered until it has a citable source."
+      "notes": "The rate the unit's own planning table applies to every ministry. Explicitly stated as including charges."
     }
   ]
 }

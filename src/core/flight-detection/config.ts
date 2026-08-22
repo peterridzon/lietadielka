@@ -5,7 +5,7 @@
  * bump DETECTOR_VERSION, because `flight.detector_version` is what tells us which
  * flights need rebuilding.
  */
-export const DETECTOR_VERSION = 'fd-1.2.0'
+export const DETECTOR_VERSION = 'fd-1.3.0'
 
 export type DetectionConfig = {
   /** Above this gap, two fixes are never part of one continuous track. */

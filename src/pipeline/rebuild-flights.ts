@@ -185,6 +185,8 @@ export async function rebuildFlightsForAircraft(options: {
       probableArrivalAirportId: arrivalMatch.airport ? null : (arrivalMatch.probable?.id ?? null),
       routeId,
       durationSeconds: item.durationSeconds,
+      blockSeconds: item.blockSeconds,
+      blockSecondsEstimated: item.blockSeconds === null,
       distanceKm: item.distanceKm,
       distanceFromGapsKm: item.distanceFromGapsKm,
       greatCircleKm: item.greatCircleKm,

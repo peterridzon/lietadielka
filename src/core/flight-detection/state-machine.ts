@@ -48,6 +48,10 @@ export type FlightSpan = {
   arrivalGapSeconds: number
   /** Ground contacts inside the flight that were too brief to be landings. */
   touchAndGoCount: number
+  /** Bounds of the ground run before the climb, for measuring off-block time. */
+  groundBefore: { startIndex: number; endIndex: number } | null
+  /** Bounds of the ground run after the descent, for measuring on-block time. */
+  groundAfter: { startIndex: number; endIndex: number } | null
 }
 
 export function buildRuns(
@@ -109,6 +113,7 @@ export function findFlightSpans(
     lastAirborneTs: Date
     lastAirborneIndex: number
     touchAndGoCount: number
+    groundBefore: { startIndex: number; endIndex: number } | null
   }
   let open: OpenFlight | null = null
 
@@ -138,6 +143,7 @@ export function findFlightSpans(
         lastAirborneTs: run.endTs,
         lastAirborneIndex: run.endIndex,
         touchAndGoCount: 0,
+        groundBefore: ground ? { startIndex: ground.startIndex, endIndex: ground.endIndex } : null,
       }
       continue
     }
@@ -158,6 +164,8 @@ export function findFlightSpans(
         departureGapSeconds: open.departureGapSeconds,
         arrivalGapSeconds: (run.startTs.getTime() - open.lastAirborneTs.getTime()) / 1000,
         touchAndGoCount: open.touchAndGoCount,
+        groundBefore: open.groundBefore,
+        groundAfter: { startIndex: run.startIndex, endIndex: run.endIndex },
       })
       open = null
     } else {
@@ -179,6 +187,8 @@ export function findFlightSpans(
       departureGapSeconds: open.departureGapSeconds,
       arrivalGapSeconds: Number.POSITIVE_INFINITY,
       touchAndGoCount: open.touchAndGoCount,
+      groundBefore: open.groundBefore,
+      groundAfter: null,
     })
   }
 
