@@ -48,7 +48,7 @@
 .f-cov { display: flex; align-items: center; gap: 8px; }
 .f-cov .bar { flex: 1; height: 5px; background: var(--rule); position: relative; }
 .f-cov .bar i { position: absolute; inset: 0 auto 0 0; background: var(--ink-2); display: block; }
-.f-cov .pct { font-family: var(--data); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--ink-2); width: 34px; text-align: right; }
+.f-cov .pct { font-family: var(--data); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--ink-2); width: 46px; text-align: right; white-space: nowrap; }
 
 .chev { color: var(--ink-3); transition: transform 0.18s ease; justify-self: end; }
 .strip[open-state="1"] .chev { transform: rotate(90deg); }
@@ -71,14 +71,25 @@
 .fact dd.soft { color: var(--ink-3); }
 
 .quality { border-top: 1px solid var(--rule); padding-top: 16px; display: grid; gap: 9px; }
-.qrow { display: grid; grid-template-columns: 132px 1fr 42px; align-items: center; gap: 12px; font-size: 12.5px; }
+.qrow { display: grid; grid-template-columns: 132px 1fr 52px; align-items: center; gap: 12px; font-size: 12.5px; }
 .qrow .lbl { font-family: var(--data); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
 .qrow .track { height: 6px; background: var(--rule); position: relative; }
 .qrow .track i { position: absolute; inset: 0 auto 0 0; display: block; }
-.qrow .val { font-family: var(--data); font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; }
+.qrow .val { font-family: var(--data); font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 .q-high i { background: var(--ok); } .q-high .val { color: var(--ok); }
 .q-med i { background: var(--warn); } .q-med .val { color: var(--warn); }
 .q-low i { background: var(--weak); } .q-low .val { color: var(--weak); }
+
+.purpose { border-top: 1px solid var(--rule); padding-top: 16px; display: grid; gap: 7px; }
+.purpose .status { font-family: var(--data); font-size: 10.5px; letter-spacing: 0.09em; text-transform: uppercase; padding: 3px 7px; border: 1px solid currentColor; justify-self: start; }
+.purpose .status.confirmed { color: var(--ok); }
+.purpose .status.probable { color: var(--warn); }
+.purpose .status.unknown { color: var(--ink-3); }
+.purpose .ptitle { font-size: 14.5px; font-weight: 600; line-height: 1.4; }
+.purpose .pdesc { font-size: 13px; color: var(--ink-2); line-height: 1.5; margin: 0; }
+.purpose .psrc { font-family: var(--data); font-size: 11px; color: var(--ink-3); line-height: 1.5; }
+.purpose .psrc a { color: inherit; text-decoration: underline; text-underline-offset: 2px; word-break: break-word; }
+.purpose .psrc a:hover { color: var(--accent); }
 
 .caveat { font-size: 13px; color: var(--ink-2); border-left: 2px solid var(--warn); padding-left: 12px; line-height: 1.5; }
 .caveat b { color: var(--ink); font-weight: 600; }

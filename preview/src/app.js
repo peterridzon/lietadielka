@@ -43,7 +43,7 @@
     return Math.floor(sec / 3600) + ' h ' + Math.round((sec % 3600) / 60) + ' min'
   }
   function km(n) { return n == null ? '—' : nf(Math.round(n)) }
-  function pct(x) { return x == null ? '—' : Math.round(x * 100) + ' %' }
+  function pct(x) { return x == null ? '—' : Math.round(x * 100) + '\u00a0%' }
   function grade(x) { return x >= 0.75 ? 'q-high' : x >= 0.5 ? 'q-med' : 'q-low' }
 
   function el(tag, cls, text) {
@@ -604,6 +604,30 @@
       quality.appendChild(qualityRow('Letisko odletu', f.depConf || 0))
       quality.appendChild(qualityRow('Letisko príletu', f.arrConf || 0))
       facts.appendChild(quality)
+
+      // Účel letu — nikdy neodvodený softvérom, vždy so zdrojom a so statusom.
+      var purpose = el('div', 'purpose')
+      purpose.appendChild(el('p', 'eyebrow', 'Účel letu'))
+      if (f.purposeTitle) {
+        var STATUS_LABEL = { confirmed: 'potvrdený', probable: 'pravdepodobný', unknown: 'neznámy' }
+        var st = f.purposeStatus || 'unknown'
+        purpose.appendChild(el('span', 'status ' + st, STATUS_LABEL[st] || st))
+        purpose.appendChild(el('div', 'ptitle', f.purposeTitle))
+        if (f.purposeDescription) purpose.appendChild(el('p', 'pdesc', f.purposeDescription))
+        if (f.purposeSourceUrl) {
+          var src = el('div', 'psrc')
+          src.innerHTML = 'Zdroj: ' + (f.purposeSourcePublisher || '') +
+            ' · <a href="' + f.purposeSourceUrl + '" target="_blank" rel="noopener noreferrer">' +
+            f.purposeSourceUrl.replace(/^https?:\/\//, '').slice(0, 60) + '…</a>'
+          purpose.appendChild(src)
+        }
+      } else {
+        purpose.appendChild(el('span', 'status unknown', 'neznámy'))
+        purpose.appendChild(el('p', 'pdesc',
+          'Účel tohto letu nemáme podložený zdrojom. Softvér ho neodhaduje — kým sa neobjaví ' +
+          'verejný doklad, zostáva neznámy.'))
+      }
+      facts.appendChild(purpose)
 
       var lines = caveatFor(f, dep, arr)
       if (lines.length) {
