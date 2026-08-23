@@ -42,6 +42,26 @@ vybaví GitHub sám.
 
 ---
 
+## Cloudflare Pages
+
+Rovnocenná náhrada GitHub Pages, ak máte radšej ich CDN. Bez Gitu, priamym nahratím:
+
+```bash
+npx wrangler login
+```
+
+```bash
+npm run deploy:cloudflare
+```
+
+**Rieši to hosting, nie automatiku.** Na Cloudflare nič nebeží — je to statický súbor.
+Denný zber tam spustiť nejde: Workers majú limit CPU, nemajú súborový systém a denný
+archív adsb.lol má 3,75 GB. Zber preto ostáva na GitHub Actions alebo na vás.
+
+Kombinácia, ktorá dáva zmysel, ak chcete oboje: **zber na GitHub Actions, stránka na
+Cloudflare Pages.** Do workflowu stačí pridať krok s `wrangler pages deploy` a token
+`CLOUDFLARE_API_TOKEN` ako secret.
+
 ## Ako to funguje
 
 ```
