@@ -64,9 +64,78 @@
         leteckej kapacity — ktorý by nezmizol ani vtedy. Obe stoja na jedinom oficiálnom údaji,
         ktorý sa nám podarilo získať, a obe sú preto zaťažené veľkou neistotou.
       </p>
+      <p><a href="#sec-methodology">Ako si tieto čísla overiť →</a></p>
     </div>
     <div class="fleet-cost" id="fleet-cost"></div>
     <div class="cost-meta" id="cost-source" style="margin-top:18px"></div>
+  </div>
+</section>
+
+<section id="sec-fleet">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Register</p>
+      <h2>Sledované lietadlá</h2>
+      <p>
+        Slovenská štátna letecká preprava nie je jedna flotila. Letecký útvar MV SR a Vzdušné
+        sily sú samostatní prevádzkovatelia s vlastnými rozpočtami a vlastnými registrami —
+        preto ich vedieme oddelene a sadzba jedného rezortu sa nikdy neaplikuje na lietadlá
+        druhého. Zbierame výhradne lietadlá zapísané v registri projektu a ani jedna identita
+        zatiaľ nie je potvrdená voči primárnemu štátnemu registru.
+      </p>
+    </div>
+    <div id="fleet-groups"></div>
+    <div class="verify" id="verify"></div>
+  </div>
+</section>
+
+<section id="sec-flights">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Detegované lety</p>
+      <h2 id="flights-heading">Zoznam letov</h2>
+      <p>
+        Jeden pásik na let. Ľavá hrana nesie celkovú spoľahlivosť, pravá podiel letu, ktorý je
+        naozaj pokrytý pozorovaniami. Kliknutím na pásik sa otvorí zrekonštruovaná trasa a úplný
+        rozpad kvality dát. Otáznik označuje letisko určené pod hranicou spoľahlivosti,
+        vlnovka <span class="mono">~</span> čas, ktorý sme odvodili a nie odpozorovali.
+        <strong>NEZN</strong> znamená koniec, ktorý sme neurčili — pokrytie sa stratilo, kým bolo
+        lietadlo ešte vo vzduchu. Aj vtedy však vieme, kde sme ho videli naposledy, a to je
+        pri takom lete uvedené.
+      </p>
+    </div>
+    <div class="strips" id="strips"></div>
+  </div>
+</section>
+
+<section id="sec-missions">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Misie</p>
+      <h2>Cesty, nie jednotlivé úseky</h2>
+      <p>
+        Cesta tam a späť je jedna misia. Porovnávať jeden úsek s cenou spiatočnej letenky by nedávalo
+        zmysel, takže náklady aj prípadné komerčné porovnanie počítame na úrovni celej cesty. Zoskupenie
+        je automatické a nesie mieru istoty — reťaz úsekov je len taká spoľahlivá ako letiská, ktoré ju spájajú.
+        Zastávka uvedená ako <em>nad niečím</em> je miesto, kde sme lietadlo videli naposledy,
+        nie tvrdenie, že tam pristálo.
+      </p>
+    </div>
+    <div class="missions" id="missions"></div>
+  </div>
+</section>
+
+<section id="sec-routes">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Dvojice miest</p>
+      <h2>Najčastejšie spojenia</h2>
+      <p>
+        Dvojice bez ohľadu na smer, za sledované obdobie. Úseky, ktorých začiatok alebo cieľ sme
+        nikdy nevideli, sú uvedené zvlášť &mdash; nie priradené k odhadu.
+      </p>
+    </div>
+    <div class="routes" id="routes"></div>
   </div>
 </section>
 
@@ -118,23 +187,6 @@
   </div>
 </section>
 
-<section id="sec-missions">
-  <div class="wrap">
-    <div class="sec-head">
-      <p class="eyebrow">Misie</p>
-      <h2>Cesty, nie jednotlivé úseky</h2>
-      <p>
-        Cesta tam a späť je jedna misia. Porovnávať jeden úsek s cenou spiatočnej letenky by nedávalo
-        zmysel, takže náklady aj prípadné komerčné porovnanie počítame na úrovni celej cesty. Zoskupenie
-        je automatické a nesie mieru istoty — reťaz úsekov je len taká spoľahlivá ako letiská, ktoré ju spájajú.
-        Zastávka uvedená ako <em>nad niečím</em> je miesto, kde sme lietadlo videli naposledy,
-        nie tvrdenie, že tam pristálo.
-      </p>
-    </div>
-    <div class="missions" id="missions"></div>
-  </div>
-</section>
-
 <section id="sec-coverage">
   <div class="wrap">
     <div class="sec-head">
@@ -153,57 +205,6 @@
       <span><i class="c-quiet"></i> Archív deň mal, lietadlo nevidel</span>
       <span><i class="c-nodata"></i> Deň sa nedal získať &mdash; vylúčený, nie nula</span>
     </div>
-  </div>
-</section>
-
-<section id="sec-fleet">
-  <div class="wrap">
-    <div class="sec-head">
-      <p class="eyebrow">Register</p>
-      <h2>Sledované lietadlá</h2>
-      <p>
-        Slovenská štátna letecká preprava nie je jedna flotila. Letecký útvar MV SR a Vzdušné
-        sily sú samostatní prevádzkovatelia s vlastnými rozpočtami a vlastnými registrami —
-        preto ich vedieme oddelene a sadzba jedného rezortu sa nikdy neaplikuje na lietadlá
-        druhého. Zbierame výhradne lietadlá zapísané v registri projektu a ani jedna identita
-        zatiaľ nie je potvrdená voči primárnemu štátnemu registru.
-      </p>
-    </div>
-    <div id="fleet-groups"></div>
-    <div class="verify" id="verify"></div>
-  </div>
-</section>
-
-<section id="sec-flights">
-  <div class="wrap">
-    <div class="sec-head">
-      <p class="eyebrow">Detegované lety</p>
-      <h2 id="flights-heading">Zoznam letov</h2>
-      <p>
-        Jeden pásik na let. Ľavá hrana nesie celkovú spoľahlivosť, pravá podiel letu, ktorý je
-        naozaj pokrytý pozorovaniami. Kliknutím na pásik sa otvorí zrekonštruovaná trasa a úplný
-        rozpad kvality dát. Otáznik označuje letisko určené pod hranicou spoľahlivosti,
-        vlnovka <span class="mono">~</span> čas, ktorý sme odvodili a nie odpozorovali.
-        <strong>NEZN</strong> znamená koniec, ktorý sme neurčili — pokrytie sa stratilo, kým bolo
-        lietadlo ešte vo vzduchu. Aj vtedy však vieme, kde sme ho videli naposledy, a to je
-        pri takom lete uvedené.
-      </p>
-    </div>
-    <div class="strips" id="strips"></div>
-  </div>
-</section>
-
-<section id="sec-routes">
-  <div class="wrap">
-    <div class="sec-head">
-      <p class="eyebrow">Dvojice miest</p>
-      <h2>Najčastejšie spojenia</h2>
-      <p>
-        Dvojice bez ohľadu na smer, za sledované obdobie. Úseky, ktorých začiatok alebo cieľ sme
-        nikdy nevideli, sú uvedené zvlášť &mdash; nie priradené k odhadu.
-      </p>
-    </div>
-    <div class="routes" id="routes"></div>
   </div>
 </section>
 
