@@ -36,6 +36,35 @@ beforeAll(async () => {
 const $ = (selector: string): Element | null => dom.window.document.querySelector(selector)
 const $$ = (selector: string): Element[] => [...dom.window.document.querySelectorAll(selector)]
 
+/**
+ * A fragment is not a document. Without a charset declaration the browser falls back to
+ * its locale default and renders every diacritic as mojibake — which is exactly what
+ * happened once the page was served over HTTP rather than opened from disk. The bytes
+ * were always correct; nothing told the parser how to read them.
+ */
+describe('document envelope', () => {
+  it('declares UTF-8 within the first 1024 bytes', () => {
+    const head = readFileSync(PAGE).subarray(0, 1024).toString('latin1')
+    expect(head).toMatch(/<meta\s+charset="utf-8">/i)
+  })
+
+  it('is a complete HTML document in Slovak', () => {
+    const raw = readFileSync(PAGE, 'utf8')
+    expect(raw.startsWith('<!doctype html>')).toBe(true)
+    expect(raw).toContain('<html lang="sk">')
+    expect(raw.trimEnd().endsWith('</html>')).toBe(true)
+    for (const tag of ['<head>', '</head>', '<body>', '</body>']) {
+      expect(raw.split(tag).length - 1, `${tag} must appear exactly once`).toBe(1)
+    }
+  })
+
+  it('round-trips as UTF-8 with the diacritics intact', () => {
+    const raw = readFileSync(PAGE, 'utf8')
+    expect(raw).toContain('Štátne lety')
+    expect(raw).not.toContain('\uFFFD')
+  })
+})
+
 describe('design preview', () => {
   it('runs its script without throwing', () => {
     expect(errors).toEqual([])

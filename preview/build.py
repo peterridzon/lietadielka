@@ -2,10 +2,12 @@ import json, os
 import pathlib
 S=str(pathlib.Path(__file__).parent / 'src')
 OUT=str(pathlib.Path(__file__).parent / 'state-flights-preview.html')
-head=open(f'{S}/head.html').read(); head2=open(f'{S}/head2.html').read()
-body=open(f'{S}/body.html').read(); app=open(f'{S}/app.js').read()
-data=json.load(open(f'{S}/export.json')); land=json.load(open(f'{S}/land-simple.json'))
-borders=json.load(open(f'{S}/borders-simple.json'))
+def read(name): return open(f'{S}/{name}', encoding='utf-8').read()
+def load(name): return json.load(open(f'{S}/{name}', encoding='utf-8'))
+head=read('head.html'); head2=read('head2.html')
+body=read('body.html'); app=read('app.js')
+data=load('export.json'); land=load('land-simple.json')
+borders=load('borders-simple.json')
 
 import base64
 LICENSE_URLS={
@@ -14,7 +16,7 @@ LICENSE_URLS={
  'CC BY 2.0':'https://creativecommons.org/licenses/by/2.0/',
  'CC BY 4.0':'https://creativecommons.org/licenses/by/4.0/',
 }
-credits=json.load(open(f'{S}/photos/credits.json'))
+credits=json.load(open(f'{S}/photos/credits.json', encoding='utf-8'))
 photos={}
 for reg,c in credits.items():
     raw=open(f'{S}/photos/{reg}-final.jpg','rb').read()
@@ -28,10 +30,15 @@ for reg,c in credits.items():
       'photoLabel':c.get('photoLabel'),
     }
 def embed(o): return json.dumps(o, separators=(',',':'), ensure_ascii=False).replace('</','<\\/')
-open(OUT,'w').write('\n'.join([head, head2, body,
+# A bare fragment is not a document. Served without an encoding declaration, a browser
+# falls back to its locale default and reads the UTF-8 bytes as Latin-1 — every diacritic
+# in the page turns to mojibake. The charset meta must come first, inside the first 1024
+# bytes, before any text the parser could mis-decode.
+HEAD_OPEN='<!doctype html>\n<html lang="sk">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">'
+open(OUT,'w',encoding='utf-8').write('\n'.join([HEAD_OPEN, head, head2, '</head>\n<body>', body,
   '<script type="application/json" id="flight-data">'+embed(data)+'</script>',
   '<script type="application/json" id="land-data">'+embed(land)+'</script>',
   '<script type="application/json" id="border-data">'+embed(borders)+'</script>',
   '<script type="application/json" id="photo-data">'+embed(photos)+'</script>',
-  '<script>\n'+app+'\n</script>']))
+  '<script>\n'+app+'\n</script>', '</body>\n</html>']))
 print('size', round(os.path.getsize(OUT)/1024,1), 'KB')
