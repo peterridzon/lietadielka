@@ -26,7 +26,36 @@ async function main(): Promise<void> {
   const index = await getAirportIndex()
   console.log(`airport index: ${index.size} aerodromes`)
 
+  const failures: string[] = []
+
   for (const target of fleet) {
+    try {
+      await rebuildOne(target)
+    } catch (error) {
+      // One aircraft failing must not leave the other thirteen unrebuilt and the database
+      // in a half-written state that looks like a fleet which stopped flying.
+      const message = error instanceof Error ? error.message : String(error)
+      failures.push(`${target.registration ?? target.icao24}: ${message.split('\n')[0]}`)
+      console.log(`\n${target.registration ?? target.icao24}: FAILED — ${message.split('\n')[0]}`)
+    }
+  }
+
+  if (failures.length > 0) {
+    console.log(`\n${failures.length} aircraft failed to rebuild:`)
+    for (const f of failures) console.log(`  ${f}`)
+    await closeDb()
+    process.exit(1)
+  }
+
+  await closeDb()
+}
+
+async function rebuildOne(target: Awaited<ReturnType<typeof requireAircraft>>): Promise<void> {
+  {
+    const args = parseArgs()
+    const fromArg = optionalString(args, 'from')
+    const toArg = optionalString(args, 'to')
+    const index = await getAirportIndex()
     const result = await rebuildFlightsForAircraft({
       aircraft: target,
       from: fromArg ? parseUtcDate(fromArg) : undefined,
@@ -44,8 +73,6 @@ async function main(): Promise<void> {
         `  unresolved airport ${withUnknownAirport}`,
     )
   }
-
-  await closeDb()
 }
 
 runCli(main)

@@ -88,10 +88,20 @@ function slug(value: string): string {
     .replace(/^-|-$/g, '')
 }
 
+/**
+ * URL slug for a flight. The departure time is part of it, not decoration.
+ *
+ * Date plus aircraft plus route is not unique: an aircraft making two flights in a day
+ * with neither end identified produces the same slug twice, which a helicopter does
+ * routinely. Including the time keeps it unique without depending on what other flights
+ * happen to exist, so a permalink stays put across rebuilds.
+ */
 function publicIdFor(target: Aircraft, detected: DetectedFlight, departure: string, arrival: string): string {
-  const date = detected.departureTime.toISOString().slice(0, 10)
+  const iso = detected.departureTime.toISOString()
+  const date = iso.slice(0, 10)
+  const time = iso.slice(11, 16).replace(':', '')
   const registration = slug(target.registration ?? target.icao24)
-  return `${date}-${registration}-${slug(departure)}-${slug(arrival)}`
+  return `${date}-${time}-${registration}-${slug(departure)}-${slug(arrival)}`
 }
 
 /**

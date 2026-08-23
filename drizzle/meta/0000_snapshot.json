@@ -1,5 +1,5 @@
 {
-  "id": "3ce25404-c5c0-42b2-b288-9b10a779c1f3",
+  "id": "a4ac4ae1-fde3-474f-8fcd-091dafd1fd0d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -145,6 +145,48 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'real'"
+        },
+        "registry_owner": {
+          "name": "registry_owner",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "registry_operator_code": {
+          "name": "registry_operator_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "registry_type": {
+          "name": "registry_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "registry_year": {
+          "name": "registry_year",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "registry_category": {
+          "name": "registry_category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "registry_military": {
+          "name": "registry_military",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "registry_synced_at": {
+          "name": "registry_synced_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         },
         "notes": {
           "name": "notes",

@@ -190,6 +190,21 @@ export const aircraft = pgTable(
     costModelKey: text('cost_model_key'),
     verificationStatus: text('verification_status').notNull().default('needs_verification'),
     dataStatus: text('data_status').notNull().default('real'),
+
+    // --- third-party registry data, namespaced so it never masquerades as ours ---
+    // Filled from Bellingcat's modes.csv by `npm run registry:sync`. Kept separate from
+    // the curated fields above: these are someone else's data, at someone else's tier,
+    // and are used to cross-check our registry and to surface aircraft we have missed.
+    /** hexdb.io via modes.csv — tier C. */
+    registryOwner: text('registry_owner'),
+    registryOperatorCode: text('registry_operator_code'),
+    registryType: text('registry_type'),
+    registryYear: text('registry_year'),
+    /** LLM-generated in modes.csv — tier D. A hint for triage, never a published claim. */
+    registryCategory: text('registry_category'),
+    registryMilitary: boolean('registry_military'),
+    registrySyncedAt: timestamp('registry_synced_at', { withTimezone: true }),
+
     notes: text('notes'),
     sourceUrl: text('source_url'),
     sourceId: text('source_id').references(() => source.id),

@@ -106,6 +106,9 @@ type SeedCostModel = {
 
 type SeedPurpose = {
   flightPublicId: string
+  /** Natural key, preferred over the slug: the slug changes when detection improves. */
+  registration?: string
+  departureUtc?: string
   title: string
   description?: string
   status: string
@@ -285,12 +288,30 @@ async function main(): Promise<void> {
   const purposesPending: string[] = []
 
   for (const entry of purposeSeed.purposes) {
-    const rows = await db
-      .select({ id: flight.id })
-      .from(flight)
-      .where(eq(flight.publicId, entry.flightPublicId))
-      .limit(1)
-    const target = rows[0]
+    // Natural key first. The public id is derived from airport identifications that can
+    // change as detection improves, so binding research to it detaches the research.
+    let target: { id: string } | undefined
+    if (entry.registration && entry.departureUtc) {
+      const wanted = new Date(entry.departureUtc).getTime()
+      const candidates = await db
+        .select({ id: flight.id, departureTime: flight.departureTime })
+        .from(flight)
+        .innerJoin(aircraft, eq(aircraft.id, flight.aircraftId))
+        .where(sql`upper(${aircraft.registration}) = ${entry.registration.toUpperCase()}`)
+      const near = candidates
+        .map((c) => ({ ...c, delta: Math.abs(c.departureTime.getTime() - wanted) }))
+        .filter((c) => c.delta <= 30 * 60 * 1000)
+        .sort((a, b) => a.delta - b.delta)[0]
+      if (near) target = { id: near.id }
+    }
+    if (!target) {
+      const rows = await db
+        .select({ id: flight.id })
+        .from(flight)
+        .where(eq(flight.publicId, entry.flightPublicId))
+        .limit(1)
+      target = rows[0]
+    }
     if (!target) {
       purposesPending.push(entry.flightPublicId)
       continue
@@ -332,6 +353,23 @@ async function main(): Promise<void> {
       verifiedBy: entry.verifiedBy ?? null,
     })
     purposesApplied++
+  }
+
+  // The seed file is the declaration of what the registry contains. A row left behind in
+  // the database after an entry is removed from the file is a ghost: it keeps being polled,
+  // keeps appearing in counts, and nothing points at why it is there.
+  const seededIds = new Set(registry.aircraft.map((a) => a.id))
+  const stale = (await db.select().from(aircraft)).filter((row) => !seededIds.has(row.id))
+  if (stale.length > 0) {
+    console.log(
+      `\nWARNING: ${stale.length} aircraft are in the database but no longer in the seed file:`,
+    )
+    for (const row of stale) console.log(`  ${row.registration ?? row.icao24} (${row.icao24})`)
+    console.log(
+      '  They are still being polled and still counted. Removing them means dropping their\n' +
+        '  flights too, so it is not done automatically — rebuild the database, or delete them\n' +
+        '  deliberately, once you have decided what should happen to their history.',
+    )
   }
 
   const [counts] = await db
