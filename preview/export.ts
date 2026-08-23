@@ -6,6 +6,7 @@
  */
 import { writeFileSync } from 'node:fs'
 import { and, asc, eq } from 'drizzle-orm'
+import { getAirportIndex } from '../src/db/repositories/airports.js'
 import { alias } from 'drizzle-orm/pg-core'
 import { closeDb, getDb } from '../src/db/client.js'
 import {
@@ -108,6 +109,20 @@ const flights = await db
   .leftJoin(flightCost, and(eq(flightCost.flightId, flight.id), eq(flightCost.isCurrent, true)))
   .orderBy(asc(flight.departureTime))
 
+// Where an endpoint was never identified we still know where the aircraft was when we
+// last saw it. "Coverage lost over Romania" answers "where did it go" far better than
+// "unknown" does, and it is a fact rather than a guess about the destination.
+const airportIndex = await getAirportIndex()
+function lastKnownPlace(track: unknown, which: 'first' | 'last'): { country: string | null; near: string | null } {
+  const points = (track as [number, number, number | null, number][] | null) ?? []
+  if (points.length === 0) return { country: null, near: null }
+  const p = which === 'first' ? points[0]! : points[points.length - 1]!
+  const found = airportIndex.near({ latitude: p[1], longitude: p[0] }, 300)[0]
+  return found
+    ? { country: found.airport.country, near: found.airport.city ?? found.airport.name }
+    : { country: null, near: null }
+}
+
 const fleet = await db.select().from(aircraft).orderBy(aircraft.registration)
 const operators = await db.select().from(operatorOrganisation)
 
@@ -155,6 +170,19 @@ const days = jobs.map((j) => ({
   status: j.status,
   positions: j.positions,
 }))
+
+for (const f of flights as (typeof flights[number] & Record<string, unknown>)[]) {
+  if (!f.depIdent) {
+    const place = lastKnownPlace(f.track, 'first')
+    f.depLastSeenCountry = place.country
+    f.depLastSeenNear = place.near
+  }
+  if (!f.arrIdent) {
+    const place = lastKnownPlace(f.track, 'last')
+    f.arrLastSeenCountry = place.country
+    f.arrLastSeenNear = place.near
+  }
+}
 
 writeFileSync(
   'preview/src/export.json',

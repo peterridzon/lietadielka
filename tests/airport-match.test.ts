@@ -70,14 +70,32 @@ describe('matchAirport', () => {
     expect(atStand.confidence).toBeCloseTo(atReference.confidence, 3)
   })
 
-  it('caps confidence when the aircraft was never seen on the ground', () => {
+  it('accepts an airborne fix that is plainly on the runway', () => {
+    // 150 ft below field elevation, 2 km out. A flat ceiling used to throw this away.
     const match = matchAirport(index, {
-      latitude: 48.167, longitude: 17.198, onGround: false, altitudeAglFt: 900,
+      latitude: 48.167, longitude: 17.198, onGround: false, altitudeAglFt: -150,
     })
-    expect(match.confidence).toBeLessThanOrEqual(0.45)
+    expect(match.airport?.id).toBe('LZIB')
+    expect(match.confidence).toBeGreaterThan(0.5)
+    expect(match.explanation).toMatch(/landing itself was not observed/)
+  })
+
+  it('scales confidence down as the fix gets higher', () => {
+    const at = (aglFt: number) =>
+      matchAirport(index, { latitude: 48.167, longitude: 17.198, onGround: false, altitudeAglFt: aglFt })
+        .confidence
+    expect(at(300)).toBeGreaterThan(at(1000))
+    expect(at(1000)).toBeGreaterThan(at(2500))
+    expect(at(2500)).toBeGreaterThan(at(5000))
+  })
+
+  it('still refuses a fix in the circuit as a certainty', () => {
+    const match = matchAirport(index, {
+      latitude: 48.167, longitude: 17.198, onGround: false, altitudeAglFt: 5000,
+    })
+    expect(match.confidence).toBeLessThan(0.5)
     expect(match.airport).toBeNull()
     expect(match.probable?.id).toBe('LZIB')
-    expect(match.explanation).toMatch(/landing itself was not observed/)
   })
 
   it('refuses to name an airport under a cruising aircraft', () => {

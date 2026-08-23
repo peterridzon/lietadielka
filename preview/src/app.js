@@ -68,7 +68,17 @@
       ? { code: f.depPIata || f.depPIdent, city: f.depPCity, name: f.depPName, ident: f.depPIdent }
       : { code: f.arrPIata || f.arrPIdent, city: f.arrPCity, name: f.arrPName, ident: f.arrPIdent }
     if (q.ident) return { code: q.code, city: q.city, name: q.name, state: 'probable' }
-    return { code: 'NEZN', city: null, name: 'Neurčené', state: 'unknown' }
+    // Not identified — but we know where the aircraft was when coverage ended, and that
+    // is a fact worth showing. "Stratené nad Pekingom" tells a reader far more than
+    // "unknown", without claiming the aircraft landed there.
+    var near = side === 'dep' ? f.depLastSeenNear : f.arrLastSeenNear
+    return {
+      code: 'NEZN',
+      city: near ? (side === 'dep' ? 'prvýkrát nad ' : 'naposledy nad ') + near : null,
+      name: near ? 'Neurčené — ' + (side === 'dep' ? 'prvá' : 'posledná') + ' pozícia nad ' + near : 'Neurčené',
+      state: 'unknown',
+      near: near || null,
+    }
   }
 
   // --- hlavné čísla -------------------------------------------------------
@@ -636,15 +646,44 @@
         var f = costByFlight[l.publicId]
         return s + (f && f.costFullMid ? f.costFullMid : 0)
       }, 0)
-      return { m: m, legs: legs, full: full }
+      // Build the route from the legs rather than the stored key, so an unidentified
+      // stop can name the place where we lost the aircraft.
+      var stops = []
+      legs.forEach(function (l, i) {
+        var f = costByFlight[l.publicId]
+        if (!f) return
+        var dep = endpoint(f, 'dep'), arr = endpoint(f, 'arr')
+        if (i === 0) stops.push(dep)
+        stops.push(arr)
+      })
+      return { m: m, legs: legs, full: full, stops: stops }
     })
-    rows.sort(function (a, b) { return b.full - a.full })
+    // Newest first. Sorting by cost made the date column look shuffled, and most Air
+    // Force flights have no cost at all, so they landed in an arbitrary order.
+    rows.sort(function (a, b) { return new Date(b.m.startedAt) - new Date(a.m.startedAt) })
 
     rows.forEach(function (r) {
       var row = el('div', 'mrow')
       row.appendChild(el('div', null, dayLabel(r.m.startedAt)))
-      var route = el('div', 'mroute', (r.m.routeKey || '').replace(/-/g, ' → ').replace(/UNKNOWN/g, 'NEZN'))
-      route.appendChild(el('em', null, r.m.registration || ''))
+      var route = el('div', 'mroute')
+      if (r.stops.length) {
+        r.stops.forEach(function (stop, i) {
+          if (i) route.appendChild(el('span', 'marrow', ' → '))
+          var label
+          if (stop.state === 'unknown') {
+            label = stop.near ? 'nad ' + stop.near : 'neurčené'
+          } else {
+            label = stop.city || stop.code
+          }
+          var node = el('span', stop.state === 'known' ? 'mstop' : 'mstop unknown', label)
+          node.title = stop.name + (stop.code && stop.state === 'known' ? ' (' + stop.code + ')' : '')
+          route.appendChild(node)
+        })
+      } else {
+        route.appendChild(el('span', 'mstop', (r.m.routeKey || '').replace(/-/g, ' → ').replace(/UNKNOWN/g, 'NEZN')))
+      }
+      var reg = el('em', null, r.m.registration || '')
+      route.appendChild(reg)
       row.appendChild(route)
       row.appendChild(el('div', 'mlegs', nf(r.m.legCount)))
       row.appendChild(el('div', 'mhours', duration(r.m.airborneSeconds)))
@@ -875,6 +914,7 @@
     node.appendChild(document.createTextNode(p.code))
     if (p.city) node.appendChild(el('em', null, p.city))
     if (estimated) node.appendChild(el('em', null, '~'))
+    if (p.state === 'unknown') node.title = p.name
     return node
   }
 

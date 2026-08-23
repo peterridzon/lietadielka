@@ -129,9 +129,20 @@ score = distance score × aerodrome type weight × ground evidence weight
   penalising that distance was measurably wrong.
 - **Type weight** prefers real airports over airstrips and heliports — except for
   helicopters, where a heliport is entirely normal.
-- **Ground evidence weight** is what separates a strong match from a weak one. If we
-  never saw the aircraft on the ground there, confidence is capped at 0.45 and the
-  result is at best "probable".
+- **Ground evidence weight** is what separates a strong match from a weak one, and it is
+  graded by height above the field rather than being a single number. An aircraft 150 ft
+  below field elevation two kilometres out is on the runway; one at 5 000 ft may be
+  passing overhead. The bands are 500 ft → 0.9, 1 500 ft → 0.78, 3 000 ft → 0.62,
+  6 000 ft → 0.45, and nothing above that.
+
+  An earlier version applied a flat 0.45 both here and again as a ceiling. Since the
+  acceptance threshold is 0.5, that meant **no airborne fix could ever identify an
+  airport**, however obvious — a landing at Düsseldorf recorded 150 ft below field
+  elevation was thrown away as unknown. Correcting it took the unidentified endpoints in
+  our data from 24 to 7.
+- **Distance decay is looser for an airborne fix** — 8 km rather than 2.5. A parked
+  aircraft is metres from its stand; one on final approach is routinely ten kilometres
+  out and still unambiguously landing there.
 - **Ambiguity**: if a runner-up scores above 70 % of the winner, both lose confidence.
   At a dead heat the identification is rejected.
 
@@ -145,6 +156,10 @@ Two hard rules:
 
 Below a confidence of 0.5 the airport is stored as *probable* and displayed with a
 question mark, or as *unknown* if even that is unsupported.
+
+Where an endpoint is genuinely unknown, we still report **where the aircraft was when we
+last saw it** — "over Beijing", "over Batumi". That is an observation, not a guess at the
+destination, and it answers the reader's actual question far better than the word unknown.
 
 ---
 

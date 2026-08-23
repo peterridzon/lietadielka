@@ -15,10 +15,24 @@ export type AirportMatchOptions = {
   airborneRadiusKm: number
   /** Below this the airport is reported as "unknown / probable" instead of certain. */
   minConfidence: number
-  /** Confidence ceiling when the anchor was not on the ground. */
-  airborneMaxConfidence: number
+  /**
+   * Confidence ceiling for an airborne anchor, by height above field elevation.
+   *
+   * A flat ceiling was wrong, and wrong in a way that threw away good evidence: it sat
+   * below the acceptance threshold, so no airborne anchor could ever name an airport —
+   * not even one 2 km from Düsseldorf at 150 ft below field elevation, which is an
+   * aircraft on the runway. How convincing an airborne fix is depends entirely on how
+   * low it is, so the ceiling does too.
+   */
+  airborneCeilingByAgl: { maxAglFt: number; ceiling: number }[]
   /** Distance beyond the aerodrome footprint at which the score falls to 1/e. */
   distanceDecayKm: number
+  /**
+   * The same, for an airborne anchor — deliberately looser. A parked aircraft is metres
+   * from its stand; one on final approach is routinely ten kilometres out and still
+   * unambiguously landing there.
+   */
+  airborneDistanceDecayKm: number
   /**
    * Above this height above field elevation, the fix says nothing about which airport
    * was used. A track that ends at cruise altitude gets no airport at all — not even a
@@ -35,8 +49,14 @@ export const DEFAULT_MATCH_OPTIONS: AirportMatchOptions = {
   groundRadiusKm: 10,
   airborneRadiusKm: 25,
   minConfidence: 0.5,
-  airborneMaxConfidence: 0.45,
+  airborneCeilingByAgl: [
+    { maxAglFt: 500, ceiling: 0.9 },    // on or just off the runway
+    { maxAglFt: 1500, ceiling: 0.78 },  // final approach or initial climb
+    { maxAglFt: 3000, ceiling: 0.62 },  // in the circuit
+    { maxAglFt: 6000, ceiling: 0.45 },  // terminal area, could be passing through
+  ],
   distanceDecayKm: 2.5,
+  airborneDistanceDecayKm: 8,
   maxAnchorAltitudeAglFt: 5_000,
   minProbableConfidence: 0.15,
   isRotorcraft: false,
@@ -131,13 +151,20 @@ export function matchAirport(
     }
   }
 
-  const edgeWeight = anchor.onGround ? 1 : 0.45
+  // How much an airborne fix is worth, by how low it is. This replaces a flat 0.45
+  // penalty that was applied here AND again as a ceiling, which together guaranteed no
+  // airborne anchor could ever clear the acceptance threshold.
+  const edgeWeight = anchor.onGround ? 1 : airborneFactor(anchor.altitudeAglFt, config)
   const candidates: AirportCandidate[] = nearby
     .map(({ airport, distanceKm }) => ({
       airport,
       distanceKm,
       score:
-        distanceScore(distanceKm, airport.type, config.distanceDecayKm) *
+        distanceScore(
+          distanceKm,
+          airport.type,
+          anchor.onGround ? config.distanceDecayKm : config.airborneDistanceDecayKm,
+        ) *
         typeWeight(airport.type, config.isRotorcraft) *
         edgeWeight,
     }))
@@ -159,7 +186,6 @@ export function matchAirport(
     }
   }
 
-  if (!anchor.onGround) confidence = Math.min(confidence, config.airborneMaxConfidence)
   confidence = Math.max(0, Math.min(1, confidence))
 
   const accepted = confidence >= config.minConfidence
@@ -175,7 +201,7 @@ export function matchAirport(
       `${best.airport.ident} at ${best.distanceKm.toFixed(1)} km, type ${best.airport.type}` +
       (anchor.onGround
         ? ', matched from a position recorded on the ground'
-        : ', matched from the last airborne position only — the landing itself was not observed') +
+        : `, matched from an airborne position at ${Math.round(anchor.altitudeAglFt ?? 0).toLocaleString('en-GB')} ft above the field — the landing itself was not observed`) +
       ambiguity +
       (accepted
         ? ''
@@ -183,6 +209,19 @@ export function matchAirport(
           ? `; below the ${config.minConfidence} confidence threshold, reported as probable only`
           : '; too weak to report even as a probable airport'),
   }
+}
+
+/**
+ * What an airborne fix is worth as evidence of which airport was used.
+ *
+ * An aircraft 150 ft below field elevation is on the runway. One at 5 000 ft may simply
+ * be passing overhead. Height above the field is the whole difference, so it sets the
+ * weight rather than a single number standing in for every case.
+ */
+function airborneFactor(altitudeAglFt: number | null | undefined, config: AirportMatchOptions): number {
+  if (altitudeAglFt == null) return 0.35
+  const band = config.airborneCeilingByAgl.find((b) => altitudeAglFt <= b.maxAglFt)
+  return band ? band.ceiling : 0
 }
 
 /** Flat inside the aerodrome footprint, exponential decay outside it. */
