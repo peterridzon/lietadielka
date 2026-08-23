@@ -121,10 +121,8 @@ describe('design preview', () => {
       (g.querySelector('h3')?.textContent ?? '').includes('Vzdušné sily'),
     )
     const regs = [...airForce!.querySelectorAll('.ac .reg')].map((e) => e.textContent)
-    // Two Global 5000 and eight UH-60M, all identified by military evidence number.
-    expect(regs).toContain('9513')
-    expect(regs).toContain('9633')
-    expect(regs.filter((r) => r?.startsWith('74') || r?.startsWith('76')).length).toBe(8)
+    // The two Global 5000, identified by military evidence number rather than a civil mark.
+    expect(regs.sort()).toEqual(['9513', '9633'])
     expect(airForce!.textContent).toContain('vojenský register')
   })
 
@@ -140,7 +138,7 @@ describe('design preview', () => {
 
   it('gives every card the same image band', () => {
     const figures = $$('.ac figure')
-    expect(figures.length).toBeGreaterThanOrEqual(5)
+    expect(figures.length).toBe(5)
     for (const figure of figures) {
       expect(figure.querySelector('img')?.getAttribute('loading')).toBe('lazy')
     }

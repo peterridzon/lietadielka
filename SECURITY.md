@@ -52,27 +52,14 @@ acceptable; a shorter one is not.
   official source, in which case the source is cited and the claim is attributed to it.
 - Anything obtained other than from public ADS-B feeds and published documents.
 
-## Rotary-wing aircraft and medical flights
-
-The eight Slovak Air Force UH-60M are tracked because the type carries officials and flies
-repatriation and rescue missions — state use of public aircraft, which is what this
-project exists to examine.
-
-It follows that **rescue and medical flights to hospital helipads will appear in this
-data**. That was considered before adding them, and the position is:
-
-* The publication delay applies unchanged; nothing is visible while a mission is running.
-* Purpose stays `unknown` unless a source states otherwise. The software never infers that
-  a flight to a hospital was a medical evacuation, and never infers anything about who was
-  aboard.
-* We publish that an aircraft flew between two places. We do not publish, and will not
-  accept, anything identifying a patient.
-
-A correction request about a specific flight of this kind will be honoured without argument.
-
 ## Aircraft in scope
 
 Only aircraft in `data/aircraft.seed.json` with `tracking_enabled` are ever imported.
+Scope is deliberately narrow: state air transport, meaning aircraft that carry officials.
+Military rotary and training aircraft are documented in the registry file but not
+collected — their movements are operational information that says nothing about how
+officials use public aircraft, and rescue flights would raise questions about individuals
+that this project has no business publishing.
 There is no bounding-box collection and no bulk ingest of unrelated traffic. Aircraft
 that turn out to be privately owned are removed and recorded under `rejected` so they
 are not re-added.
