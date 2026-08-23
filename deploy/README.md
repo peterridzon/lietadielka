@@ -33,22 +33,16 @@ prihlásenie cez prehliadač funguje. Stačí raz, prihlásenie si uloží kľú
 
 ## 2. Cloudflare Pages
 
-Prihlásenie a založenie projektu:
+Z dashboardu treba dva údaje. Ten istý token použije aj GitHub Actions, takže
+`wrangler login` netreba vôbec.
 
-```bash
-npx -y wrangler@latest pages project create lietadielka --production-branch main
-```
+- **Account ID** — <https://dash.cloudflare.com>, *Workers & Pages*, vpravo v postrannom
+  paneli *Account ID*.
+- **API token** — <https://dash.cloudflare.com/profile/api-tokens>, *Create Token* →
+  **Create Custom Token**. Jediné potrebné oprávnenie je
+  *Account* → **Cloudflare Pages** → **Edit**. Hotové šablóny Pages nepokrývajú.
 
-Prehliadač si vyžiada povolenie. Projekt je tým založený a prázdny.
-
-Ďalej treba dva údaje pre GitHub Actions:
-
-- **Account ID** — Cloudflare dashboard, *Workers & Pages*, vpravo *Account ID*.
-- **API token** — <https://dash.cloudflare.com/profile/api-tokens>, *Create Token*,
-  šablóna **Edit Cloudflare Workers**, alebo vlastný s oprávnením
-  *Account → Cloudflare Pages → Edit*.
-
-## 3. Zverejnenie
+Potom obidva vložte do shellu a založte projekt:
 
 ```bash
 export CLOUDFLARE_ACCOUNT_ID=...
@@ -57,6 +51,14 @@ export CLOUDFLARE_ACCOUNT_ID=...
 ```bash
 read -rs CLOUDFLARE_API_TOKEN && export CLOUDFLARE_API_TOKEN
 ```
+
+```bash
+npx -y wrangler@latest pages project create lietadielka --production-branch main
+```
+
+## 3. Zverejnenie
+
+V tom istom okne terminálu, kde ste nastavili premenné:
 
 ```bash
 npm run publish
