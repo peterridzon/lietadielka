@@ -1,88 +1,59 @@
 # Nasadenie
 
 ```
-   Claude/Codex          GitHub                    Cloudflare
-   ────────────          ──────                    ──────────
-   píše kód       →      repozitár           →     Pages
-                         + Actions 04:17 UTC       + lietadielka.com
-                         (zber, prepočet, build)   (hosting, CDN, HTTPS)
+   Claude/Codex          GitHub                      Cloudflare
+   ────────────          ──────                      ──────────
+   píše kód       →      repozitár                →  Pages
+                         + Actions 04:17 UTC          + lietadielka.com
+                         (zber, prepočet, build)      (hosting, CDN, HTTPS)
 ```
 
-Na vašom počítači nemusí bežať nič. Zber dát aj prepočet nákladov robí GitHub Actions
-každé ráno, hotovú stránku pošle na Cloudflare Pages.
+Na vašom počítači nebeží nič. Zber, prepočet aj vygenerovanie stránky robí GitHub
+Actions každé ráno a commituje výsledok do repozitára. Cloudflare Pages ten repozitár
+sleduje a nasadí každú zmenu sám.
 
-Zatiaľ na GitHube nie je nič — nasledujúce kroky ho založia.
+Žiadne tokeny, žiadne secrety, žiadny server.
 
 ---
 
-## 1. Prihlásenie do GitHubu
+## 1. GitHub — hotové
 
-Cursor nedokáže zobraziť interaktívne prihlásenie, preto cez token.
+Repozitár je na <https://github.com/peterridzon/lietadielka>, workflow **Denný zber**
+beží denne o 04:17 UTC a má právo commitovať späť.
 
-Otvorte <https://github.com/settings/tokens/new>, zaškrtnite **`repo`** a **`workflow`**,
-dole *Generate token*, skopírujte ho. Potom:
-
-```bash
-read -rs GH_TOKEN && echo "$GH_TOKEN" | gh auth login --with-token && gh auth status
-```
-
-Token sa vloží naslepo (nebude ho vidieť), potvrďte Enterom.
-
-Ak to nepomôže, spustite `gh auth login` v **Terminal.app** — tam interaktívne
-prihlásenie cez prehliadač funguje. Stačí raz, prihlásenie si uloží kľúčenka.
+Založené príkazom `npm run publish`, ak by bolo treba znova inde.
 
 ## 2. Cloudflare Pages
 
-Z dashboardu treba dva údaje. Ten istý token použije aj GitHub Actions, takže
-`wrangler login` netreba vôbec.
+Bez tokenu a bez terminálu, všetko v prehliadači.
 
-- **Account ID** — <https://dash.cloudflare.com>, *Workers & Pages*, vpravo v postrannom
-  paneli *Account ID*.
-- **API token** — <https://dash.cloudflare.com/profile/api-tokens>, *Create Token* →
-  **Create Custom Token**. Jediné potrebné oprávnenie je
-  *Account* → **Cloudflare Pages** → **Edit**. Hotové šablóny Pages nepokrývajú.
+1. <https://dash.cloudflare.com> → **Workers & Pages** → *Create* → záložka **Pages**
+   → **Connect to Git**
+2. Povoľte Cloudflare prístup k účtu `peterridzon` a vyberte repozitár **lietadielka**
+3. Nastavenie buildu:
 
-Potom obidva vložte do shellu a založte projekt:
+   | pole | hodnota |
+   |---|---|
+   | Production branch | `main` |
+   | Framework preset | None |
+   | Build command | *(nechať prázdne)* |
+   | Build output directory | `public` |
 
-```bash
-export CLOUDFLARE_ACCOUNT_ID=...
-```
+4. **Save and Deploy**
 
-```bash
-read -rs CLOUDFLARE_API_TOKEN && export CLOUDFLARE_API_TOKEN
-```
+Build command je zámerne prázdny. Stránku generuje GitHub Actions a commituje ju do
+`public/index.html`; Cloudflare ju už len rozdistribuuje. Nič sa u nich nepočíta,
+takže nasadenie trvá sekundy a nemôže spadnúť na závislostiach.
 
-```bash
-npx -y wrangler@latest pages project create lietadielka --production-branch main
-```
+O minútu je stránka na `https://lietadielka.pages.dev`.
 
-## 3. Zverejnenie
+## 3. lietadielka.com
 
-V tom istom okne terminálu, kde ste nastavili premenné:
+Doména je registrovaná na Cloudflare a beží na ich nameserveroch, takže netreba
+prepínať nič a DNS sa nastaví samo.
 
-```bash
-npm run publish
-```
-
-Skript vytvorí **verejný** repozitár, nahrá ho, povolí workflowu zapisovať, uloží obidva
-Cloudflare secrety a raz spustí zber. Predtým vypíše, čo presne pôjde von, a počká na
-potvrdenie — zverejnenie sa nedá potichu vrátiť.
-
-Ak secrety nezadáte, repozitár aj zber vzniknú tak či tak, len sa preskočí publikovanie.
-Doplniť sa dajú kedykoľvek:
-
-```bash
-gh secret set CLOUDFLARE_API_TOKEN && gh secret set CLOUDFLARE_ACCOUNT_ID
-```
-
-## 4. lietadielka.com
-
-Doména je registrovaná na Cloudflare a beží na ich nameserveroch, takže netreba nič
-prepínať ani nastavovať DNS ručne.
-
-Cloudflare dashboard → *Workers & Pages* → **lietadielka** → *Custom domains* →
-*Set up a custom domain* → `lietadielka.com`. DNS záznam aj HTTPS certifikát vybaví
-Cloudflare sám, do pár minút.
+*Workers & Pages* → **lietadielka** → *Custom domains* → *Set up a custom domain* →
+`lietadielka.com`. DNS záznam aj HTTPS certifikát vybaví Cloudflare, do pár minút.
 
 Rovnako pridajte `www.lietadielka.com`, ak ho chcete.
 
@@ -97,32 +68,35 @@ Rovnako pridajte `www.lietadielka.com`, ak ho chcete.
  │ 2. stiahne nové dni z adsb.lol               │
  │ 3. prepočíta lety, misie, náklady            │
  │ 4. testy — pri chybe sa nepublikuje          │
- │ 5. vygeneruje stránku                        │
- │ 6. commitne nové pozorovania späť do gitu    │
- │ 7. pošle stránku na Cloudflare Pages         │
+ │ 5. vygeneruje stránku do public/             │
+ │ 6. commitne pozorovania aj stránku           │
  └──────────────────────────────────────────────┘
+                     ↓ push
+   Cloudflare Pages nasadí public/
 ```
 
 Surové pozorovania v `data/observations/` sú jediný stav, ktorý sa musí uchovať.
-Všetko ostatné — lety, misie, náklady — sa z nich dá kedykoľvek prepočítať nanovo.
-Preto ich workflow commituje späť do repozitára: databáza je odvodená, git je pamäť.
+Lety, misie aj náklady sa z nich dajú kedykoľvek prepočítať nanovo, preto ich workflow
+commituje späť: databáza je odvodená, git je pamäť.
+
+`public/index.html` je tiež odvodený a napriek tomu je v gite — je to spôsob nasadenia,
+a pri projekte o overiteľnosti nie je na škodu mať v histórii presne to, čo bolo kedy
+zverejnené.
 
 Publikačné oneskorenie (`PUBLICATION_DELAY_HOURS`, štandardne 6) platí na úrovni
 dopytu, nie exportu — stránka fyzicky nemôže obsahovať prebiehajúci let.
 
-## Ručné publikovanie
+## Ručné nasadenie
 
-Bez GitHubu, priamo z počítača na Cloudflare:
+Ak by ste chceli stránku nahrať mimo tejto linky:
 
 ```bash
 npm run deploy:cloudflare
 ```
 
-Nahrá aktuálnu stránku. Automatiku to nerieši, len hosting.
+Nahrá aktuálnu stránku priamym uploadom (`wrangler`, vyžaduje prihlásenie).
+`deploy/upload.sh` vie to isté cez FTPS kamkoľvek inam, ak nastavíte `FTP_HOST`,
+`FTP_USER`, `FTP_PASS`, `FTP_DIR`.
 
-## Iný hosting
-
-`deploy/upload.sh` nahrá stránku cez FTPS kamkoľvek (napr. WebSupport), ak
-nastavíte `FTP_HOST`, `FTP_USER`, `FTP_PASS`, `FTP_DIR`. Zber aj tak musí bežať
-inde — Cloudflare Workers ani bežný webhosting ho nezvládnu: denný archív adsb.lol
-má 3,75 GB a Workers nemajú súborový systém.
+Zber musí tak či tak bežať na GitHub Actions — denný archív adsb.lol má 3,75 GB
+a Cloudflare Workers ani bežný webhosting ho nespracujú.
