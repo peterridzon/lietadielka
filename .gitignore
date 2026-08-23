@@ -10,3 +10,4 @@ dist/
 /data/pglite/
 /data/airports.csv
 /coverage/
+.local-preview/

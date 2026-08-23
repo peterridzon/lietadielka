@@ -149,20 +149,89 @@ section > .wrap > .sec-head { margin-bottom: 28px; }
 .kpi .note { font-size: 12.5px; color: var(--ink-3); }
 
 /* --- coverage grid ------------------------------------------------------- */
+/* --- coverage calendar ----------------------------------------------------
+   An aircraft × day matrix stops working at a year: 5 aircraft × 365 days is a
+   1825-cell strip nobody can scan. Weeks as columns and weekdays as rows fits a
+   whole year in roughly 690 × 90, so the record can grow for years down the page
+   instead of sideways off it.
+
+   The cost is per-aircraft detail, which moves into the panel below on selection.
+   That trade is the right way round: the question this section answers is whether
+   a given DAY is trustworthy, and only then which aircraft made it so. */
+.cov-years { display: flex; flex-direction: column; gap: 26px; }
+.cov-year { display: grid; grid-template-columns: auto 1fr; gap: 0 10px; align-items: start; }
+.cov-year > h3 {
+  grid-column: 1 / -1; margin: 0 0 10px; font-family: var(--data); font-size: 12px;
+  font-weight: 600; letter-spacing: 0.12em; color: var(--ink-2);
+}
+.cov-dows { display: grid; grid-template-rows: repeat(7, var(--cov-cell)); gap: var(--cov-gap);
+  margin-top: calc(14px + var(--cov-gap)); }
+.cov-dows span { font-family: var(--data); font-size: 9px; line-height: var(--cov-cell);
+  color: var(--ink-3); text-align: right; }
 .cov-scroll { overflow-x: auto; padding-bottom: 6px; }
-.cov { border-collapse: separate; border-spacing: 0; font-family: var(--data); font-size: 11px; }
-.cov th { font-weight: 500; color: var(--ink-2); text-align: left; padding: 0 10px 8px 0; white-space: nowrap; }
-.cov td { padding: 0; }
-.cov .cell { width: 15px; height: 22px; border-right: 1px solid var(--surface); display: block; }
-.cov .reg { padding-right: 14px; white-space: nowrap; font-weight: 500; }
-.cov .month-label { width: 15px; padding: 0 0 4px; position: relative; height: 16px; }
-.cov .month-label b { position: absolute; left: 0; bottom: 4px; font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); white-space: nowrap; }
-.c-flew { background: var(--accent); }
-.c-quiet { background: var(--none); }
-.c-nodata { background: repeating-linear-gradient(45deg, var(--weak-soft), var(--weak-soft) 3px, transparent 3px, transparent 6px); box-shadow: inset 0 0 0 1px var(--weak-soft); }
+.cov-grid {
+  --cov-cell: 11px; --cov-gap: 3px;
+  display: grid; grid-auto-flow: column; grid-template-rows: 14px repeat(7, var(--cov-cell));
+  gap: var(--cov-gap); width: max-content;
+}
+.cov-dows { --cov-cell: 11px; --cov-gap: 3px; }
+.cov-mon { font-family: var(--data); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink-3); white-space: nowrap; grid-row: 1; align-self: end; }
+
+.cov-day {
+  width: var(--cov-cell); height: var(--cov-cell); padding: 0; border: 0; border-radius: 2px;
+  background: var(--surface-2); cursor: pointer; display: block;
+}
+.cov-day[data-state="outside"] { background: transparent; cursor: default; }
+.cov-day[data-state="quiet"] { background: var(--none); }
+.cov-day[data-state="nodata"] {
+  background: repeating-linear-gradient(45deg, var(--weak-soft), var(--weak-soft) 2px, transparent 2px, transparent 4px);
+  box-shadow: inset 0 0 0 1px var(--weak-soft);
+}
+.cov-day[data-state="partial"] { background: var(--warn-soft); box-shadow: inset 0 0 0 1px var(--warn); }
+/* Flight count reads through opacity: one flight and six should not look the same. */
+.cov-day[data-state="flew"] { background: var(--accent); opacity: 0.55; }
+.cov-day[data-state="flew"][data-load="2"] { opacity: 0.78; }
+.cov-day[data-state="flew"][data-load="3"] { opacity: 1; }
+.cov-day:hover:not([data-state="outside"]) { box-shadow: inset 0 0 0 1px var(--ink); }
+.cov-day:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.cov-day[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--ink); }
+
+/* --- selected day --------------------------------------------------------- */
+.cov-detail {
+  margin-top: 20px; border: 1px solid var(--rule); background: var(--surface);
+  padding: 16px 18px; display: none;
+}
+.cov-detail[data-open="1"] { display: block; }
+.cov-detail-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline;
+  justify-content: space-between; }
+.cov-detail-head b { font-family: var(--display); font-size: 17px; }
+.cov-detail-head .verdict { font-size: 13px; color: var(--ink-2); }
+.cov-clear { font-family: var(--data); font-size: 11px; letter-spacing: 0.08em;
+  background: none; border: 1px solid var(--rule); padding: 4px 9px; cursor: pointer;
+  color: var(--ink-2); }
+.cov-clear:hover { border-color: var(--ink); color: var(--ink); }
+.cov-rows { margin-top: 14px; display: grid; gap: 6px; }
+.cov-row { display: grid; grid-template-columns: 92px 14px 1fr; gap: 10px; align-items: center;
+  font-size: 13px; }
+.cov-row .reg { font-family: var(--data); font-weight: 500; }
+.cov-row i { width: 12px; height: 12px; display: block; border-radius: 2px; }
+.cov-row .what { color: var(--ink-2); }
+
+.strips-empty { padding: 22px 2px; color: var(--ink-2); font-size: 14px; }
+
 .legend { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 18px; font-size: 12.5px; color: var(--ink-2); }
 .legend span { display: flex; align-items: center; gap: 8px; }
 .legend i { width: 22px; height: 12px; display: block; flex: none; }
+/* The key swatches must be the cells themselves, or the legend drifts from the grid. */
+.legend i.cov-key { width: 14px; height: 14px; border-radius: 2px; background: var(--surface-2); }
+.legend i.cov-key[data-state="quiet"] { background: var(--none); }
+.legend i.cov-key[data-state="flew"] { background: var(--accent); }
+.legend i.cov-key[data-state="partial"] { background: var(--warn-soft); box-shadow: inset 0 0 0 1px var(--warn); }
+.legend i.cov-key[data-state="nodata"] {
+  background: repeating-linear-gradient(45deg, var(--weak-soft), var(--weak-soft) 2px, transparent 2px, transparent 4px);
+  box-shadow: inset 0 0 0 1px var(--weak-soft);
+}
 
 /* --- fleet --------------------------------------------------------------- */
 /* A fixed three-column module, not auto-fit. With auto-fit a group of two would stretch

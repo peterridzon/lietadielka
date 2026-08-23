@@ -117,10 +117,74 @@ describe('design preview', () => {
     expect($$('.mrow').length).toBeGreaterThan(1)
   })
 
-  it('shows the coverage grid with all three day states', () => {
-    expect($$('.cov .c-flew').length).toBeGreaterThan(0)
-    expect($$('.cov .c-quiet').length).toBeGreaterThan(0)
-    expect($$('.cov .c-nodata').length).toBeGreaterThan(0)
+  it('lays the coverage record out as week columns, seven days to a column', () => {
+    const years = $$('.cov-year')
+    expect(years.length).toBeGreaterThan(0)
+    for (const y of years) {
+      expect(y.querySelector('h3')?.textContent).toMatch(/^\d{4}$/)
+      // Every cell sits on one of the seven weekday rows; anything else means the grid
+      // has drifted out of alignment and the columns no longer read as weeks.
+      const rows = new Set(
+        [...y.querySelectorAll('.cov-day')].map((d) => (d as HTMLElement).style.gridRow),
+      )
+      for (const r of rows) expect(Number(r)).toBeGreaterThanOrEqual(2)
+      expect(rows.size).toBeLessThanOrEqual(7)
+    }
+  })
+
+  it('distinguishes flown, quiet and unavailable days', () => {
+    const states = $$('.cov-day').map((d) => d.getAttribute('data-state'))
+    for (const wanted of ['flew', 'quiet', 'nodata']) {
+      expect(states.filter((s) => s === wanted).length, wanted).toBeGreaterThan(0)
+    }
+    // A day outside the record must not be clickable — it asserts nothing.
+    for (const cell of $$('.cov-day[data-state="outside"]')) {
+      expect((cell as HTMLButtonElement).disabled).toBe(true)
+    }
+  })
+
+  it('filters the flight list to the day that was clicked', () => {
+    const flown = $$('.cov-day[data-state="flew"]')[0] as HTMLButtonElement
+    const day = flown.getAttribute('data-day')
+    flown.click()
+
+    expect(flown.getAttribute('aria-pressed')).toBe('true')
+    const visible = $$('.strip').filter((s) => (s as HTMLElement).style.display !== 'none')
+    expect(visible.length).toBeGreaterThan(0)
+    for (const s of visible) expect(s.getAttribute('data-day')).toBe(day)
+
+    // Clicking the same day again clears the filter rather than trapping the reader.
+    flown.click()
+    expect(flown.getAttribute('aria-pressed')).toBe('false')
+    expect($$('.strip').every((s) => (s as HTMLElement).style.display !== 'none')).toBe(true)
+  })
+
+  it('says which kind of empty an empty day is', () => {
+    const missing = $$('.cov-day[data-state="nodata"]')[0] as HTMLButtonElement
+    missing.click()
+    const note = $('.strips-empty') as HTMLElement
+    expect(note.style.display).not.toBe('none')
+    // The distinction this whole section exists to make: excluded, not counted as zero.
+    expect(note.textContent).toContain('nezapočítaný ako nula')
+
+    const quiet = $$('.cov-day[data-state="quiet"]')[0] as HTMLButtonElement
+    quiet.click()
+    expect(note.textContent).toContain('Pokojný deň')
+    ;($('#cov-clear') as HTMLButtonElement).click()
+    expect(note.style.display).toBe('none')
+  })
+
+  it('breaks the selected day down per aircraft', () => {
+    const flown = $$('.cov-day[data-state="flew"]')[0] as HTMLButtonElement
+    flown.click()
+    expect(($('#cov-detail') as Element).getAttribute('data-open')).toBe('1')
+    const rows = $$('#cov-detail-rows .cov-row')
+    expect(rows.length).toBeGreaterThan(0)
+    for (const r of rows) {
+      expect(r.querySelector('.reg')?.textContent).toBeTruthy()
+      expect(r.querySelector('.what')?.textContent).toBeTruthy()
+    }
+    ;($('#cov-clear') as HTMLButtonElement).click()
   })
 
   it('separates the two operators and never merges them into one fleet', () => {

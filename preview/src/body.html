@@ -192,11 +192,20 @@
         overiť nedokázal, sú z každého čísla na tejto stránke vylúčené &mdash; nie započítané ako nula.
       </p>
     </div>
-    <div class="cov-scroll"><table class="cov" id="cov"></table></div>
+    <div class="cov-years" id="cov-years"></div>
     <div class="legend">
-      <span><i class="c-flew"></i> Detegované lety</span>
-      <span><i class="c-quiet"></i> Archív deň mal, lietadlo nevidel</span>
-      <span><i class="c-nodata"></i> Deň sa nedal získať &mdash; vylúčený, nie nula</span>
+      <span><i class="cov-key" data-state="flew"></i> Detegované lety</span>
+      <span><i class="cov-key" data-state="quiet"></i> Archív deň mal, lietadlo nevidel</span>
+      <span><i class="cov-key" data-state="partial"></i> Časť flotily overená, časť nie</span>
+      <span><i class="cov-key" data-state="nodata"></i> Deň sa nedal získať &mdash; vylúčený, nie nula</span>
+    </div>
+    <div class="cov-detail" id="cov-detail" data-open="0" aria-live="polite">
+      <div class="cov-detail-head">
+        <b id="cov-detail-day"></b>
+        <span class="verdict" id="cov-detail-verdict"></span>
+        <button type="button" class="cov-clear" id="cov-clear">Zrušiť výber</button>
+      </div>
+      <div class="cov-rows" id="cov-detail-rows"></div>
     </div>
   </div>
 </section>

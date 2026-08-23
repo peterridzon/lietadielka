@@ -692,8 +692,13 @@
     })
   }
 
-  // --- mriežka pokrytia ---------------------------------------------------
-  // Jeden deň sa môže importovať opakovane, tak si necháme najlepšie podloženú odpoveď.
+  // --- kalendár pokrytia ----------------------------------------------------
+  // Matica lietadlo × deň sa pri roku rozpadne: 5 × 365 je pásik na 1825 buniek. Týždne
+  // ako stĺpce a dni v týždni ako riadky zmestia celý rok pod seba, nie vedľa seba.
+  //
+  // Bunka je jeden UTC deň za celú flotilu. Rozlíšenie na lietadlá sa presúva do panela
+  // pod mriežkou, ktorý sa otvorí po kliknutí — otázka tejto sekcie je, či sa dá dňu
+  // veriť, a až potom, ktoré lietadlo za to môže.
   var RANK = { unavailable: 0, empty: 1, completed: 2 }
   var byCell = {}
   var dayKeys = []
@@ -706,45 +711,170 @@
 
   var fleetByReg = {}
   DATA.fleet.forEach(function (a) { fleetByReg[a.registration] = a })
-  var flightsByIcaoDay = {}
+  var flightsByDay = {}
   flights.forEach(function (f) {
-    var ac = fleetByReg[f.registration]
-    if (ac) flightsByIcaoDay[ac.icao24 + '|' + isoDate(f.departureTime)] = true
+    var day = isoDate(f.departureTime)
+    ;(flightsByDay[day] || (flightsByDay[day] = [])).push(f)
   })
 
-  var table = document.getElementById('cov')
-  var headRow = el('tr')
-  headRow.appendChild(el('th', 'reg', ''))
-  var lastMonth = null
-  dayKeys.forEach(function (day) {
-    var m = day.slice(0, 7)
-    // Popisok je absolútne umiestnený, aby široký názov mesiaca nerozšíril stĺpec.
-    var th = el('th', 'month-label')
-    if (m !== lastMonth) th.appendChild(el('b', null, MONTH_SHORT[Number(day.slice(5, 7)) - 1]))
-    lastMonth = m
-    headRow.appendChild(th)
-  })
-  table.appendChild(headRow)
+  var DOW = ['Po', 'Ut', 'St', 'Št', 'Pi', 'So', 'Ne']
 
-  DATA.fleet.forEach(function (ac) {
-    var row = el('tr')
-    row.appendChild(el('th', 'reg', ac.registration))
-    dayKeys.forEach(function (day) {
-      var td = el('td')
-      var status = byCell[ac.icao24 + '|' + day]
-      var cls = 'c-nodata', title = 'deň sa nedal získať'
-      if (status === 'completed' || flightsByIcaoDay[ac.icao24 + '|' + day]) {
-        cls = 'c-flew'; title = 'detegované lety'
-      } else if (status === 'empty') {
-        cls = 'c-quiet'; title = 'archív deň mal, lietadlo nevidel'
-      }
-      var cell = el('span', 'cell ' + cls)
-      cell.title = ac.registration + ' · ' + day + ' · ' + title
-      td.appendChild(cell)
-      row.appendChild(td)
+  // Poradie je zámerné: jediný detegovaný let prebije čokoľvek iné, a neoveriteľnosť
+  // prebije ticho. Deň sa nesmie tváriť pokojne, kým časť flotily overená nie je.
+  function dayState(day) {
+    var flew = (flightsByDay[day] || []).length
+    if (flew) return { state: 'flew', flights: flew }
+    var seen = 0, unknown = 0, quiet = 0
+    DATA.fleet.forEach(function (ac) {
+      var st = byCell[ac.icao24 + '|' + day]
+      if (st === undefined) return
+      seen++
+      if (st === 'completed') quiet++          // pozície boli, ale let z nich nevznikol
+      else if (st === 'empty') quiet++
+      else unknown++
     })
-    table.appendChild(row)
-  })
+    if (!seen) return { state: 'outside', flights: 0 }
+    if (unknown === seen) return { state: 'nodata', flights: 0 }
+    if (unknown) return { state: 'partial', flights: 0 }
+    return { state: 'quiet', flights: 0 }
+  }
+
+  var VERDICT = {
+    flew: 'Detegované lety.',
+    quiet: 'Archív deň mal a žiadne z lietadiel v ňom nevidel. Pokojný deň, nie chýbajúci.',
+    partial: 'Časť flotily sa v ten deň overiť dala, časť nie. Neoverené lietadlá sú z čísel vylúčené.',
+    nodata: 'Deň sa nepodarilo získať zo žiadneho zdroja. Je vylúčený zo všetkých súčtov — nezapočítaný ako nula.',
+    outside: 'Mimo sledovaného obdobia.'
+  }
+  var CELL_WORD = {
+    completed: 'archív deň mal, pozície zaznamenané',
+    empty: 'archív deň mal, lietadlo nevidel',
+    unavailable: 'deň sa nedal získať'
+  }
+
+  function addDays(iso, n) {
+    var d = new Date(iso + 'T00:00:00Z')
+    d.setUTCDate(d.getUTCDate() + n)
+    return d.toISOString().slice(0, 10)
+  }
+  // Pondelok = 0, aby mriežka začínala tam, kde európsky týždeň.
+  function dowIndex(iso) { return (new Date(iso + 'T00:00:00Z').getUTCDay() + 6) % 7 }
+
+  var yearsBox = document.getElementById('cov-years')
+  var detail = document.getElementById('cov-detail')
+  var detailDay = document.getElementById('cov-detail-day')
+  var detailVerdict = document.getElementById('cov-detail-verdict')
+  var detailRows = document.getElementById('cov-detail-rows')
+  var selected = null
+  var buttons = {}
+
+  if (yearsBox && dayKeys.length) {
+    var first = dayKeys[0], last = dayKeys[dayKeys.length - 1]
+    // Mriežka musí začať v pondelok a skončiť v nedeľu, inak sa stĺpce rozsypú.
+    var cursor = addDays(first, -dowIndex(first))
+    var stop = addDays(last, 6 - dowIndex(last))
+
+    var byYear = {}
+    var yearOrder = []
+    while (cursor <= stop) {
+      var y = cursor.slice(0, 4)
+      if (!byYear[y]) { byYear[y] = []; yearOrder.push(y) }
+      byYear[y].push(cursor)
+      cursor = addDays(cursor, 1)
+    }
+
+    yearOrder.forEach(function (year) {
+      var panel = el('div', 'cov-year')
+      panel.appendChild(el('h3', null, year))
+
+      var dows = el('div', 'cov-dows')
+      DOW.forEach(function (d, i) { dows.appendChild(el('span', null, i % 2 ? '' : d)) })
+      panel.appendChild(dows)
+
+      var scroll = el('div', 'cov-scroll')
+      var grid = el('div', 'cov-grid')
+      var lastMonth = null
+      byYear[year].forEach(function (day, i) {
+        var inRange = day >= first && day <= last
+        var month = day.slice(5, 7)
+        // Popisok patrí nad stĺpec svojho týždňa. V automatickom toku by si ukrojil vlastný
+        // stĺpec a pri dvanástich mesiacoch by mriežku posunul o dvanásť týždňov.
+        var week = Math.floor(i / 7) + 1
+        if (inRange && month !== lastMonth) {
+          var lab = el('span', 'cov-mon', MONTH_SHORT[Number(month) - 1])
+          lab.style.gridColumn = String(week)
+          lab.style.gridRow = '1'
+          grid.appendChild(lab)
+          lastMonth = month
+        }
+
+        var info = inRange ? dayState(day) : { state: 'outside', flights: 0 }
+        var b = document.createElement('button')
+        b.type = 'button'
+        b.className = 'cov-day'
+        b.setAttribute('data-state', info.state)
+        b.setAttribute('data-day', day)
+        b.style.gridRow = String(dowIndex(day) + 2)
+        b.style.gridColumn = String(week)
+        if (info.flights) b.setAttribute('data-load', String(Math.min(3, info.flights)))
+        if (info.state === 'outside') {
+          b.disabled = true
+          b.setAttribute('aria-hidden', 'true')
+          b.tabIndex = -1
+        } else {
+          b.setAttribute('aria-pressed', 'false')
+          b.title = dayLabel(day + 'T00:00:00Z') + ' — ' +
+            (info.flights ? info.flights + ' ' + plural(info.flights, 'let', 'lety', 'letov')
+                          : VERDICT[info.state].split('.')[0].toLowerCase())
+          buttons[day] = b
+          b.addEventListener('click', function () {
+            var next = day === selected ? null : day
+            selectDay(next)
+            if (next) {
+              var sec = document.getElementById('sec-flights')
+              if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }
+          })
+        }
+        grid.appendChild(b)
+      })
+      scroll.appendChild(grid)
+      panel.appendChild(scroll)
+      yearsBox.appendChild(panel)
+    })
+
+    document.getElementById('cov-clear').addEventListener('click', function () { selectDay(null) })
+  }
+
+  function selectDay(day) {
+    Object.keys(buttons).forEach(function (d) {
+      buttons[d].setAttribute('aria-pressed', String(d === day))
+    })
+    selected = day
+    detail.setAttribute('data-open', day ? '1' : '0')
+    filterStrips(day)
+    if (!day) return
+
+    var info = dayState(day)
+    detailDay.textContent = longDate(day + 'T00:00:00Z')
+    detailVerdict.textContent = VERDICT[info.state]
+    detailRows.textContent = ''
+    DATA.fleet.forEach(function (ac) {
+      var st = byCell[ac.icao24 + '|' + day]
+      if (st === undefined) return
+      var mine = (flightsByDay[day] || []).filter(function (f) { return f.registration === ac.registration })
+      var row = el('div', 'cov-row')
+      row.appendChild(el('span', 'reg', ac.registration))
+      var swatch = el('i')
+      swatch.className = 'cov-key'
+      swatch.setAttribute('data-state', mine.length ? 'flew' : st === 'unavailable' ? 'nodata' : 'quiet')
+      row.appendChild(swatch)
+      row.appendChild(el('span', 'what', mine.length
+        ? mine.length + ' ' + plural(mine.length, 'let', 'lety', 'letov')
+        : CELL_WORD[st] || '—'))
+      detailRows.appendChild(row)
+    })
+  }
 
   // --- register: oddelene podľa prevádzkovateľa -----------------------------
   // Vyradené lietadlo zostáva v registri, ale nesmie vstupovať do ničoho, čo opisuje
@@ -1169,8 +1299,38 @@
       build()
     }
 
+    strip.setAttribute('data-day', isoDate(f.departureTime))
     stripsBox.appendChild(strip)
   })
+
+  // Výber dňa v kalendári zúži zoznam letov. Deň bez letov nesmie zmiznúť do prázdna —
+  // celá pointa sekcie je, že ticho a chýbajúce dáta sú dve rôzne odpovede, tak to
+  // prázdno musí povedať, ktorá z nich to je.
+  var stripsHeading = document.getElementById('flights-heading')
+  var stripsBaseLabel = stripsHeading.textContent
+  var stripsEmpty = el('p', 'strips-empty')
+  stripsEmpty.style.display = 'none'
+  stripsBox.appendChild(stripsEmpty)
+
+  function filterStrips(day) {
+    var shown = 0
+    var all = stripsBox.querySelectorAll('.strip')
+    for (var i = 0; i < all.length; i++) {
+      var match = !day || all[i].getAttribute('data-day') === day
+      all[i].style.display = match ? '' : 'none'
+      if (match) shown++
+    }
+    if (!day) {
+      stripsHeading.textContent = stripsBaseLabel
+      stripsEmpty.style.display = 'none'
+      return
+    }
+    stripsHeading.textContent = shown
+      ? nf(shown) + ' ' + plural(shown, 'let', 'lety', 'letov') + ' · ' + longDate(day + 'T00:00:00Z')
+      : 'Žiadny let · ' + longDate(day + 'T00:00:00Z')
+    stripsEmpty.textContent = shown ? '' : VERDICT[dayState(day).state]
+    stripsEmpty.style.display = shown ? 'none' : ''
+  }
 
   // --- dvojice miest ------------------------------------------------------
   var pairs = {}
