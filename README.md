@@ -177,13 +177,13 @@ npm run collect:daily     # the whole cycle, for running it by hand
 
 ## Deployment
 
-Three steps, no credentials, free: push to GitHub, set Pages to build from GitHub
-Actions, allow the workflow to write. The page then rebuilds itself every morning.
+GitHub Actions collects, recomputes and builds every morning; Cloudflare Pages serves the
+result at [lietadielka.com](https://lietadielka.com). Nothing runs on the author's machine.
 
-Nothing on it changes between recomputations — nothing is published until six hours after
-a landing — so it is static, the pipeline runs in CI, and **the database never faces the
-internet**. See [deploy/README.md](deploy/README.md), including how to point a WebSupport
-domain at it.
+Nothing on the page changes between recomputations — nothing is published until six hours
+after a landing — so it is static, the pipeline runs in CI, and **the database never faces
+the internet**. See [deploy/README.md](deploy/README.md) for the setup, and for hosting it
+somewhere else instead.
 
 ## Licence
 

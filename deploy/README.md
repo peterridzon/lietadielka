@@ -1,153 +1,126 @@
 # Nasadenie
 
-## Najjednoduchšie: GitHub Pages
+```
+   Claude/Codex          GitHub                    Cloudflare
+   ────────────          ──────                    ──────────
+   píše kód       →      repozitár           →     Pages
+                         + Actions 04:17 UTC       + lietadielka.com
+                         (zber, prepočet, build)   (hosting, CDN, HTTPS)
+```
 
-Zber aj hosting rieši GitHub. **Žiadne prihlasovacie údaje, žiadny server, zadarmo.**
+Na vašom počítači nemusí bežať nič. Zber dát aj prepočet nákladov robí GitHub Actions
+každé ráno, hotovú stránku pošle na Cloudflare Pages.
 
-### Dva príkazy
+Zatiaľ na GitHube nie je nič — nasledujúce kroky ho založia.
+
+---
+
+## 1. Prihlásenie do GitHubu
+
+Cursor nedokáže zobraziť interaktívne prihlásenie, preto cez token.
+
+Otvorte <https://github.com/settings/tokens/new>, zaškrtnite **`repo`** a **`workflow`**,
+dole *Generate token*, skopírujte ho. Potom:
 
 ```bash
-gh auth login
+read -rs GH_TOKEN && echo "$GH_TOKEN" | gh auth login --with-token && gh auth status
+```
+
+Token sa vloží naslepo (nebude ho vidieť), potvrďte Enterom.
+
+Ak to nepomôže, spustite `gh auth login` v **Terminal.app** — tam interaktívne
+prihlásenie cez prehliadač funguje. Stačí raz, prihlásenie si uloží kľúčenka.
+
+## 2. Cloudflare Pages
+
+Prihlásenie a založenie projektu:
+
+```bash
+npx -y wrangler@latest pages project create lietadielka --production-branch main
+```
+
+Prehliadač si vyžiada povolenie. Projekt je tým založený a prázdny.
+
+Ďalej treba dva údaje pre GitHub Actions:
+
+- **Account ID** — Cloudflare dashboard, *Workers & Pages*, vpravo *Account ID*.
+- **API token** — <https://dash.cloudflare.com/profile/api-tokens>, *Create Token*,
+  šablóna **Edit Cloudflare Workers**, alebo vlastný s oprávnením
+  *Account → Cloudflare Pages → Edit*.
+
+## 3. Zverejnenie
+
+```bash
+export CLOUDFLARE_ACCOUNT_ID=...
+```
+
+```bash
+read -rs CLOUDFLARE_API_TOKEN && export CLOUDFLARE_API_TOKEN
 ```
 
 ```bash
 npm run publish
 ```
 
-Skript vytvorí verejný repozitár, nahrá ho, povolí workflow zapisovať, zapne Pages
-a raz spustí zber. Predtým vypíše, čo presne pôjde von, a počká na potvrdenie —
-zverejnenie sa nedá potichu vrátiť.
+Skript vytvorí **verejný** repozitár, nahrá ho, povolí workflowu zapisovať, uloží obidva
+Cloudflare secrety a raz spustí zber. Predtým vypíše, čo presne pôjde von, a počká na
+potvrdenie — zverejnenie sa nedá potichu vrátiť.
 
-Stránka je potom na `https://vas-login.github.io/lietadielka/` a každé ráno o 04:17 UTC
-sa sama aktualizuje.
+Ak secrety nezadáte, repozitár aj zber vzniknú tak či tak, len sa preskočí publikovanie.
+Doplniť sa dajú kedykoľvek:
 
-### Alebo ručne, ak nechcete gh
-
-1. Nahrajte repozitár na GitHub ako **verejný**.
-2. *Settings → Pages → Source:* **GitHub Actions**.
-3. *Settings → Actions → General → Workflow permissions:* **Read and write**.
-4. *Actions → Denný zber → Run workflow*.
-
-### Vlastná doména
-
-Ak máte doménu na WebSupporte, nemusíte tam nič hostovať — stačí ju nasmerovať na Pages.
-V DNS zázname vo Webadmine:
-
-```
-CNAME   lietadla    vas-login.github.io
+```bash
+gh secret set CLOUDFLARE_API_TOKEN && gh secret set CLOUDFLARE_ACCOUNT_ID
 ```
 
-a v *Settings → Pages → Custom domain* zadajte `lietadla.vasadomena.sk`. HTTPS certifikát
-vybaví GitHub sám.
+## 4. lietadielka.com
+
+Doména je registrovaná na Cloudflare a beží na ich nameserveroch, takže netreba nič
+prepínať ani nastavovať DNS ručne.
+
+Cloudflare dashboard → *Workers & Pages* → **lietadielka** → *Custom domains* →
+*Set up a custom domain* → `lietadielka.com`. DNS záznam aj HTTPS certifikát vybaví
+Cloudflare sám, do pár minút.
+
+Rovnako pridajte `www.lietadielka.com`, ak ho chcete.
 
 ---
 
-## Cloudflare Pages
+## Čo sa deje každý deň
 
-Rovnocenná náhrada GitHub Pages, ak máte radšej ich CDN. Bez Gitu, priamym nahratím:
-
-```bash
-npx wrangler login
 ```
+   GitHub Actions, 04:17 UTC
+ ┌──────────────────────────────────────────────┐
+ │ 1. poskladá databázu z gitu                  │
+ │ 2. stiahne nové dni z adsb.lol               │
+ │ 3. prepočíta lety, misie, náklady            │
+ │ 4. testy — pri chybe sa nepublikuje          │
+ │ 5. vygeneruje stránku                        │
+ │ 6. commitne nové pozorovania späť do gitu    │
+ │ 7. pošle stránku na Cloudflare Pages         │
+ └──────────────────────────────────────────────┘
+```
+
+Surové pozorovania v `data/observations/` sú jediný stav, ktorý sa musí uchovať.
+Všetko ostatné — lety, misie, náklady — sa z nich dá kedykoľvek prepočítať nanovo.
+Preto ich workflow commituje späť do repozitára: databáza je odvodená, git je pamäť.
+
+Publikačné oneskorenie (`PUBLICATION_DELAY_HOURS`, štandardne 6) platí na úrovni
+dopytu, nie exportu — stránka fyzicky nemôže obsahovať prebiehajúci let.
+
+## Ručné publikovanie
+
+Bez GitHubu, priamo z počítača na Cloudflare:
 
 ```bash
 npm run deploy:cloudflare
 ```
 
-**Rieši to hosting, nie automatiku.** Na Cloudflare nič nebeží — je to statický súbor.
-Denný zber tam spustiť nejde: Workers majú limit CPU, nemajú súborový systém a denný
-archív adsb.lol má 3,75 GB. Zber preto ostáva na GitHub Actions alebo na vás.
+Nahrá aktuálnu stránku. Automatiku to nerieši, len hosting.
 
-Kombinácia, ktorá dáva zmysel, ak chcete oboje: **zber na GitHub Actions, stránka na
-Cloudflare Pages.** Do workflowu stačí pridať krok s `wrangler pages deploy` a token
-`CLOUDFLARE_API_TOKEN` ako secret.
+## Iný hosting
 
-## Ako to funguje
-
-```
-   GitHub Actions, 04:17 UTC denne
- ┌────────────────────────────────────────┐
- │ 1. poskladá databázu z gitu            │
- │ 2. stiahne nové dni z adsb.lol         │
- │ 3. prestaví lety, misie, náklady       │
- │ 4. spustí testy                        │
- │ 5. commitne nové pozorovania           │
- │ 6. vypublikuje stránku na Pages        │
- └────────────────────────────────────────┘
-```
-
-Krok 4 je zámerný: **keď testy neprejdú, nič sa nezverejní.**
-
-### Prečo sa surové dáta commitujú
-
-Runner začína pri každom behu prázdny, takže databáza musí niekde prežiť. Namiesto
-externého Postgresu a ďalšieho tajomstva sa surové pozorovania ukladajú do repozitára ako
-`data/observations/<icao24>/<dátum>.ndjson.gz` a databáza sa z nich zakaždým poskladá.
-
-Sedí to na architektúru, ktorú projekt má odjakživa: *surové dáta sa nemažú, všetko
-ostatné je odvodené a prepočítateľné.* Overené — zahodenie celej databázy a obnova zo
-súborov dá presne rovnaký výsledok: 21 787 pozícií, 23 letov, 20 misií.
-
-Veľkosť: 40 dní a 5 lietadiel = 512 kB, teda **asi 5 MB za rok**.
-
-Vedľajší efekt, ktorý sa hodí: surové pozorovania sú tým verejné, verzované a nezávisle
-overiteľné. Ktokoľvek si ich stiahne a prepočíta všetko po svojom, bez toho, aby nám
-musel veriť.
-
-### Prečo to nemôže bežať na vašom počítači
-
-Archív adsb.lol drží asi **40 dní**. Keď sa dlhšie nezbiera, tie dni sú **nenávratne preč** —
-nedajú sa dostiahnuť neskôr. Týždeň dovolenky sa dobehne, dva mesiace vypnutý notebook nie.
-
-### Prečo to nemôže bežať na WebSupport webhostingu
-
-[Webhosting](https://www.websupport.sk/webhosting/specifikacia/) je PHP 8.2–8.5, **žiadny
-Node.js**. [Cron](https://www.websupport.sk/podpora/kb/cron-ulohy/) spúšťa len PHP skripty
-alebo URL, nie ľubovoľné príkazy.
-
-Nevadí to. Nikdy nezverejňujeme živú polohu — let sa objaví až šesť hodín po pristátí —
-takže stránka nemá dôvod byť dynamická. A má to bezpečnostný dôsledok, ktorý stojí za to
-povedať nahlas: **databáza sa vôbec nedostane na internet.** Von ide len vygenerované HTML.
-
----
-
-## Ak to predsa chcete na WebSupporte
-
-Workflow `.github/workflows/websupport.yml` nahrá stránku cez FTPS po každom úspešnom
-zbere. Pridajte štyri secrets v *Settings → Secrets and variables → Actions*:
-
-| | |
-|---|---|
-| `WS_HOST` | FTP server z Webadminu |
-| `WS_USER` | FTP login |
-| `WS_PASSWORD` | FTP heslo |
-| `WS_PATH` | cesta k webovému koreňu, napr. `/login/web` |
-
-Bez nich sa workflow ticho preskočí.
-
-Jednorazovo a ručne:
-
-```bash
-export WS_HOST=... WS_USER=... WS_PATH=/login/web
-npm run deploy:preview
-```
-
----
-
-## Na skúšanie lokálne
-
-```bash
-npm run collect:daily
-```
-
-Spraví celý cyklus naraz. S `-- --upload` aj nahrá. Na trvalý zber sa nespoliehajte —
-viď vyššie.
-
----
-
-## Než to pôjde na verejnú doménu
-
-- [ ] `PUBLICATION_DELAY_HOURS` nikdy nenastavovať na 0 (viď `SECURITY.md`)
-- [ ] identity lietadiel sú stále `needs_verification` — je to na stránke napísané
-- [ ] náklady stoja na cenách roku 2020 a nesú nízku kvalitu odhadu — tiež napísané
-- [ ] `robots.txt`, ak nechcete indexáciu skôr, než bude obsah hotový
+`deploy/upload.sh` nahrá stránku cez FTPS kamkoľvek (napr. WebSupport), ak
+nastavíte `FTP_HOST`, `FTP_USER`, `FTP_PASS`, `FTP_DIR`. Zber aj tak musí bežať
+inde — Cloudflare Workers ani bežný webhosting ho nezvládnu: denný archív adsb.lol
+má 3,75 GB a Workers nemajú súborový systém.
