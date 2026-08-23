@@ -24,6 +24,7 @@
     "costs:explain": "tsx src/cli/costs-explain.ts",
     "preview:build": "tsx preview/export.ts && python3 preview/build.py",
     "deploy:preview": "npm run preview:build && bash deploy/upload.sh",
+    "publish": "bash deploy/publish.sh",
     "purpose:set": "tsx src/cli/purpose-set.ts",
     "imports:list": "tsx src/cli/imports-list.ts",
     "obs:export": "tsx src/cli/observations-export.ts",

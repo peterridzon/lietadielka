@@ -4,14 +4,29 @@
 
 Zber aj hosting rieši GitHub. **Žiadne prihlasovacie údaje, žiadny server, zadarmo.**
 
-### Tri kroky
+### Dva príkazy
+
+```bash
+gh auth login
+```
+
+```bash
+npm run publish
+```
+
+Skript vytvorí verejný repozitár, nahrá ho, povolí workflow zapisovať, zapne Pages
+a raz spustí zber. Predtým vypíše, čo presne pôjde von, a počká na potvrdenie —
+zverejnenie sa nedá potichu vrátiť.
+
+Stránka je potom na `https://vas-login.github.io/lietadielka/` a každé ráno o 04:17 UTC
+sa sama aktualizuje.
+
+### Alebo ručne, ak nechcete gh
 
 1. Nahrajte repozitár na GitHub ako **verejný**.
 2. *Settings → Pages → Source:* **GitHub Actions**.
 3. *Settings → Actions → General → Workflow permissions:* **Read and write**.
-
-Hotovo. Stránka je na `https://vas-login.github.io/lietadielka/` a od zajtra sa sama
-každé ráno aktualizuje. Ručne sa dá spustiť v záložke *Actions → Denný zber → Run workflow*.
+4. *Actions → Denný zber → Run workflow*.
 
 ### Vlastná doména
 
