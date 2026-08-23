@@ -27,7 +27,9 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          # Must match the npm that wrote package-lock.json: npm 10 lays the nested
+          # esbuild copies out differently and `npm ci` then rejects the lockfile.
+          node-version: '26'
           cache: npm
 
       # Reference data and provider responses are regenerable, so a cache miss costs time
