@@ -18,6 +18,39 @@
   </div>
 </header>
 
+<section id="sec-coverage">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Záznam</p>
+      <h2>Pokojný deň a chýbajúci deň nie je to isté</h2>
+      <p>
+        Každá bunka je jeden UTC deň za celú flotilu. Archív, z ktorého pipeline číta, drží
+        len asi 40 dní a odpovedá rovnako, či lietadlo v ten deň neletelo, alebo či deň už
+        nemá. Collector preto každý deň zvlášť overí, kým ho označí za pokojný. Dni, ktoré
+        overiť nedokázal, sú z každého čísla na tejto stránke vylúčené &mdash; nie započítané ako nula.
+        <strong>Kliknutím na deň sa zoznam letov zúži naň.</strong>
+      </p>
+    </div>
+
+    <div class="cov-panel">
+      <div class="cov-years" id="cov-years"></div>
+      <div class="cov-side">
+        <p class="cov-period" id="cov-period"></p>
+        <dl class="cov-stats" id="cov-stats"></dl>
+      </div>
+    </div>
+
+    <div class="cov-detail" id="cov-detail" data-open="0" aria-live="polite">
+      <div class="cov-detail-head">
+        <b id="cov-detail-day"></b>
+        <span class="verdict" id="cov-detail-verdict"></span>
+        <button type="button" class="cov-clear" id="cov-clear">Zrušiť výber</button>
+      </div>
+      <div class="cov-rows" id="cov-detail-rows"></div>
+    </div>
+  </div>
+</section>
+
 <section id="sec-totals">
   <div class="wrap">
     <div class="sec-head">
@@ -176,36 +209,6 @@
     <div class="verify-steps">
       <h3>Overte si to sami</h3>
       <ol id="verify-list"></ol>
-    </div>
-  </div>
-</section>
-
-<section id="sec-coverage">
-  <div class="wrap">
-    <div class="sec-head">
-      <p class="eyebrow">Úplnosť datasetu</p>
-      <h2>Pokojný deň a chýbajúci deň nie je to isté</h2>
-      <p>
-        Každá bunka je jedno lietadlo v jeden UTC deň. Archív, z ktorého pipeline číta, drží
-        len asi 40 dní a odpovedá rovnako, či lietadlo v ten deň neletelo, alebo či deň už
-        nemá. Collector preto každý deň zvlášť overí, kým ho označí za pokojný. Dni, ktoré
-        overiť nedokázal, sú z každého čísla na tejto stránke vylúčené &mdash; nie započítané ako nula.
-      </p>
-    </div>
-    <div class="cov-years" id="cov-years"></div>
-    <div class="legend">
-      <span><i class="cov-key" data-state="flew"></i> Detegované lety</span>
-      <span><i class="cov-key" data-state="quiet"></i> Archív deň mal, lietadlo nevidel</span>
-      <span><i class="cov-key" data-state="partial"></i> Časť flotily overená, časť nie</span>
-      <span><i class="cov-key" data-state="nodata"></i> Deň sa nedal získať &mdash; vylúčený, nie nula</span>
-    </div>
-    <div class="cov-detail" id="cov-detail" data-open="0" aria-live="polite">
-      <div class="cov-detail-head">
-        <b id="cov-detail-day"></b>
-        <span class="verdict" id="cov-detail-verdict"></span>
-        <button type="button" class="cov-clear" id="cov-clear">Zrušiť výber</button>
-      </div>
-      <div class="cov-rows" id="cov-detail-rows"></div>
     </div>
   </div>
 </section>

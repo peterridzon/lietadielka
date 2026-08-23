@@ -785,14 +785,17 @@
 
     yearOrder.forEach(function (year) {
       var panel = el('div', 'cov-year')
-      panel.appendChild(el('h3', null, year))
+      if (yearOrder.length > 1) panel.appendChild(el('h3', null, year))
 
-      var dows = el('div', 'cov-dows')
-      DOW.forEach(function (d, i) { dows.appendChild(el('span', null, i % 2 ? '' : d)) })
-      panel.appendChild(dows)
-
-      var scroll = el('div', 'cov-scroll')
       var grid = el('div', 'cov-grid')
+      // Šírka stĺpca je zlomok, nie pixel, takže bunka rastie, kým je záznam krátky,
+      // a zmenšuje sa, ako pribúdajú roky. Mriežka tak nikdy neuteká nabok.
+      grid.style.setProperty('--weeks', String(Math.ceil(byYear[year].length / 7)))
+      DOW.forEach(function (d, i) {
+        var lab = el('span', 'cov-dow', i % 2 ? '' : d)
+        lab.style.gridRow = String(i + 2)
+        grid.appendChild(lab)
+      })
       var lastMonth = null
       byYear[year].forEach(function (day, i) {
         var inRange = day >= first && day <= last
@@ -802,7 +805,7 @@
         var week = Math.floor(i / 7) + 1
         if (inRange && month !== lastMonth) {
           var lab = el('span', 'cov-mon', MONTH_SHORT[Number(month) - 1])
-          lab.style.gridColumn = String(week)
+          lab.style.gridColumn = String(week + 1)
           lab.style.gridRow = '1'
           grid.appendChild(lab)
           lastMonth = month
@@ -815,7 +818,7 @@
         b.setAttribute('data-state', info.state)
         b.setAttribute('data-day', day)
         b.style.gridRow = String(dowIndex(day) + 2)
-        b.style.gridColumn = String(week)
+        b.style.gridColumn = String(week + 1)
         if (info.flights) b.setAttribute('data-load', String(Math.min(3, info.flights)))
         if (info.state === 'outside') {
           b.disabled = true
@@ -838,9 +841,40 @@
         }
         grid.appendChild(b)
       })
-      scroll.appendChild(grid)
-      panel.appendChild(scroll)
+      panel.appendChild(grid)
       yearsBox.appendChild(panel)
+    })
+
+    // Pri siedmich týždňoch by pás štvorčekov cez celú šírku bol prázdne divadlo.
+    // To, ako úplný záznam je, povedia čísla — tie patria vedľa mriežky, nie pod ňu.
+    var tally = { flew: 0, quiet: 0, partial: 0, nodata: 0 }
+    dayKeys.forEach(function (d) {
+      var st = dayState(d).state
+      if (tally[st] !== undefined) tally[st]++
+    })
+    document.getElementById('cov-period').textContent =
+      longDate(first + 'T00:00:00Z') + ' – ' + longDate(last + 'T00:00:00Z')
+
+    var statsBox = document.getElementById('cov-stats')
+    // Slovenčina skloňuje aj popisok, nielen podstatné meno: jeden deň je overený,
+    // dva sú overené, päť ich je overených. Bez toho tam svieti "1 dní".
+    var STATS = [
+      ['flew', 'deň s detegovaným letom', 'dni s detegovaným letom', 'dní s detegovaným letom'],
+      ['quiet', 'deň overene pokojný', 'dni overene pokojné', 'dní overene pokojných'],
+      ['partial', 'deň overený len sčasti', 'dni overené len sčasti', 'dní overených len sčasti'],
+      ['nodata', 'deň sa nedal získať — vylúčený', 'dni sa nedali získať — vylúčené',
+        'dní sa nedalo získať — vylúčené']
+    ]
+    STATS.forEach(function (row) {
+      var n = tally[row[0]]
+      if (!n) return
+      var wrap = el('div', 'cov-stat')
+      var swatch = el('i', 'cov-sw')
+      swatch.setAttribute('data-state', row[0])
+      wrap.appendChild(swatch)
+      wrap.appendChild(el('dd', null, nf(n)))
+      wrap.appendChild(el('dt', null, plural(n, row[1], row[2], row[3])))
+      statsBox.appendChild(wrap)
     })
 
     document.getElementById('cov-clear').addEventListener('click', function () { selectDay(null) })
@@ -865,8 +899,7 @@
       var mine = (flightsByDay[day] || []).filter(function (f) { return f.registration === ac.registration })
       var row = el('div', 'cov-row')
       row.appendChild(el('span', 'reg', ac.registration))
-      var swatch = el('i')
-      swatch.className = 'cov-key'
+      var swatch = el('i', 'cov-sw')
       swatch.setAttribute('data-state', mine.length ? 'flew' : st === 'unavailable' ? 'nodata' : 'quiet')
       row.appendChild(swatch)
       row.appendChild(el('span', 'what', mine.length

@@ -121,7 +121,11 @@ describe('design preview', () => {
     const years = $$('.cov-year')
     expect(years.length).toBeGreaterThan(0)
     for (const y of years) {
-      expect(y.querySelector('h3')?.textContent).toMatch(/^\d{4}$/)
+      // The year heading is noise when the record sits inside one year, so it appears
+      // only once there is more than one panel to tell apart.
+      const heading = y.querySelector('h3')
+      if (years.length > 1) expect(heading?.textContent).toMatch(/^\d{4}$/)
+      else expect(heading).toBeNull()
       // Every cell sits on one of the seven weekday rows; anything else means the grid
       // has drifted out of alignment and the columns no longer read as weeks.
       const rows = new Set(
@@ -140,6 +144,27 @@ describe('design preview', () => {
     // A day outside the record must not be clickable — it asserts nothing.
     for (const cell of $$('.cov-day[data-state="outside"]')) {
       expect((cell as HTMLButtonElement).disabled).toBe(true)
+    }
+  })
+
+  it('sizes itself by week count instead of fixed pixels', () => {
+    for (const grid of $$('.cov-grid')) {
+      const weeks = Number((grid as HTMLElement).style.getPropertyValue('--weeks'))
+      expect(weeks).toBeGreaterThan(0)
+      // Seven rows of cells per week column, so the two must agree exactly.
+      const cells = grid.querySelectorAll('.cov-day').length
+      expect(cells).toBe(weeks * 7)
+    }
+  })
+
+  it('counts each day state beside the grid, matching the cells', () => {
+    const cells = $$('.cov-day').map((d) => d.getAttribute('data-state'))
+    const stats = $$('.cov-stat')
+    expect(stats.length).toBeGreaterThan(0)
+    for (const stat of stats) {
+      const state = stat.querySelector('i')?.getAttribute('data-state')
+      const shown = Number(stat.querySelector('dd')?.textContent?.replace(/\s/g, ''))
+      expect(shown, `${state} count`).toBe(cells.filter((c) => c === state).length)
     }
   })
 
