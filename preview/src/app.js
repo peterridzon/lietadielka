@@ -831,12 +831,7 @@
                           : VERDICT[info.state].split('.')[0].toLowerCase())
           buttons[day] = b
           b.addEventListener('click', function () {
-            var next = day === selected ? null : day
-            selectDay(next)
-            if (next) {
-              var sec = document.getElementById('sec-flights')
-              if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' })
-            }
+            selectDay(day === selected ? null : day)
           })
         }
         grid.appendChild(b)
@@ -880,6 +875,54 @@
     document.getElementById('cov-clear').addEventListener('click', function () { selectDay(null) })
   }
 
+  // Skok na konkrétny let má zmysel, lebo si ho čitateľ vypýtal menovite — na rozdiel od
+  // skoku na celý zoznam, ktorý ho len odniesol preč od otázky.
+  function openFlight(f) { goToFlights(isoDate(f.departureTime)) }
+
+  // Skok na začiatok sekcie končil na titulku a dlhom odstavci, takže čitateľ pristál na
+  // texte a pásiky mu ostali pod okrajom — vyzeralo to, že klik neurobil nič. Cieľom je
+  // prvý pásik toho dňa, otvorený, v strede obrazovky.
+  function goToFlights(day) {
+    var all = document.querySelectorAll('#strips .strip')
+    for (var i = 0; i < all.length; i++) {
+      if (all[i].getAttribute('data-day') !== day) continue
+      var btn = all[i].querySelector('.strip-btn')
+      if (all[i].getAttribute('open-state') !== '1' && btn) btn.click()
+      // Rozbalený pásik je vyšší než obrazovka, takže vycentrovanie by mu vysunulo
+      // hlavičku s trasou nad okraj. Pri lete je dôležitý jeho začiatok.
+      bringIntoView(all[i], 'start')
+      return
+    }
+    // Deň bez letov má vlastnú odpoveď — tá musí byť rovnako na očiach.
+    bringIntoView(document.querySelector('.strips-empty'))
+  }
+
+  // Posun je ozdoba: výber dňa naň nesmie doplatiť tam, kde ho prostredie nepozná.
+  // Ale ak sa vykonať má, musí sa vykonať naozaj. Plynulý posun niektoré prostredia
+  // potichu ignorujú a čitateľovi to vyzerá tak, že klik neurobil nič — preto sa po
+  // chvíli overí, či sa stránka pohla, a ak nie, doskočí sa natvrdo.
+  function bringIntoView(node, align) {
+    if (!node || typeof node.scrollIntoView !== 'function') return
+    align = align || 'center'
+    var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    var from = window.pageYOffset
+    try {
+      node.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: align })
+    } catch (err) {
+      try { node.scrollIntoView(true) } catch (err2) { return }
+    }
+    if (calm) return
+    window.setTimeout(function () {
+      if (window.pageYOffset !== from) return
+      var box = node.getBoundingClientRect()
+      if (box.top > 0 && box.bottom < window.innerHeight) return   // už na očiach
+      // scrollIntoView(true) zarovná na horný okraj; dopočítaním stredu vyjde rovnaký
+      // výsledok ako pri plynulom posune, takže sa cieľ neusadí raz hore a raz v strede.
+      var offset = align === 'start' ? 24 : (window.innerHeight - box.height) / 2
+      window.scrollTo(0, Math.max(0, Math.round(window.pageYOffset + box.top - offset)))
+    }, 350)
+  }
+
   function selectDay(day) {
     Object.keys(buttons).forEach(function (d) {
       buttons[d].setAttribute('aria-pressed', String(d === day))
@@ -902,11 +945,33 @@
       var swatch = el('i', 'cov-sw')
       swatch.setAttribute('data-state', mine.length ? 'flew' : st === 'unavailable' ? 'nodata' : 'quiet')
       row.appendChild(swatch)
-      row.appendChild(el('span', 'what', mine.length
-        ? mine.length + ' ' + plural(mine.length, 'let', 'lety', 'letov')
-        : CELL_WORD[st] || '—'))
+
+      if (!mine.length) {
+        row.appendChild(el('span', 'what', CELL_WORD[st] || '—'))
+        detailRows.appendChild(row)
+        return
+      }
+      // Kalendár je hore a zoznam letov o päť sekcií nižšie. Odpoveď preto musí byť tu,
+      // nie na konci skoku cez pol stránky — trasa, čas, a odkaz na úplný rozpad.
+      var legs = el('span', 'what')
+      mine.forEach(function (f) {
+        var dep = endpoint(f, 'dep'), arr = endpoint(f, 'arr')
+        var a = document.createElement('a')
+        a.className = 'cov-leg'
+        a.href = '#'
+        a.appendChild(el('b', null, (dep.code || 'NEZN') + ' → ' + (arr.code || 'NEZN')))
+        a.appendChild(el('em', null, hhmm(f.departureTime) + ' · ' + duration(f.durationSeconds)))
+        a.addEventListener('click', function (ev) {
+          ev.preventDefault()
+          openFlight(f)
+        })
+        legs.appendChild(a)
+      })
+      row.appendChild(legs)
       detailRows.appendChild(row)
     })
+
+    goToFlights(day)
   }
 
   // --- register: oddelene podľa prevádzkovateľa -----------------------------

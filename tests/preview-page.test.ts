@@ -185,6 +185,7 @@ describe('design preview', () => {
   })
 
   it('says which kind of empty an empty day is', () => {
+    ;($('#cov-clear') as HTMLButtonElement).click()
     const missing = $$('.cov-day[data-state="nodata"]')[0] as HTMLButtonElement
     missing.click()
     const note = $('.strips-empty') as HTMLElement
@@ -199,7 +200,36 @@ describe('design preview', () => {
     expect(note.style.display).toBe('none')
   })
 
+  it('answers beside the calendar instead of jumping to the list', () => {
+    ;($('#cov-clear') as HTMLButtonElement).click()
+    const flown = $$('.cov-day[data-state="flew"]')[0] as HTMLButtonElement
+    flown.click()
+    // The calendar leads the page and the flight list is five sections below it, so a
+    // click must not carry the reader away from the question they just asked.
+    const legs = $$('.cov-leg')
+    expect(legs.length).toBeGreaterThan(0)
+    for (const leg of legs) {
+      expect(leg.querySelector('b')?.textContent).toMatch(/.+ → .+/)
+      expect(leg.querySelector('em')?.textContent).toMatch(/\d{2}:\d{2}/)
+    }
+    ;($('#cov-clear') as HTMLButtonElement).click()
+  })
+
+  it('opens the flight itself, not just the section that holds it', () => {
+    ;($('#cov-clear') as HTMLButtonElement).click()
+    const flown = $$('.cov-day[data-state="flew"]')[0] as HTMLButtonElement
+    const day = flown.getAttribute('data-day')
+    flown.click()
+    // Landing on the section heading looked like the click had done nothing, because the
+    // strips sat below a long paragraph. The strip for that day must be open.
+    const strip = $$('.strip').find((s) => s.getAttribute('data-day') === day)
+    expect(strip?.getAttribute('open-state')).toBe('1')
+    expect(strip?.querySelector('.strip-btn')?.getAttribute('aria-expanded')).toBe('true')
+    ;($('#cov-clear') as HTMLButtonElement).click()
+  })
+
   it('breaks the selected day down per aircraft', () => {
+    ;($('#cov-clear') as HTMLButtonElement).click()
     const flown = $$('.cov-day[data-state="flew"]')[0] as HTMLButtonElement
     flown.click()
     expect(($('#cov-detail') as Element).getAttribute('data-open')).toBe('1')

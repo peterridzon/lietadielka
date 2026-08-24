@@ -247,7 +247,12 @@ section > .wrap > .sec-head { margin-bottom: 28px; }
 .cov-row { display: grid; grid-template-columns: 92px 14px 1fr; gap: 10px; align-items: center;
   font-size: 13px; }
 .cov-row .reg { font-family: var(--data); font-weight: 500; }
-.cov-row .what { color: var(--ink-2); }
+.cov-row .what { color: var(--ink-2); display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.cov-leg { display: inline-flex; align-items: baseline; gap: 8px; text-decoration: none;
+  border-bottom: 1px solid var(--rule); color: var(--ink); }
+.cov-leg:hover { border-bottom-color: var(--accent); color: var(--accent); }
+.cov-leg b { font-family: var(--data); font-weight: 600; font-size: 12.5px; letter-spacing: 0.02em; }
+.cov-leg em { font-style: normal; font-size: 12px; color: var(--ink-3); }
 
 /* One swatch definition for every place a state is named — the counts beside the grid and
    the per-aircraft rows below them. Scoping these under a parent is how the detail panel
