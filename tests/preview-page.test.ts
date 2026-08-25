@@ -384,11 +384,46 @@ describe('design preview', () => {
   })
 
   it('gets Slovak plurals right', () => {
-    // "3 letov" reads as a typo; 2-4 takes a different form from 5+.
-    const text = $('#sec-fleet')?.textContent ?? ''
-    expect(text).toContain('3 lety')
-    expect(text).toContain('5 letov')
-    expect(text).toContain('lietadlá v službe')
+    // "3 letov" reads as a typo; one takes one form, two to four another, five and up a
+    // third. Which counts actually appear depends on the data and changes as the record
+    // grows, so this checks every number on the page against the rule rather than
+    // expecting particular ones.
+    const correct = (n: number, forms: [string, string, string]) =>
+      n === 1 ? forms[0] : n >= 2 && n <= 4 ? forms[1] : forms[2]
+
+    const words: [string, string, string][] = [
+      ['let', 'lety', 'letov'],
+      ['deň', 'dni', 'dní'],
+      ['lietadlo', 'lietadlá', 'lietadiel'],
+    ]
+    // Read text nodes one at a time. Joining the whole body first runs neighbouring
+    // elements together — the type "F28 Mark 0100" followed by a count of "2 lety" reads
+    // as "1002 lety" — and drags the embedded script's own comments in with it.
+    const walker = dom.window.document.createTreeWalker(
+      dom.window.document.body,
+      dom.window.NodeFilter.SHOW_TEXT,
+    )
+    const chunks: string[] = []
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const tag = node.parentElement?.tagName
+      if (tag === 'SCRIPT' || tag === 'STYLE') continue
+      chunks.push((node.textContent ?? '').replace(/[\u00a0\u202f]/g, ' ').trim())
+    }
+    // Joined by newlines, so a count and its noun in sibling elements still read as one
+    // phrase while two unrelated numbers never fuse into a third.
+    const text = chunks.filter(Boolean).join('\n')
+
+    let checked = 0
+    for (const forms of words) {
+      const pattern = new RegExp(`(?:^|[^\\d])(\\d[\\d ]*)\\s(${forms.join('|')})\\b`, 'gm')
+      for (const [whole, digits, used] of text.matchAll(pattern)) {
+        const n = Number(digits!.replace(/\s/g, ''))
+        expect(used, `"${whole.trim()}"`).toBe(correct(n, forms))
+        checked++
+      }
+    }
+    expect(checked, 'nothing counted, so nothing was checked').toBeGreaterThan(3)
+    expect($('#sec-fleet')?.textContent).toContain('lietadlá v službe')
   })
 
   it('does not let a photograph identify an aircraft', () => {
