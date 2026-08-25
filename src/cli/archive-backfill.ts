@@ -6,8 +6,9 @@
  *
  * A day costs 2.5–4 GB of streaming and there is no way to make it cheaper: the archive
  * stores entries unsorted, so an aircraft cannot be seeked to. Measured end to end on
- * 2026-08-22: 3.60 GB, 73 180 entries, 552 seconds on a home connection — the same trace
- * the live endpoint serves, 796 positions, identical.
+ * 2026-08-22: 3.60 GB, 73 180 entries — the same trace the live endpoint serves, 796
+ * positions, identical. A day takes 72–85 seconds on a CI runner and roughly seven times
+ * that on a home connection, which is the link speed talking, not the archive.
  * That shapes the whole design. --days bounds one run so it fits inside a CI job, the
  * oldest missing day is always taken first, and each finished day is committed, so an
  * interrupted backfill loses at most the day it was working on.
@@ -15,7 +16,7 @@
  * Options:
  *   --from   YYYY-MM-DD, earliest day to reach (required)
  *   --to     YYYY-MM-DD, latest day to fill (default: yesterday UTC)
- *   --days   how many days to process in this run (default 10)
+ *   --days   how many days to process in this run (default 40)
  *   --newest work forwards from the newest missing day instead of the oldest
  *   --force  re-import days that were already imported
  */
@@ -80,7 +81,7 @@ async function main(): Promise<void> {
     : new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() - 1))
   if (to < from) throw new Error('--to must not be before --from')
 
-  const budget = Number(optionalString(args, 'days') ?? 10)
+  const budget = Number(optionalString(args, 'days') ?? 40)
   if (!Number.isFinite(budget) || budget < 1) throw new Error('--days must be a positive number')
 
   const fleet = await listTrackedAircraft()
