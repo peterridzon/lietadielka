@@ -48,42 +48,30 @@
 
   /** Slovak counts split 1 / 2-4 / 5+, and "3 letov" reads as a typo to a Slovak reader. */
   /**
-   * Panel na zoradenie zoznamu. Prehadzuje hotové riadky, nie prekresľuje ich, takže
-   * rozbalený detail ani zvýraznený deň o seba neprídu. Zhodné hodnoty rozhoduje dátum,
-   * aby poradie nebolo pri každom kliknutí iné.
+   * Ovládanie zoznamu: zoradenie, rozsah dátumov a strop na počet riadkov.
+   *
+   * Tristo letov a dvestopäťdesiat ciest sa nedá čítať zhora nadol. Zoznam preto ukazuje
+   * prvých tridsať v aktuálnom poradí — čo pri zoradení podľa nákladu znamená tridsať
+   * najdrahších, teda presne to, načo sa človek pýta — a zvyšok si vyžiada sám.
+   *
+   * Riadky sa prehadzujú a skrývajú, nikdy neprekresľujú, takže rozbalený let ani deň
+   * vybraný v kalendári o seba neprídu.
    */
-  function sortBarFor(box, rowSelector, specs, initial, onSorted) {
-    var state = { key: initial.key, desc: initial.desc }
-    var bar = el('div', 'sortbar')
+  var PAGE_STEP = 30
+
+  function listControls(box, rowSelector, specs, initial) {
+    var state = { key: initial.key, desc: initial.desc, from: '', to: '', limit: PAGE_STEP }
+
+    var bar = el('div', 'listbar')
     bar.setAttribute('role', 'group')
-    bar.setAttribute('aria-label', initial.label || 'Zoradiť')
-    bar.appendChild(el('span', 'sortbar-label', 'Zoradiť'))
+    bar.setAttribute('aria-label', initial.label || 'Zoradiť a filtrovať')
 
-    function apply() {
-      var spec = specs.filter(function (x) { return x.key === state.key })[0] || specs[0]
-      var rows = [].slice.call(box.querySelectorAll(rowSelector))
-      rows.sort(function (a, b) {
-        var av = a.getAttribute('data-sort-' + spec.key) || ''
-        var bv = b.getAttribute('data-sort-' + spec.key) || ''
-        var cmp = spec.numeric ? Number(av) - Number(bv) : av.localeCompare(bv, 'sk')
-        if (cmp === 0) {
-          cmp = (a.getAttribute('data-sort-date') || '').localeCompare(b.getAttribute('data-sort-date') || '')
-        }
-        return state.desc ? -cmp : cmp
-      })
-      rows.forEach(function (r) { box.appendChild(r) })
-      var buttons = bar.querySelectorAll('button')
-      for (var i = 0; i < buttons.length; i++) {
-        var on = buttons[i].getAttribute('data-key') === state.key
-        buttons[i].setAttribute('aria-pressed', String(on))
-        buttons[i].querySelector('em').textContent = on ? (state.desc ? '↓' : '↑') : ''
-      }
-      if (onSorted) onSorted()
-    }
-
+    var sortRow = el('div', 'listbar-row')
+    sortRow.appendChild(el('span', 'listbar-label', 'Zoradiť'))
     specs.forEach(function (spec) {
       var b = document.createElement('button')
       b.type = 'button'
+      b.className = 'lb-sort'
       b.setAttribute('data-key', spec.key)
       b.setAttribute('aria-pressed', 'false')
       b.appendChild(document.createTextNode(spec.label))
@@ -93,13 +81,140 @@
         // ňom dáva zmysel — peniaze a vzdialenosti od najväčších, mená od a.
         if (state.key === spec.key) state.desc = !state.desc
         else { state.key = spec.key; state.desc = spec.desc }
+        state.limit = PAGE_STEP
         apply()
       })
-      bar.appendChild(b)
+      sortRow.appendChild(b)
     })
+    bar.appendChild(sortRow)
+
+    var rangeRow = el('div', 'listbar-row')
+    rangeRow.appendChild(el('span', 'listbar-label', 'Obdobie'))
+    function dateInput(which, label) {
+      var input = document.createElement('input')
+      input.type = 'date'
+      input.className = 'lb-date'
+      input.setAttribute('aria-label', label)
+      input.addEventListener('change', function () {
+        state[which] = input.value
+        state.limit = PAGE_STEP
+        apply()
+      })
+      return input
+    }
+    var fromInput = dateInput('from', 'Od dátumu')
+    var toInput = dateInput('to', 'Do dátumu')
+    rangeRow.appendChild(fromInput)
+    rangeRow.appendChild(el('span', 'lb-dash', '–'))
+    rangeRow.appendChild(toInput)
+
+    var reset = document.createElement('button')
+    reset.type = 'button'
+    reset.className = 'lb-reset'
+    reset.textContent = 'Celé obdobie'
+    reset.addEventListener('click', function () {
+      state.from = ''; state.to = ''; state.limit = PAGE_STEP
+      fromInput.value = ''; toInput.value = ''
+      apply()
+    })
+    rangeRow.appendChild(reset)
+    bar.appendChild(rangeRow)
+
+    var footer = el('div', 'listbar-foot')
+    var count = el('span', 'lb-count', '')
+    var more = document.createElement('button')
+    more.type = 'button'
+    more.className = 'lb-more'
+    more.addEventListener('click', function () { state.limit += PAGE_STEP; apply() })
+    var all = document.createElement('button')
+    all.type = 'button'
+    all.className = 'lb-more'
+    all.addEventListener('click', function () { state.limit = Infinity; apply() })
+    footer.appendChild(count)
+    footer.appendChild(more)
+    footer.appendChild(all)
+
+    function inRange(row) {
+      var day = (row.getAttribute('data-sort-date') || '').slice(0, 10)
+      if (state.from && day < state.from) return false
+      if (state.to && day > state.to) return false
+      return true
+    }
+
+    function apply() {
+      var spec = specs.filter(function (x) { return x.key === state.key })[0] || specs[0]
+      var rows = [].slice.call(box.querySelectorAll(rowSelector))
+      rows.sort(function (a, b) {
+        var av = a.getAttribute('data-sort-' + spec.key) || ''
+        var bv = b.getAttribute('data-sort-' + spec.key) || ''
+        var cmp = spec.numeric ? Number(av) - Number(bv) : av.localeCompare(bv, 'sk')
+        // Zhodné hodnoty rozhodne dátum, aby poradie nebolo pri každom kliknutí iné.
+        if (cmp === 0) {
+          cmp = (a.getAttribute('data-sort-date') || '').localeCompare(b.getAttribute('data-sort-date') || '')
+        }
+        return state.desc ? -cmp : cmp
+      })
+
+      var matching = 0, shown = 0
+      rows.forEach(function (row) {
+        box.appendChild(row)
+        if (!inRange(row)) { row.style.display = 'none'; return }
+        matching++
+        var visible = shown < state.limit
+        row.style.display = visible ? '' : 'none'
+        if (visible) shown++
+      })
+
+      var buttons = bar.querySelectorAll('.lb-sort')
+      for (var i = 0; i < buttons.length; i++) {
+        var on = buttons[i].getAttribute('data-key') === state.key
+        buttons[i].setAttribute('aria-pressed', String(on))
+        buttons[i].querySelector('em').textContent = on ? (state.desc ? '↓' : '↑') : ''
+      }
+
+      var whole = rows.length
+      count.textContent = shown === matching
+        ? (matching === whole
+            ? nf(matching) + ' ' + plural(matching, 'záznam', 'záznamy', 'záznamov')
+            : nf(matching) + ' z ' + nf(whole) + ' vo zvolenom období')
+        : 'zobrazených ' + nf(shown) + ' z ' + nf(matching) +
+            (matching === whole ? '' : ' vo zvolenom období')
+      var rest = matching - shown
+      more.style.display = rest > 0 ? '' : 'none'
+      all.style.display = rest > PAGE_STEP ? '' : 'none'
+      more.textContent = 'Ďalších ' + Math.min(PAGE_STEP, rest)
+      all.textContent = 'Všetkých ' + nf(matching)
+      footer.style.display = matching ? '' : 'none'
+    }
+
     box.parentNode.insertBefore(bar, box)
+    box.parentNode.insertBefore(footer, box.nextSibling)
     apply()
-    return bar
+
+    return {
+      /**
+       * Kalendár si vypýta konkrétny deň. Zoznam sa nezúži na ten jediný let — to bolo raz
+       * odmietnuté a právom. Otvorí sa jeho mesiac: dosť úzke na to, aby zostal strop
+       * tridsiatich riadkov užitočný, dosť široké na to, aby to bol stále zoznam. Polia
+       * rozsahu sa nastavia viditeľne, takže je zjavné, prečo sa zobrazenie zmenilo, a
+       * "Celé obdobie" to vráti.
+       *
+       * Alternatíva — len odkryť toľko riadkov, aby bol deň vidieť — pri januárovom dni a
+       * zoradení od najnovších znamená vysypať tristosedemdesiat riadkov, čím strop
+       * prestane existovať práve vtedy, keď je najviac potrebný.
+       */
+      revealDay: function (day) {
+        if (!day) return
+        var month = day.slice(0, 7)
+        var last = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0))
+        state.from = month + '-01'
+        state.to = last.toISOString().slice(0, 10)
+        state.limit = PAGE_STEP
+        fromInput.value = state.from
+        toInput.value = state.to
+        apply()
+      }
+    }
   }
 
   function plural(n, one, few, many) {
@@ -769,14 +884,14 @@
     // vôbec nemala a padali do náhodného poradia. Odkedy má sumu každý let, tá námietka
     // padla — a pri dvoch stovkách ciest je hľadanie tej najdrahšej to hlavné, načo sem
     // človek príde.
-    sortBarFor(missionsBox, '.mrow:not(.head)', [
+    listControls(missionsBox, '.mrow:not(.head)', [
       { key: 'date', label: 'Dátum', numeric: false, desc: true },
       { key: 'cost', label: 'Náklad', numeric: true, desc: true },
       { key: 'hours', label: 'Čas vo vzduchu', numeric: true, desc: true },
       { key: 'legs', label: 'Úsekov', numeric: true, desc: true },
       { key: 'reg', label: 'Lietadlo', numeric: false, desc: false },
       { key: 'route', label: 'Trasa', numeric: false, desc: false }
-    ], { key: 'date', desc: true, label: 'Zoradiť cesty' })
+    ], { key: 'date', desc: true, label: 'Zoradiť a filtrovať cesty' })
   }
 
   // --- dopĺňanie histórie --------------------------------------------------
@@ -1024,6 +1139,10 @@
   // texte a pásiky mu ostali pod okrajom — vyzeralo to, že klik neurobil nič. Cieľom je
   // prvý pásik toho dňa, otvorený, v strede obrazovky.
   function goToFlights(day) {
+    // Zoznam ukazuje tridsať riadkov, takže hľadaný let môže byť skrytý. Kalendár si ho
+    // vypýta nastavením rozsahu na ten deň — nie obídením filtra, aby zoznam a to, čo
+    // sa v ňom zvýrazní, hovorili to isté.
+    if (flightList) flightList.revealDay(day)
     var all = document.querySelectorAll('#strips .strip')
     for (var i = 0; i < all.length; i++) {
       if (all[i].getAttribute('data-day') !== day) continue
@@ -1510,14 +1629,14 @@
   var stripsBaseLabel = stripsHeading.textContent
   // Pri dvadsiatich letoch bolo zoraďovanie zbytočnosťou, pri troch stovkách je to
   // jediný spôsob, ako sa niekam dostať — najdrahší let, najdlhší, konkrétne lietadlo.
-  sortBarFor(stripsBox, '.strip', [
+  var flightList = listControls(stripsBox, '.strip', [
     { key: 'date', label: 'Dátum', numeric: false, desc: true },
     { key: 'cost', label: 'Náklad', numeric: true, desc: true },
     { key: 'dist', label: 'Vzdialenosť', numeric: true, desc: true },
     { key: 'dur', label: 'Trvanie', numeric: true, desc: true },
     { key: 'reg', label: 'Lietadlo', numeric: false, desc: false },
     { key: 'route', label: 'Trasa', numeric: false, desc: false }
-  ], { key: 'date', desc: true, label: 'Zoradiť lety' })
+  ], { key: 'date', desc: true, label: 'Zoradiť a filtrovať lety' })
 
   var firstStrip = stripsBox.querySelector('.strip')
   if (firstStrip && firstStrip.getAttribute('open-state') !== '1') {

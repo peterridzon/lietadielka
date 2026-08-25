@@ -242,8 +242,14 @@ describe('design preview', () => {
     expect(flown.getAttribute('aria-pressed')).toBe('true')
     // Narrowing the list to one day left the page showing a single flight and hiding
     // every other one. A list of flights has to stay a list of flights.
+    // Selecting a day opens its month, never that one day: narrowing the list to a single
+    // flight was the bug. It must still read as a list.
     const visible = $$('.strip').filter((s) => (s as HTMLElement).style.display !== 'none')
-    expect(visible.length).toBe(total)
+    expect(visible.length).toBeGreaterThan(1)
+    expect(new Set(visible.map((s) => s.getAttribute('data-day'))).size).toBeGreaterThan(1)
+    expect(visible.length).toBeLessThanOrEqual(total)
+    const month = day!.slice(0, 7)
+    for (const s of visible) expect(s.getAttribute('data-day')).toContain(month)
 
     const picked = $$('.strip.picked')
     expect(picked.length).toBeGreaterThan(0)
@@ -273,6 +279,45 @@ describe('design preview', () => {
     }
     expect(checked, 'no empty day of any kind to check').toBeGreaterThan(0)
     ;($('#cov-clear') as HTMLButtonElement).click()
+  })
+
+  it('shows a workable slice of a long list, with a way to ask for more', () => {
+    ;($('#sec-flights .lb-reset') as HTMLButtonElement).click()
+    // Three hundred flights cannot be read top to bottom, and rendering them all at once
+    // is not a display, it is a dump. Thirty is a sample; the rest is on request.
+    const strips = $$('.strip')
+    const visible = () => $$('.strip').filter((s) => (s as HTMLElement).style.display !== 'none')
+    expect(strips.length).toBeGreaterThan(30)
+    expect(visible().length).toBe(30)
+
+    const count = $('#sec-flights .lb-count')?.textContent ?? ''
+    expect(count).toMatch(/zobrazených/)
+    // The number shown and the number claimed have to agree.
+    expect(count.replace(/\s/g, '')).toContain(`zobrazených30z${strips.length}`)
+
+    const more = $$('#sec-flights .lb-more')[0] as HTMLButtonElement
+    more.click()
+    expect(visible().length).toBe(60)
+  })
+
+  it('narrows a long list to a period without touching the sort', () => {
+    ;($('#sec-flights .lb-reset') as HTMLButtonElement).click()
+    const from = $('#sec-flights .lb-date') as HTMLInputElement
+    const to = $$('#sec-flights .lb-date')[1] as HTMLInputElement
+    from.value = '2026-03-01'
+    to.value = '2026-03-31'
+    from.dispatchEvent(new dom.window.Event('change'))
+    to.dispatchEvent(new dom.window.Event('change'))
+
+    const visible = $$('.strip').filter((s) => (s as HTMLElement).style.display !== 'none')
+    expect(visible.length).toBeGreaterThan(0)
+    for (const s of visible) {
+      const day = s.getAttribute('data-day') ?? ''
+      expect(day >= '2026-03-01' && day <= '2026-03-31', day).toBe(true)
+    }
+
+    ;($('#sec-flights .lb-reset') as HTMLButtonElement).click()
+    expect($$('.strip').filter((s) => (s as HTMLElement).style.display !== 'none').length).toBe(30)
   })
 
   it('opens the flight itself, not just the section that holds it', () => {
