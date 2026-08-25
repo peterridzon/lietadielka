@@ -47,6 +47,61 @@
   function grade(x) { return x >= 0.75 ? 'q-high' : x >= 0.5 ? 'q-med' : 'q-low' }
 
   /** Slovak counts split 1 / 2-4 / 5+, and "3 letov" reads as a typo to a Slovak reader. */
+  /**
+   * Panel na zoradenie zoznamu. Prehadzuje hotové riadky, nie prekresľuje ich, takže
+   * rozbalený detail ani zvýraznený deň o seba neprídu. Zhodné hodnoty rozhoduje dátum,
+   * aby poradie nebolo pri každom kliknutí iné.
+   */
+  function sortBarFor(box, rowSelector, specs, initial, onSorted) {
+    var state = { key: initial.key, desc: initial.desc }
+    var bar = el('div', 'sortbar')
+    bar.setAttribute('role', 'group')
+    bar.setAttribute('aria-label', initial.label || 'Zoradiť')
+    bar.appendChild(el('span', 'sortbar-label', 'Zoradiť'))
+
+    function apply() {
+      var spec = specs.filter(function (x) { return x.key === state.key })[0] || specs[0]
+      var rows = [].slice.call(box.querySelectorAll(rowSelector))
+      rows.sort(function (a, b) {
+        var av = a.getAttribute('data-sort-' + spec.key) || ''
+        var bv = b.getAttribute('data-sort-' + spec.key) || ''
+        var cmp = spec.numeric ? Number(av) - Number(bv) : av.localeCompare(bv, 'sk')
+        if (cmp === 0) {
+          cmp = (a.getAttribute('data-sort-date') || '').localeCompare(b.getAttribute('data-sort-date') || '')
+        }
+        return state.desc ? -cmp : cmp
+      })
+      rows.forEach(function (r) { box.appendChild(r) })
+      var buttons = bar.querySelectorAll('button')
+      for (var i = 0; i < buttons.length; i++) {
+        var on = buttons[i].getAttribute('data-key') === state.key
+        buttons[i].setAttribute('aria-pressed', String(on))
+        buttons[i].querySelector('em').textContent = on ? (state.desc ? '↓' : '↑') : ''
+      }
+      if (onSorted) onSorted()
+    }
+
+    specs.forEach(function (spec) {
+      var b = document.createElement('button')
+      b.type = 'button'
+      b.setAttribute('data-key', spec.key)
+      b.setAttribute('aria-pressed', 'false')
+      b.appendChild(document.createTextNode(spec.label))
+      b.appendChild(el('em', null, ''))
+      b.addEventListener('click', function () {
+        // Druhý klik na to isté pole otočí smer; prvý klik na nové zoberie ten, ktorý pri
+        // ňom dáva zmysel — peniaze a vzdialenosti od najväčších, mená od a.
+        if (state.key === spec.key) state.desc = !state.desc
+        else { state.key = spec.key; state.desc = spec.desc }
+        apply()
+      })
+      bar.appendChild(b)
+    })
+    box.parentNode.insertBefore(bar, box)
+    apply()
+    return bar
+  }
+
   function plural(n, one, few, many) {
     return n === 1 ? one : n >= 2 && n <= 4 ? few : many
   }
@@ -117,6 +172,19 @@
   var costed = flights.filter(function (f) { return f.costFullMid != null })
   var totalDirect = costed.reduce(function (s, f) { return s + (f.costDirectMid || 0) }, 0)
   var totalFixed = costed.reduce(function (s, f) { return s + (f.costFixedMid || 0) }, 0)
+  // Časť sumy stojí na komerčnom benchmarku pre typ, nie na slovenskom čísle. Kým to
+  // platí, nesmie to byť skryté v detaile jedného letu — je to vlastnosť tej hlavnej
+  // sumy, ktorú ľudia z tejto stránky odnesú.
+  function benchmarkShare() {
+    var onBenchmark = costed.filter(function (f) {
+      return String(f.costModelVersion || '').indexOf('BENCHMARK') !== -1
+    })
+    if (!onBenchmark.length) return ' · kvalita odhadu nízka'
+    var part = onBenchmark.reduce(function (s, f) { return s + (f.costFullMid || 0) }, 0)
+    var pct = Math.round((part / (totalFull || 1)) * 100)
+    return ' · z toho ' + pct + ' % stojí na komerčnom benchmarku pre typ, nie na slovenskom údaji'
+  }
+
   var totalFull = costed.reduce(function (s, f) { return s + (f.costFullMid || 0) }, 0)
   var totalFullLow = costed.reduce(function (s, f) { return s + (f.costFullLow || 0) }, 0)
   var totalFullHigh = costed.reduce(function (s, f) { return s + (f.costFullHigh || 0) }, 0)
@@ -139,7 +207,7 @@
           v: eur(totalFull).replace('\u00a0€', ''),
           unit: '€',
           label: 'Odhadované celkové náklady',
-          note: 'Interval ' + eur(totalFullLow) + ' – ' + eur(totalFullHigh) + ' · kvalita odhadu nízka',
+          note: 'Interval ' + eur(totalFullLow) + ' – ' + eur(totalFullHigh) + benchmarkShare(),
         }
       : { unavailable: 'Dáta nedostupné', label: 'Odhadované náklady', note: 'Nemáme zdrojovany udaj' },
   ]
@@ -688,8 +756,27 @@
       row.appendChild(el('div', 'mlegs', nf(r.m.legCount)))
       row.appendChild(el('div', 'mhours', duration(r.m.airborneSeconds)))
       row.appendChild(el('div', 'mcost', r.full ? eur(r.full) : '—'))
+      row.setAttribute('data-sort-date', r.m.startedAt)
+      row.setAttribute('data-sort-cost', String(r.full == null ? -1 : r.full))
+      row.setAttribute('data-sort-legs', String(r.m.legCount || 0))
+      row.setAttribute('data-sort-hours', String(r.m.airborneSeconds || 0))
+      row.setAttribute('data-sort-reg', r.m.registration || '')
+      row.setAttribute('data-sort-route', route.textContent || '')
       missionsBox.appendChild(row)
     })
+
+    // Zoraďovanie podľa nákladu sa tu raz zavrhlo, lebo väčšina letov vzdušných síl sumu
+    // vôbec nemala a padali do náhodného poradia. Odkedy má sumu každý let, tá námietka
+    // padla — a pri dvoch stovkách ciest je hľadanie tej najdrahšej to hlavné, načo sem
+    // človek príde.
+    sortBarFor(missionsBox, '.mrow:not(.head)', [
+      { key: 'date', label: 'Dátum', numeric: false, desc: true },
+      { key: 'cost', label: 'Náklad', numeric: true, desc: true },
+      { key: 'hours', label: 'Čas vo vzduchu', numeric: true, desc: true },
+      { key: 'legs', label: 'Úsekov', numeric: true, desc: true },
+      { key: 'reg', label: 'Lietadlo', numeric: false, desc: false },
+      { key: 'route', label: 'Trasa', numeric: false, desc: false }
+    ], { key: 'date', desc: true, label: 'Zoradiť cesty' })
   }
 
   // --- dopĺňanie histórie --------------------------------------------------
@@ -1221,6 +1308,20 @@
     dist.appendChild(el('em', null, 'km'))
     btn.appendChild(dist)
 
+    // Kým sumu ukazoval len rozbalený detail, zoznam sa podľa nej nedal ani prečítať,
+    // nieto zoradiť — a práve peniaze sú to, kvôli čomu sem väčšina ľudí príde.
+    var cost = el('span', 'f-cost')
+    if (f.costFullMid != null) {
+      cost.appendChild(document.createTextNode(nf(Math.round(f.costFullMid))))
+      cost.appendChild(el('em', null, '€'))
+      // Benchmark sa pozná podľa verzie modelu; nesmie vyzerať rovnako pevne ako číslo
+      // odvodené zo slovenského dokumentu.
+      if (String(f.costModelVersion || '').indexOf('BENCHMARK') !== -1) cost.classList.add('weak')
+    } else {
+      cost.appendChild(el('em', null, 'bez modelu'))
+    }
+    btn.appendChild(cost)
+
     var cov = el('span', 'f-cov')
     var bar = el('span', 'bar')
     var fill = el('i')
@@ -1388,13 +1489,17 @@
     })
 
     // Prvý let necháme otvorený, aby bolo vidieť, čo sa pod pásikom skrýva.
-    if (index === 0) {
-      strip.setAttribute('open-state', '1')
-      btn.setAttribute('aria-expanded', 'true')
-      build()
-    }
+    // Otvorenie prvého pásika sa robí až po prvom zoradení — inak by bol otvorený let,
+    // ktorý po zoradení nie je prvý, a čitateľ by uvidel rozbalený detail kdesi v strede.
+    if (index === 0) strip.setAttribute('data-open-first', '1')
 
     strip.setAttribute('data-day', isoDate(f.departureTime))
+    strip.setAttribute('data-sort-date', f.departureTime)
+    strip.setAttribute('data-sort-reg', f.registration || '')
+    strip.setAttribute('data-sort-route', (dep.code || 'ZZZZ') + ' ' + (arr.code || 'ZZZZ'))
+    strip.setAttribute('data-sort-dur', String(f.durationSeconds || 0))
+    strip.setAttribute('data-sort-dist', String(f.distanceKm || 0))
+    strip.setAttribute('data-sort-cost', String(f.costFullMid == null ? -1 : f.costFullMid))
     stripsBox.appendChild(strip)
   })
 
@@ -1403,6 +1508,23 @@
   // prázdno musí povedať, ktorá z nich to je.
   var stripsHeading = document.getElementById('flights-heading')
   var stripsBaseLabel = stripsHeading.textContent
+  // Pri dvadsiatich letoch bolo zoraďovanie zbytočnosťou, pri troch stovkách je to
+  // jediný spôsob, ako sa niekam dostať — najdrahší let, najdlhší, konkrétne lietadlo.
+  sortBarFor(stripsBox, '.strip', [
+    { key: 'date', label: 'Dátum', numeric: false, desc: true },
+    { key: 'cost', label: 'Náklad', numeric: true, desc: true },
+    { key: 'dist', label: 'Vzdialenosť', numeric: true, desc: true },
+    { key: 'dur', label: 'Trvanie', numeric: true, desc: true },
+    { key: 'reg', label: 'Lietadlo', numeric: false, desc: false },
+    { key: 'route', label: 'Trasa', numeric: false, desc: false }
+  ], { key: 'date', desc: true, label: 'Zoradiť lety' })
+
+  var firstStrip = stripsBox.querySelector('.strip')
+  if (firstStrip && firstStrip.getAttribute('open-state') !== '1') {
+    var firstBtn = firstStrip.querySelector('.strip-btn')
+    if (firstBtn) firstBtn.click()
+  }
+
   // Výber dňa zoznam nezužuje. Skrývať zvyšok znamenalo, že po kliknutí na kalendár
   // ostal na stránke jediný let a všetky ostatné zmizli — zoznam letov musí zostať
   // zoznamom letov. Deň sa preto len zvýrazní a otvorí.

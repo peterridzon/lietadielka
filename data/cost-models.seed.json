@@ -16,7 +16,6 @@
     "Price year is 2020. Every flight we currently hold is from 2026, so every calculation",
     "carries a six-year price-year gap and cannot be high confidence."
   ],
-
   "costModels": [
     {
       "key": "lu-mvsr-fixedwing-direct",
@@ -40,7 +39,10 @@
       "sourceId": "src-rokovania-lu-mvsr",
       "sourceTier": "A4",
       "params": {
-        "researchItemIds": ["cri-lu-direct-hourly-2018-2019", "cri-lu-direct-hourly-spread"],
+        "researchItemIds": [
+          "cri-lu-direct-hourly-2018-2019",
+          "cri-lu-direct-hourly-spread"
+        ],
         "includes": [
           "fuel",
           "navigation",
@@ -50,7 +52,15 @@
           "maintenance_cycle",
           "crew_variable"
         ],
-        "excludes": ["insurance", "crew_fixed", "training", "facility", "software", "capital", "administration"],
+        "excludes": [
+          "insurance",
+          "crew_fixed",
+          "training",
+          "facility",
+          "software",
+          "capital",
+          "administration"
+        ],
         "unavailableComponents": []
       },
       "notes": "Blended direct rate for 2018-2020. Components are not separable from this source."
@@ -77,7 +87,10 @@
       "sourceId": "src-rokovania-lu-mvsr",
       "sourceTier": "A4",
       "params": {
-        "researchItemIds": ["cri-lu-direct-hourly-longterm", "cri-lu-direct-hourly-spread"],
+        "researchItemIds": [
+          "cri-lu-direct-hourly-longterm",
+          "cri-lu-direct-hourly-spread"
+        ],
         "includes": [
           "fuel",
           "navigation",
@@ -87,11 +100,69 @@
           "maintenance_cycle",
           "crew_variable"
         ],
-        "excludes": ["insurance", "crew_fixed", "training", "facility", "software", "capital", "administration"],
+        "excludes": [
+          "insurance",
+          "crew_fixed",
+          "training",
+          "facility",
+          "software",
+          "capital",
+          "administration"
+        ],
         "unavailableComponents": [],
         "fixedCostScopeKey": "lu-mvsr-fixedwing"
       },
       "notes": "The rate the unit's own planning table applies to every ministry. Explicitly stated as including charges."
+    },
+    {
+      "key": "os-sr-global5000-direct",
+      "version": 1,
+      "modelVersion": "OSSR-GL5T-DIRECT-BENCHMARK-2026-v1",
+      "label": "Priame prevadzkove naklady Global 5000 (komercny benchmark, nie slovenske cisla)",
+      "appliesToTypeCode": "GL5T",
+      "scope": "fleet",
+      "scopeKey": "os-sr-global5000",
+      "allocationMethod": "by_flight_hours",
+      "validFrom": "2024-01-01",
+      "validTo": null,
+      "priceYear": 2026,
+      "mode": "blended",
+      "blendedDirectRateLow": 6000.0,
+      "blendedDirectRateMid": 6912.0,
+      "blendedDirectRateHigh": 7152.0,
+      "taxiAllowanceHours": 0.25,
+      "currency": "EUR",
+      "verificationStatus": "needs_verification",
+      "sourceId": "src-benchmark-global5000-operating",
+      "sourceTier": "D",
+      "params": {
+        "researchItemIds": [
+          "cri-global5000-variable-hourly-benchmark"
+        ],
+        "includes": [
+          "fuel",
+          "maintenance_hour",
+          "maintenance_cycle",
+          "navigation",
+          "airport",
+          "handling"
+        ],
+        "excludes": [
+          "insurance",
+          "crew_fixed",
+          "crew_variable",
+          "training",
+          "facility",
+          "capital",
+          "administration"
+        ],
+        "unavailableComponents": [
+          "crew_variable"
+        ],
+        "fxRateUsdPerEur": 1.1701,
+        "fxSourceId": "src-ecb-eurusd-2026"
+      },
+      "notes": "COMMERCIAL BENCHMARK FOR THE TYPE, CONVERTED FROM USD. Not a Slovak figure and not verified against any invoice. Published because leaving 87 flights with no cost at all reads as if they were free, which is further from the truth than a labelled estimate. Replace the moment a real figure is obtained."
     }
   ]
 }

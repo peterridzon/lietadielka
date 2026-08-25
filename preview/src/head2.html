@@ -12,7 +12,7 @@
 .strip-btn {
   width: 100%;
   display: grid;
-  grid-template-columns: 4px 96px 92px minmax(200px, 1.5fr) 78px 96px 108px 26px;
+  grid-template-columns: 4px 92px 88px minmax(180px, 1.4fr) 72px 88px 96px 96px 26px;
   align-items: center;
   gap: 0 16px;
   padding: 0 16px 0 0;
@@ -24,6 +24,25 @@
   text-align: left;
   cursor: pointer;
 }
+.sortbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; margin-bottom: 14px; }
+.sortbar-label { font-family: var(--data); font-size: 11px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink-3); margin-right: 4px; }
+.sortbar button {
+  font-family: var(--data); font-size: 12px; background: none; cursor: pointer;
+  border: 1px solid var(--rule); color: var(--ink-2); padding: 5px 10px;
+}
+.sortbar button:hover { border-color: var(--ink); color: var(--ink); }
+.sortbar button[aria-pressed="true"] { border-color: var(--ink); color: var(--ink);
+  background: var(--surface); font-weight: 600; }
+.sortbar button em { font-style: normal; margin-left: 6px; color: var(--accent); }
+.sortbar button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.f-cost { font-family: var(--data); font-variant-numeric: tabular-nums; text-align: right;
+  white-space: nowrap; font-weight: 600; }
+.f-cost em { font-style: normal; font-weight: 400; color: var(--ink-3); margin-left: 3px; }
+/* A benchmark figure must not look as solid as one traced to an invoice. */
+.f-cost.weak { font-weight: 500; color: var(--ink-2); }
+
 .strip-btn:hover { background: var(--surface-2); }
 .strip-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
 

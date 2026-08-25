@@ -12,6 +12,34 @@ how much it can be trusted — including when that number favours the state airc
 
 ---
 
+
+## The Global 5000 rate is a benchmark, not a Slovak figure
+
+No operating cost for the two Air Force Global 5000s has been obtained. The only Slovak
+numbers in hand are a four-year maintenance framework with a ten-million ceiling — a
+ceiling is not spending, and dividing it by four would invent a rate — and two procurement
+fines under appeal, which are not operating costs at all. Neither is used by any model.
+
+For a long time those flights therefore carried no cost. That was defensible while they
+were a handful; at eighty-seven of them it stopped being caution and started being
+misleading, because a blank reads as free.
+
+They are now costed from independent commercial estimators for the type: variable cost
+7 807–8 368 USD per flight hour, converted at the ECB 2026 average of 1.1701 USD/EUR, with
+the interval widened downwards because a military operator buys fuel and maintenance on
+different terms. Source tier **D**. A politician's claim of roughly 12 000 €/FH is recorded
+alongside but used by nothing; it sits near the upper end of the *total* benchmark at low
+utilisation, which makes it a weak cross-check rather than a source.
+
+Three things follow, and all three are on the page rather than buried here:
+
+* every such figure is set in a lighter weight in the flight list, so it never reads as
+  solidly as one traced to a government document;
+* the headline total states what share of itself rests on the benchmark — currently 29 %;
+* the moment a real invoice or parliamentary answer arrives, the model is replaced and
+  this section goes with it.
+
+
 ## 0. What we actually have
 
 Before any modelling, the honest inventory of sourced inputs as of 2026-08-22.
