@@ -399,10 +399,22 @@ describe('design preview', () => {
     expect(names.some((n) => n.includes('Vzdušné sily'))).toBe(true)
   })
 
-  it('does not show a withdrawn aircraft that has nothing to show', () => {
-    // OM-BYC left service in February 2025 and has no flights in the period. It stays
-    // in the registry, but a card for it would be a database row pretending to be news.
-    expect($('#sec-fleet')?.textContent).not.toContain('OM-BYC')
+  it('shows a withdrawn aircraft only when it has something to show, and never as current', () => {
+    // OM-BYC left service in February 2025. While the record began in July 2026 it had no
+    // flights and a card for it would have been a database row pretending to be news; once
+    // 2025 was filled in it has sixteen, and hiding them would hide real state flights.
+    // What must never happen is its appearing among the aircraft flying today.
+    const current = $$('.fleet-group:not(.historical)')
+      .map((g) => g.textContent ?? '')
+      .join(' ')
+    expect(current).not.toContain('OM-BYC')
+
+    const flownByWithdrawn = $$('.strip').filter(
+      (s) => s.querySelector('.f-ac')?.firstChild?.textContent === 'OM-BYC',
+    ).length
+    const historical = $$('.fleet-group.historical').map((g) => g.textContent ?? '').join(' ')
+    if (flownByWithdrawn > 0) expect(historical).toContain('OM-BYC')
+    else expect($('#sec-fleet')?.textContent).not.toContain('OM-BYC')
   })
 
   it('lists exactly the three current Ministry of Interior aircraft', () => {
@@ -434,8 +446,12 @@ describe('design preview', () => {
   })
 
   it('gives every card the same image band', () => {
+    // One band per card, whatever the fleet happens to contain — a withdrawn aircraft
+    // returning to the page with its history must not arrive without one.
+    const cards = $$('.ac')
     const figures = $$('.ac figure')
-    expect(figures.length).toBe(5)
+    expect(cards.length).toBeGreaterThan(0)
+    expect(figures.length).toBe(cards.filter((c) => !c.className.includes('no-image')).length)
     for (const figure of figures) {
       expect(figure.querySelector('img')?.getAttribute('loading')).toBe('lazy')
     }
