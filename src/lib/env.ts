@@ -69,6 +69,20 @@ export const env = {
     .map((value) => value.trim().toLowerCase())
     .filter(Boolean),
 
+  /**
+   * adsb.lol publishes each UTC day as a GitHub release. Unlike the live endpoint these
+   * are not pruned, so they are the only route to a period older than the retention
+   * window. "prod" is the primary feed; "staging" is tried when a day is missing from it.
+   */
+  archiveRepoOwner: str('ARCHIVE_REPO_OWNER', 'adsblol'),
+  archiveVariants: (opt('ARCHIVE_VARIANTS') ?? 'planes-readsb-prod-0,planes-readsb-staging-0')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean),
+  archiveCacheDir: str('ARCHIVE_CACHE_DIR', './data/cache/archive'),
+  /** Lifts the GitHub API limit from 60 requests an hour to 5000; not needed for downloads. */
+  githubToken: opt('GITHUB_TOKEN') ?? opt('GH_TOKEN'),
+
   openskyClientId: opt('OPENSKY_CLIENT_ID'),
   openskyClientSecret: opt('OPENSKY_CLIENT_SECRET'),
   openskyBaseUrl: str('OPENSKY_BASE_URL', 'https://opensky-network.org/api'),

@@ -1,10 +1,12 @@
 import { env } from '../lib/env.js'
 import type { AdsbProvider } from './provider.js'
 import { AdsbLolProvider } from './providers/adsblol.js'
+import { ArchiveProvider } from './providers/archive.js'
 import { OpenSkyProvider } from './providers/opensky.js'
 
 const factories: Record<string, () => AdsbProvider> = {
   adsblol: () => new AdsbLolProvider(),
+  archive: () => new ArchiveProvider(),
   opensky: () => new OpenSkyProvider(),
 }
 

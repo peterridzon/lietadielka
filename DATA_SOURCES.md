@@ -4,6 +4,39 @@ Everything this project publishes traces back to something on this page.
 
 ---
 
+## adsb.lol daily release archive
+
+The live globe history endpoint keeps roughly 40 days. adsb.lol also publishes every UTC
+day as a GitHub release, and those are not pruned — they are the only route to a period
+that has already scrolled out of the live window.
+
+| | |
+| --- | --- |
+| Repositories | `adsblol/globe_history_2024`, `_2025`, `_2026` |
+| Tag | `v<YYYY.MM.DD>-planes-readsb-prod-0`, with `-staging-0` as fallback |
+| Assets | plain tar split into `.tar.aa`, `.tar.ab`, … concatenated in name order |
+| Contents | `traces/<last two hex>/trace_full_<icao>.json` — the same files the live endpoint serves |
+| Verified range | 2025-12-13 through yesterday, checked 2026-08-25 |
+
+**It is the same data.** Extracting `505c06` for 2026-08-22 from the archive and comparing
+it against the copy collected live gives 796 positions on both sides, identical timestamps,
+positions, altitudes, callsigns and ground flags. Both paths run through one decoder
+(`src/adsb/trace.ts`) so they cannot drift apart later.
+
+**It is not addressable.** Entries are stored unsorted — an observed sequence of trace
+directories was 20, 65, cb, 50, 02, 87, e7, fa, a1 — so a filename search over HTTP range
+requests is impossible even though the CDN supports them. A day costs a full stream
+whatever you are looking for. Measured on 2026-08-22: **3.60 GB, 73 180 entries, 552
+seconds** on a home connection. The whole fleet is therefore extracted in one pass, since
+the bytes go past either way, and reaching 1 January 2026 is about 800 GB of traffic.
+
+**It removes an ambiguity the live endpoint has.** Live, a 504 means either "this aircraft
+did not fly" or "this day is already pruned", and telling them apart needs sentinel
+airframes that fly almost daily. In the archive, having streamed the entire day, an absent
+trace is proof of absence. A day is either published or it is not, and that is recorded as
+such rather than counted as zero.
+
+
 ## 1. ADS-B observations
 
 ### adsb.lol (primary)

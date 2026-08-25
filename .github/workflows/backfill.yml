@@ -1,0 +1,114 @@
+name: Doplnenie histórie
+
+# The live endpoint keeps about 40 days; anything older has to come from adsb.lol's daily
+# release archive, where one day is 2.5–4 GB of streaming because its entries are stored
+# unsorted and cannot be seeked. Measured: 3.60 GB and 552 seconds for 2026-08-22 on a
+# home connection. Reaching January 2026 is roughly 800 GB — a slow job, not a long one.
+#
+# So this runs in bounded batches and keeps its place in the repository: each run takes
+# the oldest days still missing, commits the observations, and stops. Interrupting it
+# costs at most the day it was working on.
+on:
+  schedule:
+    # Every three hours, offset from the daily collection at 04:17 so the two never
+    # contend for the same commit.
+    - cron: '43 1,4,7,10,13,16,19,22 * * *'
+  workflow_dispatch:
+    inputs:
+      from:
+        description: 'Earliest day to reach (YYYY-MM-DD)'
+        required: false
+        default: '2026-01-01'
+      days:
+        description: 'Days to process in this run'
+        required: false
+        default: '10'
+
+concurrency:
+  # Never alongside itself, and never alongside the daily collection: both commit
+  # observations to the same branch.
+  group: collect
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    # Ten days at up to nine minutes of streaming each, plus rebuild and tests. Runners
+    # are better connected than the machine that measurement came from, so this is the
+    # pessimistic end.
+    timeout-minutes: 180
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+          cache: npm
+
+      - name: Cache reference data
+        uses: actions/cache@v4
+        with:
+          path: data/cache/airports
+          key: airports-${{ hashFiles('src/cli/airports-import.ts') }}
+
+      - run: npm ci
+
+      - name: Restore state from the repository
+        run: |
+          npm run db:migrate
+          npm run seed
+          npm run airports:import
+          npm run obs:import
+
+      - name: Fill from the archive
+        env:
+          # Raises the GitHub API limit from 60 requests an hour to 5000. Only release
+          # metadata is fetched through the API; the tar parts are plain downloads.
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          npm run archive:backfill -- \
+            --from "${{ inputs.from || '2026-01-01' }}" \
+            --days "${{ inputs.days || 10 }}"
+
+      - name: Rebuild everything derived
+        run: |
+          npm run flights:rebuild -- --all
+          npm run missions:rebuild
+          npm run costs:recompute
+
+      - run: npm test
+
+      - name: Build the page
+        run: |
+          npm run preview:build
+          mkdir -p public
+          cp preview/state-flights-preview.html public/index.html
+
+      - name: Commit what was filled
+        run: |
+          npm run obs:export
+          git config user.name 'lietadielka-collector'
+          git config user.email 'noreply@users.noreply.github.com'
+          git add data/observations preview/src/export.json preview/state-flights-preview.html public/index.html
+          if git diff --cached --quiet; then
+            echo 'Nič nové — žiadny commit.'
+          else
+            git commit -m "data: doplnenie histórie $(date -u +%F)"
+            # The daily collection may have landed while this was streaming.
+            git pull --rebase --autostash origin main
+            git push
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '## Doplnenie histórie'
+            echo '```'
+            npx tsx src/cli/imports-list.ts 2>/dev/null | head -20 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
