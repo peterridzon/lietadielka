@@ -352,7 +352,9 @@
    */
   function buildMap(list, opts) {
     opts = opts || {}
-    var tracks = list.map(function (f) { return f.track || [] }).filter(function (t) { return t.length > 1 })
+    var tracks = opts.connections
+      ? opts.connections.map(function (c) { return [c.a, c.b] })
+      : list.map(function (f) { return f.track || [] }).filter(function (t) { return t.length > 1 })
     if (!tracks.length) return null
 
     var minLon = Infinity, maxLon = -Infinity, minLat = Infinity, maxLat = -Infinity
@@ -420,7 +422,35 @@
     var solidWidth = opts.solidWidth || 2.4
     var dashWidth = opts.dashWidth || 1.6
 
-    list.forEach(function (f) {
+    if (opts.connections) {
+      // Prehľadová mapa nekreslí stopy, ale spojenia. Pri 457 letoch je 9 812 úsečiek
+      // v mape širokej 720 px asi tridsať čiar na pixel — to už nie je mapa, ale škvrna.
+      // Jedna čiara na dvojicu letísk, hrubá podľa počtu letov, odpovedá na otázku, ktorú
+      // tá sekcia kladie: kam flotila lieta a ako často. Ako trasa naozaj vyzerala, patrí
+      // do detailu jedného letu, kde to nič neprekrýva.
+      var maxN = opts.connections.reduce(function (m, c) { return Math.max(m, c.n) }, 1)
+      opts.connections.slice().sort(function (a, b) { return a.n - b.n }).forEach(function (c) {
+        var p1 = px(c.a[0], c.a[1]), p2 = px(c.b[0], c.b[1])
+        var line = document.createElementNS(SVG_NS, 'line')
+        line.setAttribute('x1', p1[0].toFixed(1)); line.setAttribute('y1', p1[1].toFixed(1))
+        line.setAttribute('x2', p2[0].toFixed(1)); line.setAttribute('y2', p2[1].toFixed(1))
+        line.style.setProperty('stroke', 'var(--accent)')
+        line.setAttribute('stroke-linecap', 'round')
+        // Odmocnina, nie priamy pomer: pri 51 letoch by lineárna hrúbka prekryla pol mapy.
+        var t = Math.sqrt(c.n / maxN)
+        line.setAttribute('stroke-width', (0.8 + t * 5.2).toFixed(2))
+        if (c.kind === 'lost') {
+          // Známy koniec a posledná videná poloha. Netvrdí pristátie, len smer.
+          line.setAttribute('stroke-dasharray', '2 4')
+          line.setAttribute('opacity', '0.42')
+        } else {
+          line.setAttribute('opacity', String(0.3 + t * 0.55))
+        }
+        svg.appendChild(line)
+      })
+    }
+
+    if (!opts.connections) list.forEach(function (f) {
       var track = f.track || []
       if (track.length < 2) return
       var gaps = (f.gaps || []).map(function (g) {
@@ -452,7 +482,11 @@
 
     // Koncové body. Duté kolieska sú miesta, kde sme lietadlo na zemi nikdy nevideli.
     var marks = []
-    list.forEach(function (f) {
+    if (opts.places) {
+      opts.places.forEach(function (p) {
+        marks.push({ pt: p.pt, port: { code: p.code, state: p.confident > 0 ? 'known' : 'probable', name: p.name }, n: p.n })
+      })
+    } else list.forEach(function (f) {
       var track = f.track || []
       if (track.length < 2) return
       marks.push({ pt: track[0], port: endpoint(f, 'dep') })
@@ -526,20 +560,80 @@
   }
 
   // --- prehľadová mapa ----------------------------------------------------
-  var overview = document.getElementById('overview')
-  var overviewSvg = buildMap(flights, {
-    minHeight: 300,
-    maxHeight: 420,
-    solidWidth: 1.9,
-    solidOpacity: 0.85,
-    dashWidth: 1.2,
-    dashOpacity: 0.45,
-    labelUnknown: false,
-    aria: 'Mapa všetkých ' + flights.length + ' zrekonštruovaných trás slovenskej štátnej flotily',
+  // Poloha letiska sa berie z krajného bodu stopy, nie z registra letísk: je to miesto,
+  // kde sme lietadlo naozaj videli, a mapa tak nekreslí nič, čo by sme nepozorovali.
+  var placeAt = {}
+  var pairCount = {}
+  var lostRays = {}
+
+  flights.forEach(function (f) {
+    var track = f.track || []
+    if (track.length < 2) return
+    var dep = endpoint(f, 'dep'), arr = endpoint(f, 'arr')
+    var ends = [
+      { port: dep, pt: track[0] },
+      { port: arr, pt: track[track.length - 1] },
+    ]
+    ends.forEach(function (e) {
+      if (e.port.state === 'unknown' || !e.port.code) return
+      var rec = placeAt[e.port.code] || (placeAt[e.port.code] = {
+        code: e.port.code, name: e.port.city || e.port.name || e.port.code,
+        pt: e.pt, n: 0, confident: 0,
+      })
+      rec.n++
+      // Letisko je isté, ak ho aspoň raz určila spoľahlivá zhoda. Pôvodne stačila jediná
+      // neistá na to, aby oň prišlo — a Bratislava, kam smeruje takmer všetko, tak zostala
+      // na mape bez názvu kvôli jednému letu z dvesto.
+      if (e.port.state === 'known') { rec.confident++; rec.pt = e.pt }
+    })
+
+    var known = ends.filter(function (e) { return e.port.state !== 'unknown' && e.port.code })
+    if (known.length === 2) {
+      if (known[0].port.code === known[1].port.code) return   // okruh, čiara by bola bod
+      var key = [known[0].port.code, known[1].port.code].sort().join('|')
+      var pair = pairCount[key] || (pairCount[key] = { a: known[0].pt, b: known[1].pt, n: 0, kind: 'pair' })
+      pair.n++
+    } else if (known.length === 1) {
+      // Vieme odkiaľ a kde sme ho stratili. Prerušovaný lúč hovorí smer, nie pristátie.
+      // Lúče sa zlučujú podľa letiska a krajiny, kde sa pokrytie stratilo — osemdesiatosem
+      // samostatných lúčov sa prekrýva rovnako ako stopy, pred ktorými sme utekali.
+      var far = known[0].pt === track[0] ? track[track.length - 1] : track[0]
+      var land = (known[0].pt === track[0] ? f.arrLastSeenCountry : f.depLastSeenCountry) || '??'
+      var rk = known[0].port.code + '>' + land
+      var ray = lostRays[rk]
+      if (!ray) { ray = lostRays[rk] = { a: known[0].pt, b: far, n: 0, kind: 'lost', sum: [0, 0] } }
+      ray.n++
+      // Priemerná posledná poloha: jeden lúč za smer, nie chumáč takmer rovnakých.
+      ray.sum[0] += far[0]; ray.sum[1] += far[1]
+      ray.b = [ray.sum[0] / ray.n, ray.sum[1] / ray.n]
+    }
   })
+
+  var connections = Object.keys(pairCount).map(function (k) { return pairCount[k] })
+    .concat(Object.keys(lostRays).map(function (k) { return lostRays[k] }))
+  var places = Object.keys(placeAt).map(function (k) { return placeAt[k] })
+    .sort(function (x, y) { return y.n - x.n })
+
+  var overview = document.getElementById('overview')
+  var overviewSvg = connections.length ? buildMap(flights, {
+    minHeight: 320,
+    maxHeight: 440,
+    connections: connections,
+    // Popisky len pre najvyťaženejšie letiská; stosedemdesiat kódov cez seba je opäť škvrna.
+    places: places.slice(0, 14),
+    labelUnknown: false,
+    aria: 'Mapa spojení slovenskej štátnej flotily, hrúbka čiary podľa počtu letov',
+  }) : null
+
   if (overviewSvg) {
     overview.appendChild(overviewSvg)
-    overview.appendChild(mapKey(nf(flights.length) + ' letov · duté koliesko = letisko, ktoré sme neurčili'))
+    var key = el('div', 'map-key')
+    key.innerHTML =
+      '<span><svg viewBox="0 0 26 8"><line class="k-solid" x1="1" y1="4" x2="25" y2="4" stroke-width="5"/></svg> časté spojenie</span>' +
+      '<span><svg viewBox="0 0 26 8"><line class="k-solid" x1="1" y1="4" x2="25" y2="4" stroke-width="1"/></svg> jednorazové</span>' +
+      '<span><svg viewBox="0 0 26 8"><line class="k-dashed" x1="1" y1="4" x2="25" y2="4"/></svg> smer, kde sme lietadlo stratili</span>' +
+      '<span>' + nf(connections.length) + ' spojení z ' + nf(flights.length) + ' letov</span>'
+    overview.appendChild(key)
   }
 
   // --- náklady: karty a zdroj ---------------------------------------------

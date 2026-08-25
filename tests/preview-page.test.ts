@@ -325,6 +325,27 @@ describe('design preview', () => {
     }
   })
 
+  it('draws the overview as connections, not as every track at once', () => {
+    // Four hundred tracks came to nine thousand segments in a map seven hundred pixels
+    // wide — about thirty lines per pixel, which is a smear rather than a map, and it
+    // answered "how do we know" instead of "where does the fleet go". The per-flight
+    // track still exists where it belongs, inside a single flight.
+    const svg = $('#overview svg')
+    expect(svg).not.toBeNull()
+    const lines = [...svg!.querySelectorAll('line')]
+    expect(lines.length).toBeLessThan($$('.strip').length)
+
+    // Thickness has to carry the frequency, or the aggregation says nothing.
+    const solid = lines.filter((l) => !l.getAttribute('stroke-dasharray'))
+      .map((l) => Number(l.getAttribute('stroke-width')))
+    expect(Math.max(...solid)).toBeGreaterThan(Math.min(...solid) * 2)
+
+    // The home base must be named. One probable match among hundreds once cost it its
+    // label entirely.
+    const labels = [...svg!.querySelectorAll('text')].map((t) => t.textContent)
+    expect(labels).toContain('BTS')
+  })
+
   it('shows a workable slice of a long list, with a way to ask for more', () => {
     ;($('#sec-flights .lb-reset') as HTMLButtonElement).click()
     // Three hundred flights cannot be read top to bottom, and rendering them all at once
