@@ -74,34 +74,9 @@ jobs:
             --from "${{ inputs.from || '2026-01-01' }}" \
             --days "${{ inputs.days || 10 }}"
 
-      - name: Rebuild everything derived
+      - name: Commit, rebase and publish
         run: |
-          npm run flights:rebuild -- --all
-          npm run missions:rebuild
-          npm run costs:recompute
-
-      - run: npm test
-
-      - name: Build the page
-        run: |
-          npm run preview:build
-          mkdir -p public
-          cp preview/state-flights-preview.html public/index.html
-
-      - name: Commit what was filled
-        run: |
-          npm run obs:export
-          git config user.name 'lietadielka-collector'
-          git config user.email 'noreply@users.noreply.github.com'
-          git add data/observations preview/src/export.json preview/state-flights-preview.html public/index.html
-          if git diff --cached --quiet; then
-            echo 'Nič nové — žiadny commit.'
-          else
-            git commit -m "data: doplnenie histórie $(date -u +%F)"
-            # The daily collection may have landed while this was streaming.
-            git pull --rebase --autostash origin main
-            git push
-          fi
+          bash scripts/commit-observations.sh "data: doplnenie histórie $(date -u +%F)"
 
       - name: Summary
         if: always()

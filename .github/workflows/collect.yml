@@ -62,40 +62,9 @@ jobs:
             --from "$(date -u -d '39 days ago' +%F)" --to "$(date -u -d '4 days ago' +%F)" \
             --concurrency 6
 
-      - name: Rebuild everything derived
+      - name: Commit, rebase and publish
         run: |
-          npm run obs:export
-          npm run flights:rebuild -- --all
-          npm run missions:rebuild
-          npm run costs:recompute
-          # Re-attaches the hand-entered flight purposes to the rebuilt flights.
-          npm run seed
-
-      # Nothing is published if the pipeline is broken.
-      - run: npm test
-
-      # public/ is generated, and committing generated output is normally a smell. Here
-      # it is the deploy: Cloudflare Pages watches this repository and serves whatever
-      # lands in public/, so no token has to live in GitHub. For a project whose point is
-      # auditability, having the exact published page in the history is worth the
-      # duplication.
-      - name: Build the page
-        run: |
-          npm run preview:build
-          mkdir -p public
-          cp preview/state-flights-preview.html public/index.html
-
-      - name: Commit the new observations and the page
-        run: |
-          git config user.name 'lietadielka-collector'
-          git config user.email 'noreply@users.noreply.github.com'
-          git add data/observations preview/src/export.json preview/state-flights-preview.html public/index.html
-          if git diff --cached --quiet; then
-            echo 'Nič nové — žiadny commit.'
-          else
-            git commit -m "data: zber $(date -u +%F)"
-            git push
-          fi
+          bash scripts/commit-observations.sh "data: zber $(date -u +%F)"
 
       - name: Summary
         if: always()
