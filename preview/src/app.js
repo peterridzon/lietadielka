@@ -810,12 +810,20 @@
     var cursor = addDays(first, -dowIndex(first))
     var stop = addDays(last, 6 - dowIndex(last))
 
+    // Týždne sa číslujú súvisle od začiatku mriežky, nie od začiatku roka. Keď záznam
+    // začína v strede týždňa — 1. januára 2026 je štvrtok, takže mriežka siaha po
+    // pondelok 29. decembra — rok sa začína neúplným týždňom a číslovanie v rámci roka
+    // by stĺpce posunulo.
     var byYear = {}
     var yearOrder = []
+    var weekOf = {}
+    var index = 0
     while (cursor <= stop) {
       var y = cursor.slice(0, 4)
       if (!byYear[y]) { byYear[y] = []; yearOrder.push(y) }
       byYear[y].push(cursor)
+      weekOf[cursor] = Math.floor(index / 7)
+      index++
       cursor = addDays(cursor, 1)
     }
 
@@ -824,21 +832,23 @@
       if (yearOrder.length > 1) panel.appendChild(el('h3', null, year))
 
       var grid = el('div', 'cov-grid')
+      var firstWeek = weekOf[byYear[year][0]]
+      var lastWeek = weekOf[byYear[year][byYear[year].length - 1]]
       // Šírka stĺpca je zlomok, nie pixel, takže bunka rastie, kým je záznam krátky,
       // a zmenšuje sa, ako pribúdajú roky. Mriežka tak nikdy neuteká nabok.
-      grid.style.setProperty('--weeks', String(Math.ceil(byYear[year].length / 7)))
+      grid.style.setProperty('--weeks', String(lastWeek - firstWeek + 1))
       DOW.forEach(function (d, i) {
         var lab = el('span', 'cov-dow', i % 2 ? '' : d)
         lab.style.gridRow = String(i + 2)
         grid.appendChild(lab)
       })
       var lastMonth = null
-      byYear[year].forEach(function (day, i) {
+      byYear[year].forEach(function (day) {
         var inRange = day >= first && day <= last
         var month = day.slice(5, 7)
         // Popisok patrí nad stĺpec svojho týždňa. V automatickom toku by si ukrojil vlastný
         // stĺpec a pri dvanástich mesiacoch by mriežku posunul o dvanásť týždňov.
-        var week = Math.floor(i / 7) + 1
+        var week = weekOf[day] - firstWeek + 1
         if (inRange && month !== lastMonth) {
           var lab = el('span', 'cov-mon', MONTH_SHORT[Number(month) - 1])
           lab.style.gridColumn = String(week + 1)

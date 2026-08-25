@@ -12,7 +12,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { gunzipSync } from 'node:zlib'
 import { getDb, closeDb } from '../db/client.js'
-import { rawAdsbPosition } from '../db/schema.js'
+import { importJob, rawAdsbPosition } from '../db/schema.js'
 import { parseArgs, runCli, optionalString } from '../lib/cli.js'
 import { log } from '../lib/log.js'
 
@@ -32,6 +32,7 @@ async function main(): Promise<void> {
 
   const { db } = await getDb()
   let files = 0
+  let outcomes = 0
   let positions = 0
 
   for (const icao of readdirSync(root).sort()) {
@@ -69,10 +70,51 @@ async function main(): Promise<void> {
       files++
       positions += rows.length
     }
+
+    // The ledger restores what was examined. Without it a rebuilt database knows only
+    // the days on which something was seen, so a verified quiet day comes back as never
+    // looked at — and the backfill would fetch it all over again.
+    const ledger = join(dir, 'days.csv')
+    if (existsSync(ledger)) {
+      const entries = readFileSync(ledger, 'utf8')
+        .split('\n')
+        .slice(1)
+        .filter(Boolean)
+        .map((line) => {
+          const [day, status, provider, stored] = line.split(',')
+          const from = new Date(`${day}T00:00:00.000Z`)
+          const to = new Date(from)
+          to.setUTCDate(to.getUTCDate() + 1)
+          return {
+            // Deterministic, so re-importing the same ledger cannot fan out into
+            // duplicate rows that would double-count a day's coverage.
+            id: `ledger:${icao}:${provider ?? 'adsblol'}:${day}`,
+            aircraftIcao24: icao,
+            provider: provider ?? 'adsblol',
+            rangeFrom: from,
+            rangeTo: to,
+            status: status ?? 'empty',
+            positionsStored: Number(stored ?? 0),
+            positionsDownloaded: Number(stored ?? 0),
+            startedAt: from,
+            completedAt: from,
+          }
+        })
+      for (let i = 0; i < entries.length; i += BATCH) {
+        await db.insert(importJob).values(entries.slice(i, i + BATCH)).onConflictDoNothing()
+      }
+      outcomes += entries.length
+    }
   }
 
-  log.info(`observations: ${files} files, ${positions.toLocaleString('en-GB')} positions imported`)
-  console.log(`imported ${positions.toLocaleString('en-GB')} positions from ${files} day files`)
+  log.info(
+    `observations: ${files} files, ${positions.toLocaleString('en-GB')} positions, ` +
+      `${outcomes} day outcomes imported`,
+  )
+  console.log(
+    `imported ${positions.toLocaleString('en-GB')} positions from ${files} day files, ` +
+      `and ${outcomes} day outcomes from the ledgers`,
+  )
   await closeDb()
 }
 

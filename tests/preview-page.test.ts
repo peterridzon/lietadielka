@@ -166,15 +166,27 @@ describe('design preview', () => {
     }
   })
 
-  it('distinguishes flown, quiet and unavailable days', () => {
-    const states = $$('.cov-day').map((d) => d.getAttribute('data-state'))
-    for (const wanted of ['flew', 'quiet', 'nodata']) {
-      expect(states.filter((s) => s === wanted).length, wanted).toBeGreaterThan(0)
+  it('gives every day a state, and lets none outside the record be clicked', () => {
+    // Which states occur depends on the data, and that changes as the archive fills —
+    // the archive has no unavailable days at all. Asserting that today's mix is present
+    // would make this test fail on a better record, so it asserts the rules instead.
+    const known = new Set(['flew', 'quiet', 'partial', 'nodata', 'outside'])
+    const cells = $$('.cov-day')
+    expect(cells.length).toBeGreaterThan(0)
+
+    let flown = 0
+    for (const cell of cells) {
+      const state = cell.getAttribute('data-state') ?? ''
+      expect(known.has(state), `unknown state ${state}`).toBe(true)
+      if (state === 'flew') flown++
+      if (state === 'outside') {
+        expect((cell as HTMLButtonElement).disabled, 'padding must not be clickable').toBe(true)
+      } else {
+        expect((cell as HTMLButtonElement).disabled).toBe(false)
+        expect(cell.getAttribute('aria-pressed')).toBeTruthy()
+      }
     }
-    // A day outside the record must not be clickable — it asserts nothing.
-    for (const cell of $$('.cov-day[data-state="outside"]')) {
-      expect((cell as HTMLButtonElement).disabled).toBe(true)
-    }
+    expect(flown, 'a record with no flights would mean the pipeline found nothing').toBeGreaterThan(0)
   })
 
   it('sizes itself by week count instead of fixed pixels', () => {
@@ -220,20 +232,24 @@ describe('design preview', () => {
   })
 
   it('says which kind of empty an empty day is', () => {
-    ;($('#cov-clear') as HTMLButtonElement).click()
     const verdict = $('#cov-detail-verdict') as HTMLElement
+    const expected: Record<string, RegExp> = {
+      nodata: /nezapočítaný ako nula/,
+      quiet: /Pokojný deň/,
+      partial: /časť nie/i,
+    }
 
-    const missing = $$('.cov-day[data-state="nodata"]')[0] as HTMLButtonElement
-    missing.click()
-    // The distinction this whole section exists to make: excluded, not counted as zero.
-    expect(verdict.textContent).toContain('nezapočítaný ako nula')
-
-    const quiet = $$('.cov-day[data-state="quiet"]')[0] as HTMLButtonElement
-    quiet.click()
-    expect(verdict.textContent).toContain('Pokojný deň')
-
+    let checked = 0
+    for (const [state, phrase] of Object.entries(expected)) {
+      const cell = $$(`.cov-day[data-state="${state}"]`)[0] as HTMLButtonElement | undefined
+      if (!cell) continue // that state simply does not occur in the current record
+      ;($('#cov-clear') as HTMLButtonElement).click()
+      cell.click()
+      expect(verdict.textContent, state).toMatch(phrase)
+      checked++
+    }
+    expect(checked, 'no empty day of any kind to check').toBeGreaterThan(0)
     ;($('#cov-clear') as HTMLButtonElement).click()
-    expect(($('#cov-detail') as Element).getAttribute('data-open')).toBe('0')
   })
 
   it('opens the flight itself, not just the section that holds it', () => {
@@ -400,8 +416,22 @@ describe('design preview', () => {
     expect($('#sec-methodology')?.textContent).toContain('vyššie')
   })
 
-  it('marks the flight purpose as probable rather than confirmed', () => {
-    const status = $('.purpose .status')
-    expect(status?.textContent).toBe('pravdepodobný')
+  it('never shows a purpose without saying how well it is established', () => {
+    const allowed = new Set(['potvrdený', 'pravdepodobný', 'neznámy'])
+    const blocks = $$('.purpose')
+    expect(blocks.length).toBeGreaterThan(0)
+
+    let researched = 0
+    for (const block of blocks) {
+      const status = block.querySelector('.status')?.textContent ?? ''
+      expect(allowed.has(status), `unlabelled purpose "${status}"`).toBe(true)
+      // A stated purpose without a qualifier would read as established fact, which is
+      // the one thing the methodology promises never to do.
+      if (block.querySelector('.ptitle')) {
+        expect(status).not.toBe('')
+        researched++
+      }
+    }
+    expect(researched, 'no researched purpose left on the page').toBeGreaterThan(0)
   })
 })

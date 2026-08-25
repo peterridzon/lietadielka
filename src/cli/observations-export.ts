@@ -10,13 +10,22 @@
  * independently checkable, which is a stronger transparency claim than any dashboard.
  *
  * Files already on disk are left alone unless --force. Raw data is append-only.
+ *
+ * Positions alone are not enough. A day on which an aircraft was checked and simply did
+ * not fly leaves no position file, so a database rebuilt from these files would show that
+ * day as never examined — the exact confusion between a quiet day and a missing one that
+ * the whole coverage methodology exists to prevent. Worse, the backfill would re-download
+ * it, and a 237-day history that re-reads its own work never finishes.
+ *
+ * So the outcome of every day is written too, to data/observations/<icao24>/days.csv:
+ * one line per UTC day, sorted, plain text, so it diffs as a ledger rather than a blob.
  */
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { gzipSync } from 'node:zlib'
-import { asc, sql } from 'drizzle-orm'
+import { asc, eq, sql } from 'drizzle-orm'
 import { closeDb, getDb } from '../db/client.js'
-import { rawAdsbPosition } from '../db/schema.js'
+import { importJob, rawAdsbPosition } from '../db/schema.js'
 import { flag, parseArgs, runCli } from '../lib/cli.js'
 
 const ROOT = 'data/observations'
@@ -96,9 +105,48 @@ async function main(): Promise<void> {
     positions += rows.length
   }
 
+  // The ledger of what was examined, which positions cannot express.
+  const jobs = await db
+    .select({
+      icao: importJob.aircraftIcao24,
+      day: sql<string>`to_char(${importJob.rangeFrom} at time zone 'UTC', 'YYYY-MM-DD')`,
+      status: importJob.status,
+      provider: importJob.provider,
+      positions: importJob.positionsStored,
+    })
+    .from(importJob)
+    .where(sql`${importJob.status} in ('completed', 'empty', 'unavailable')`)
+    .orderBy(asc(importJob.aircraftIcao24), asc(importJob.rangeFrom))
+
+  const byAircraft = new Map<string, Map<string, string>>()
+  for (const job of jobs) {
+    const rows = byAircraft.get(job.icao) ?? new Map<string, string>()
+    // A day polled more than once keeps its best-evidenced answer, the same precedence
+    // the provider uses: seeing something beats seeing nothing beats not looking.
+    const rank: Record<string, number> = { unavailable: 0, empty: 1, completed: 2 }
+    const line = `${job.day},${job.status},${job.provider},${job.positions ?? 0}`
+    const existing = rows.get(job.day)
+    if (!existing || (rank[job.status] ?? 0) >= (rank[existing.split(',')[1] ?? ''] ?? 0)) {
+      rows.set(job.day, line)
+    }
+    byAircraft.set(job.icao, rows)
+  }
+
+  let ledgers = 0
+  for (const [icao, rows] of byAircraft) {
+    const path = resolve(process.cwd(), `${ROOT}/${icao}/days.csv`)
+    const body =
+      'day,status,provider,positions\n' +
+      [...rows.keys()].sort().map((day) => rows.get(day)).join('\n') +
+      '\n'
+    mkdirSync(dirname(path), { recursive: true })
+    writeFileSync(path, body)
+    ledgers++
+  }
+
   console.log(
     `observations: ${written} day files written (${positions.toLocaleString('en-GB')} positions), ` +
-      `${skipped} already present`,
+      `${skipped} already present, ${ledgers} ledgers (${jobs.length} day outcomes)`,
   )
   await closeDb()
 }
