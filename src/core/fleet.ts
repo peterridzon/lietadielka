@@ -38,7 +38,16 @@ export function isCurrentlyActive(aircraft: FleetMember, now: Date = new Date())
   return aircraft.status === 'active' && isActiveAt(aircraft, now)
 }
 
-/** Should the collector be asking a provider about this aircraft? */
-export function shouldPoll(aircraft: FleetMember, now: Date = new Date()): boolean {
-  return aircraft.trackingEnabled === true && isCurrentlyActive(aircraft, now)
+/**
+ * Should the collector be asking a provider about this aircraft on this date?
+ *
+ * The question is whether the aircraft was flying THEN, not whether it belongs to the
+ * fleet now. Those coincide for the daily run and part company the moment history is
+ * filled in: OM-BYC flew until February 2025 and is retired today, and asking
+ * `isCurrentlyActive` would have quietly left its flights out of 2025 — with nothing on
+ * the coverage calendar to show an aircraft had been skipped, which is worse than a
+ * wrong number.
+ */
+export function shouldPoll(aircraft: FleetMember, when: Date = new Date()): boolean {
+  return aircraft.trackingEnabled === true && isActiveAt(aircraft, when)
 }

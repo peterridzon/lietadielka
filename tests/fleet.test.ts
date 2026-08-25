@@ -50,3 +50,33 @@ describe('current fleet', () => {
     expect(isActiveAt(active, new Date('2015-01-01T00:00:00Z'))).toBe(false)
   })
 })
+
+describe('shouldPoll asks about the date, not about today', () => {
+  const withdrawn = {
+    status: 'retired',
+    activeFrom: '2016-09-26',
+    activeUntil: '2025-02-11',
+    trackingEnabled: true,
+  }
+
+  it('polls a retired aircraft for days when it was still flying', () => {
+    // Filling history with today's fleet leaves a withdrawn aircraft out of its own past,
+    // and a skipped aircraft leaves no mark on the coverage calendar — the record simply
+    // looks quieter than it was.
+    expect(shouldPoll(withdrawn, new Date('2025-01-15T12:00:00Z'))).toBe(true)
+    expect(shouldPoll(withdrawn, new Date('2025-02-11T12:00:00Z'))).toBe(true)
+  })
+
+  it('stops polling it after it left service', () => {
+    expect(shouldPoll(withdrawn, new Date('2025-02-12T12:00:00Z'))).toBe(false)
+    expect(shouldPoll(withdrawn, new Date('2026-08-25T12:00:00Z'))).toBe(false)
+  })
+
+  it('does not poll an aircraft before it was ours', () => {
+    // The Global 5000s were bought in December 2024. Their earlier flights belong to a
+    // previous owner and must never be filed as Slovak state flights.
+    const global5000 = { status: 'active', activeFrom: '2024-12-16', trackingEnabled: true }
+    expect(shouldPoll(global5000, new Date('2024-11-30T12:00:00Z'))).toBe(false)
+    expect(shouldPoll(global5000, new Date('2025-01-05T12:00:00Z'))).toBe(true)
+  })
+})

@@ -22,6 +22,7 @@
  */
 import { getDb } from '../db/client.js'
 import { listTrackedAircraft } from '../db/repositories/aircraft.js'
+import { shouldPoll } from '../core/fleet.js'
 import { setArchiveExtractSet } from '../adsb/providers/archive.js'
 import { backfillAircraft } from '../pipeline/backfill.js'
 import { flag, optionalString, parseArgs, parseUtcDate, requireString, runCli } from '../lib/cli.js'
@@ -84,15 +85,29 @@ async function main(): Promise<void> {
   const budget = Number(optionalString(args, 'days') ?? 40)
   if (!Number.isFinite(budget) || budget < 1) throw new Error('--days must be a positive number')
 
-  const fleet = await listTrackedAircraft()
+  // The fleet of the day being filled, not the fleet of today. OM-BYC flew until February
+  // 2025 and is retired now; selecting by today's fleet would have left its flights out of
+  // the record with nothing to show they were ever expected — and a missing aircraft leaves
+  // no trace on the coverage calendar, which makes it worse than a wrong number.
+  const fleet = await listTrackedAircraft(to)
+  const everTracked = await listTrackedAircraft(from)
+  for (const ac of everTracked) {
+    if (!fleet.some((x) => x.icao24 === ac.icao24)) fleet.push(ac)
+  }
   if (fleet.length === 0) throw new Error('no aircraft are currently tracked — run "npm run seed"')
 
   const icaos = fleet.map((a) => a.icao24.toLowerCase())
   // Every airframe extracted while a day streams is free; the bytes pass either way.
   setArchiveExtractSet(icaos)
 
+  const activeOn = (day: string): number =>
+    fleet.filter((a) => shouldPoll(a, new Date(`${day}T12:00:00.000Z`))).length
+
   const done = await settledDays(icaos)
-  const missing = [...eachDay(from, to)].filter((day) => (done.get(day) ?? 0) < fleet.length)
+  // A day counts as filled when every aircraft that existed THAT DAY has an answer.
+  // Comparing against the whole fleet would leave 2025 permanently unfinished, because
+  // the Global 5000s did not exist before December 2024 and never will.
+  const missing = [...eachDay(from, to)].filter((day) => (done.get(day) ?? 0) < activeOn(day))
 
   if (missing.length === 0) {
     console.log(`Nothing to do: ${dayKey(from)}..${dayKey(to)} is complete for all ${fleet.length} aircraft.`)
@@ -121,6 +136,9 @@ async function main(): Promise<void> {
     let dayFailed = 0
 
     for (const aircraft of fleet) {
+      // Asking the archive for an aircraft that did not yet belong to Slovakia would file
+      // a foreign owner's flights as state flights.
+      if (!shouldPoll(aircraft, start)) continue
       try {
         const result = await backfillAircraft({
           aircraft,
@@ -137,7 +155,7 @@ async function main(): Promise<void> {
       }
     }
 
-    if (dayFailed === fleet.length) {
+    if (dayFailed > 0 && dayFailed === activeOn(day)) {
       unavailable++
       console.log(`  ${day}  unavailable`)
     } else {
