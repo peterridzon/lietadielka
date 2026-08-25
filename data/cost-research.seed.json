@@ -193,11 +193,12 @@
       "fixedVariable": "mixed",
       "contractValueType": "maximum_framework_value",
       "actualSpend": null,
-      "sourceId": "src-teraz-global5000-maintenance",
-      "sourceTier": "C",
+      "sourceId": "src-uvo-global5000-udrzba-vestnik",
+      "sourceTier": "A2",
       "confidence": "low",
       "reviewStatus": "unreviewed",
-      "notes": "A CEILING, NOT SPENDING. It must never be divided by four years and charged to flights: a framework may go largely undrawn. Recorded as a lead for obtaining the actual invoices, which would be tier A1. Deliberately not used by any cost model."
+      "notes": "A CEILING, NOT SPENDING. It must never be divided by four years and charged to flights: a framework may go largely undrawn. The notice also shows the framework is not a service fee — it covers scheduled and unscheduled maintenance, troubleshooting, service bulletins, airworthiness directives, borescope and non-destructive inspections, oil and hydraulic analysis, engine trend monitoring, spare parts, consumables, tooling, component stock and logistics. Calling it 'servis = 10 mil.' would misstate what it buys. Recorded as a lead for obtaining the actual invoices, which would be tier A1. Used by no model.",
+      "currency": "EUR"
     },
     {
       "id": "cri-9513-acquisition",
@@ -417,6 +418,28 @@
       "currency": "EUR",
       "actualSpend": null,
       "notes": "PROBABLE, NOT CONFIRMED — the order names no airframe. Note also that a component like this may already fall under the 10M maintenance framework, so counting both would double-count."
+    },
+    {
+      "id": "cri-global5000-akvizicia-mosr",
+      "aircraftType": "GL5T",
+      "operator": "Ministerstvo obrany SR",
+      "category": "capital_acquisition",
+      "description": "Obstaranie dvoch lietadiel Bombardier Global 5000 za takmer 46 milionov EUR, podla eBulletinu MO SR.",
+      "value": 46000000,
+      "unit": "eur_total",
+      "periodStart": "2024-01-01",
+      "periodEnd": null,
+      "priceYear": 2024,
+      "scope": "fleet",
+      "fixedVariable": "fixed",
+      "contractValueType": "actual_spend",
+      "sourceId": "src-mosr-ebulletin-akvizicie",
+      "sourceTier": "A2",
+      "confidence": "medium",
+      "reviewStatus": "unreviewed",
+      "currency": "EUR",
+      "actualSpend": 46000000,
+      "notes": "The ministry's own wording is 'takmer 46 milionov eur' — approximate, and it must be shown that way rather than as 46 000 000,00. Note the discrepancy worth chasing: the per-airframe figures recorded from the aviation press total 47.75 million USD, roughly 41 million EUR, which does not reconcile with 46 million EUR. Either the USD figures are list prices, or the EUR total includes more than the airframes. Not used by any model — acquisition is capital, and spreading it over flights needs a service life nobody has published."
     }
   ],
   "benchmarks": [

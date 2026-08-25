@@ -145,6 +145,15 @@
       "publishedAt": "2026-04-01",
       "type": "government",
       "notes": "CONFIRMS THE DOCUMENT EXISTS, DOES NOT CONTAIN IT. Item 19 is the answer of Deputy PM and Defence Minister Robert Kalinak to MP Gabor Grendel's interpellation of 4 March 2026 'vo veci letov lietadiel Bombardier Global 5000'. The print is only an index; its closing note says the written answers are held in the members' lounge, so the text is not online. Obtaining it is the single most valuable outstanding lead — an official answer about these flights specifically."
+    },
+    {
+      "id": "src-mosr-ebulletin-akvizicie",
+      "publisher": "Ministerstvo obrany SR",
+      "title": "eBulletin MO SR",
+      "url": "https://www.mosr.sk/data/att/162115.pdf",
+      "publishedAt": "2025-01-01",
+      "type": "government",
+      "notes": "Primary source for the acquisition: 'Ministerstvo obrany tiez kupilo dve dopravne lietadla Bombardier Global 5000 za takmer 46 milionov eur.' The wording is 'takmer', so the figure must not be rendered as an exact number."
     }
   ],
   "aircraft": [

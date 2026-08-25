@@ -13,6 +13,36 @@ how much it can be trusted — including when that number favours the state airc
 ---
 
 
+
+## What a number is, before what it is worth
+
+Public records give figures of very different standing, and treating them alike is the
+fastest way to publish something indefensible. Every recorded figure carries its nature,
+and the rule is that a figure may never be promoted to a stronger one without a source
+that proves the promotion:
+
+| Nature | Meaning | Example here |
+| --- | --- | --- |
+| Confirmed expenditure | an invoice, or a record of payment | none yet |
+| Ordered | a commitment placed, not evidence it was paid | pilot type training, 164 800 € |
+| Contracted | a signed agreement | — |
+| Procurement ceiling | the most a framework may draw, often largely undrawn | maintenance, 10 000 000 € |
+| Budgeted | planned, not spent | LÚ MV SR annual budget |
+| Estimated | a figure the document itself calls an estimate | acquisition, "takmer 46 mil." |
+| Modelled | derived by us from something above | every per-flight cost |
+
+Two of these bite in practice. A framework ceiling divided by four years produces a rate
+that looks like data and is not, which is why the ten million is deliberately used by
+nothing. And an order is a commitment: the training order names 164 800 €, while reporting
+puts the whole training package near 1.2 million, so even the order is a fragment.
+
+Allocation is tracked separately from the figure. Most Defence orders name no airframe —
+two Bombardier documentation orders and a navigation unit are almost certainly for these
+aircraft, but "almost certainly" is recorded as probable, not confirmed, and a probable
+allocation feeds no total. The navigation unit carries a further warning: it may already
+sit inside the maintenance framework, and counting both would double-count.
+
+
 ## The Global 5000 rate is a benchmark, not a Slovak figure
 
 No operating cost for the two Air Force Global 5000s has been obtained. The only Slovak
