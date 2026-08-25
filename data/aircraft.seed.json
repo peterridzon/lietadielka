@@ -109,6 +109,15 @@
       "publishedAt": "2026-01-01",
       "type": "political",
       "notes": "A politician's claim in an adversarial dispute, roughly 12 000 EUR per flight hour. NOT used by any model. Recorded because it lands close to the upper end of the commercial total-cost benchmark at low utilisation, which is a weak independent check rather than a source."
+    },
+    {
+      "id": "src-icjk-global5000-vycvik",
+      "publisher": "ICJK / Dennik N / Refresher",
+      "title": "Ministerstvo obrany objednalo vycvik pilotov na Global 5000 za viac ako milion eur bez sutaze",
+      "url": "https://www.icjk.sk/464/Ministerstvo-obrany-objednalo-vycvik-pilotov-za-viac-ako-milion-eur-bez-sutaze-Firma-nema-simulator-ani-licenciu-na-vycvik",
+      "publishedAt": "2026-01-01",
+      "type": "journalism",
+      "notes": "JOURNALISM, A LEAD NOT A SOURCE. Reports roughly 1.2 million EUR for type and maintenance training of four pilots on the two Global 5000s, awarded to Elite Jet without competition; Elite Jet holds no training approval and bought the training from CAE. Recorded to be replaced by the underlying orders once obtained. Note the ministry is DEFENCE, not Interior, despite order numbers that read as Letecky utvar."
     }
   ],
   "aircraft": [

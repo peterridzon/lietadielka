@@ -307,6 +307,28 @@
       "currency": "EUR",
       "actualSpend": null,
       "notes": "Derived by subtraction from the same benchmark, so it inherits every weakness of it and adds one: fixed cost per hour depends entirely on annual utilisation, which for these aircraft is not published."
+    },
+    {
+      "id": "cri-global5000-vycvik-posadok",
+      "aircraftType": "GL5T",
+      "operator": "Ministerstvo obrany SR",
+      "category": "training",
+      "description": "Typovy a udrzbovy vycvik styroch pilotov na Global 5000, zadany bez sutaze firme Elite Jet, spolu priblizne 1 200 000 EUR. Jedna z objednavok je 164 800 EUR z 5. novembra 2025.",
+      "value": 1200000,
+      "unit": "eur_total",
+      "periodStart": "2025-01-01",
+      "periodEnd": null,
+      "priceYear": 2025,
+      "scope": "fleet",
+      "fixedVariable": "fixed",
+      "contractValueType": "estimated_value",
+      "sourceId": "src-icjk-global5000-vycvik",
+      "sourceTier": "C",
+      "confidence": "low",
+      "reviewStatus": "unreviewed",
+      "currency": "EUR",
+      "actualSpend": null,
+      "notes": "A LEAD, NOT A COST INPUT. Journalism, and the figure is a reported total rather than settled invoices. Deliberately used by no model: training is a one-off fixed cost whose allocation depends on how many years and hours it is spread over, and neither is known. Also a caution about provenance — the order numbers read as Letecky utvar MV SR while the ministry is Defence, and this project separates the two on purpose."
     }
   ],
   "benchmarks": [
