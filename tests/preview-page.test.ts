@@ -190,13 +190,15 @@ describe('design preview', () => {
   })
 
   it('draws every day exactly once across the year panels', () => {
-    // Panels pad to whole weeks, so the last week of a year reaches into the next one. A
-    // day claimed by both panels is drawn twice with a valid state in each, and the counts
-    // beside the grid stop matching the grid.
-    const days = $$('.cov-day')
+    // Panels pad to whole weeks, so the last week of a year reaches into the next one and
+    // the same date appears in two panels. That is ordinary calendar padding and fine — as
+    // long as only one of the two makes a claim about the day. Both claiming it is what
+    // broke the counts beside the grid.
+    const stated = $$('.cov-day')
+      .filter((c) => c.getAttribute('data-state') !== 'outside')
       .map((c) => c.getAttribute('data-day'))
       .filter((d): d is string => Boolean(d))
-    expect(new Set(days).size).toBe(days.length)
+    expect(new Set(stated).size, 'a day is stated in one panel only').toBe(stated.length)
 
     for (const panel of $$('.cov-year')) {
       const inPanel = [...panel.querySelectorAll('.cov-day')]
