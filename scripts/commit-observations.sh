@@ -49,6 +49,11 @@ fi
 echo '▸ prepočet nad zlúčeným stavom'
 npm run obs:import
 npm run flights:rebuild -- --all
+# Researched purposes attach to flights by public id, so they can only be applied once
+# the flights exist. Seeding runs before the rebuild during restore, when there is
+# nothing to attach to — without this second pass every purpose is silently dropped and
+# the page presents researched flights as if nobody had looked into them.
+npm run seed
 npm run missions:rebuild
 npm run costs:recompute
 npm run preview:build
