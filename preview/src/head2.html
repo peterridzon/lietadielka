@@ -6,6 +6,7 @@
    ------------------------------------------------------------------------- */
 .strips { border: 1px solid var(--rule); border-bottom: none; }
 
+.strip.picked { box-shadow: inset 3px 0 0 var(--accent), 0 0 0 1px var(--accent); }
 .strip { scroll-margin-top: 24px; border-bottom: 1px solid var(--rule); background: var(--surface); }
 
 .strip-btn {
@@ -106,13 +107,6 @@
 .fleet-group.historical .ac { opacity: 0.72; }
 .fleet-group.historical > header h3 { color: var(--ink-2); }
 
-.verify:empty { display: none; }
-.verify { margin-top: 24px; border: 1px solid var(--rule); border-left: 3px solid var(--ok); background: var(--surface); padding: 18px 20px; display: grid; gap: 10px; }
-.verify h3 { font-family: var(--display); font-size: 16px; font-weight: 600; margin: 0; }
-.verify p { margin: 0; font-size: 14px; color: var(--ink-2); line-height: 1.55; max-width: var(--prose); }
-.verify .proof { font-family: var(--data); font-size: 12.5px; display: grid; gap: 4px; padding: 12px 14px; background: var(--surface-2); border: 1px solid var(--rule); font-variant-numeric: tabular-nums; }
-.verify .proof b { color: var(--ink); font-weight: 600; }
-.verify .verdict { font-family: var(--data); font-size: 12.5px; color: var(--ok); font-weight: 600; }
 
 .routes { display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
 .route { background: var(--surface); display: grid; grid-template-columns: minmax(0, 260px) 1fr 60px; align-items: center; gap: 18px; padding: 13px 18px; }

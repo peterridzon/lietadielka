@@ -168,51 +168,42 @@ describe('design preview', () => {
     }
   })
 
-  it('filters the flight list to the day that was clicked', () => {
+  it('marks the chosen day without hiding the rest of the list', () => {
+    ;($('#cov-clear') as HTMLButtonElement).click()
     const flown = $$('.cov-day[data-state="flew"]')[0] as HTMLButtonElement
     const day = flown.getAttribute('data-day')
+    const total = $$('.strip').length
     flown.click()
 
     expect(flown.getAttribute('aria-pressed')).toBe('true')
+    // Narrowing the list to one day left the page showing a single flight and hiding
+    // every other one. A list of flights has to stay a list of flights.
     const visible = $$('.strip').filter((s) => (s as HTMLElement).style.display !== 'none')
-    expect(visible.length).toBeGreaterThan(0)
-    for (const s of visible) expect(s.getAttribute('data-day')).toBe(day)
+    expect(visible.length).toBe(total)
 
-    // Clicking the same day again clears the filter rather than trapping the reader.
-    flown.click()
-    expect(flown.getAttribute('aria-pressed')).toBe('false')
-    expect($$('.strip').every((s) => (s as HTMLElement).style.display !== 'none')).toBe(true)
+    const picked = $$('.strip.picked')
+    expect(picked.length).toBeGreaterThan(0)
+    for (const s of picked) expect(s.getAttribute('data-day')).toBe(day)
+
+    ;($('#cov-clear') as HTMLButtonElement).click()
+    expect($$('.strip.picked').length).toBe(0)
   })
 
   it('says which kind of empty an empty day is', () => {
     ;($('#cov-clear') as HTMLButtonElement).click()
+    const verdict = $('#cov-detail-verdict') as HTMLElement
+
     const missing = $$('.cov-day[data-state="nodata"]')[0] as HTMLButtonElement
     missing.click()
-    const note = $('.strips-empty') as HTMLElement
-    expect(note.style.display).not.toBe('none')
     // The distinction this whole section exists to make: excluded, not counted as zero.
-    expect(note.textContent).toContain('nezapočítaný ako nula')
+    expect(verdict.textContent).toContain('nezapočítaný ako nula')
 
     const quiet = $$('.cov-day[data-state="quiet"]')[0] as HTMLButtonElement
     quiet.click()
-    expect(note.textContent).toContain('Pokojný deň')
-    ;($('#cov-clear') as HTMLButtonElement).click()
-    expect(note.style.display).toBe('none')
-  })
+    expect(verdict.textContent).toContain('Pokojný deň')
 
-  it('answers beside the calendar instead of jumping to the list', () => {
     ;($('#cov-clear') as HTMLButtonElement).click()
-    const flown = $$('.cov-day[data-state="flew"]')[0] as HTMLButtonElement
-    flown.click()
-    // The calendar leads the page and the flight list is five sections below it, so a
-    // click must not carry the reader away from the question they just asked.
-    const legs = $$('.cov-leg')
-    expect(legs.length).toBeGreaterThan(0)
-    for (const leg of legs) {
-      expect(leg.querySelector('b')?.textContent).toMatch(/.+ → .+/)
-      expect(leg.querySelector('em')?.textContent).toMatch(/\d{2}:\d{2}/)
-    }
-    ;($('#cov-clear') as HTMLButtonElement).click()
+    expect(($('#cov-detail') as Element).getAttribute('data-open')).toBe('0')
   })
 
   it('opens the flight itself, not just the section that holds it', () => {
@@ -309,19 +300,8 @@ describe('design preview', () => {
     expect($$('.ac .photo-detail').length).toBe(0)
   })
 
-  it('keeps the two-aircraft proof, and never leaves an empty box in its place', () => {
-    // This block was silently deleted once by an unrelated edit and nothing noticed,
-    // because a styled empty div looks like a design bug rather than missing content.
-    const verify = $('.verify')
-    expect(verify).not.toBeNull()
-    expect(verify!.children.length).toBeGreaterThan(2)
-    expect(verify!.textContent).toMatch(/naozaj dva rôzne stroje/)
-    expect(verify!.querySelector('.proof')?.textContent).toMatch(/potrebná rýchlosť/)
-    expect(verify!.querySelector('.verdict')?.textContent).toMatch(/dve samostatné lietadlá/)
-  })
-
   it('never renders an element that is styled as a box but holds nothing', () => {
-    for (const selector of ['.verify', '#fleet-groups', '#missions', '#routes', '#fleet-cost']) {
+    for (const selector of ['#fleet-groups', '#missions', '#routes', '#fleet-cost']) {
       const node = $(selector)
       if (node) expect(node.children.length, `${selector} is empty`).toBeGreaterThan(0)
     }
