@@ -129,8 +129,16 @@ function finish(aircraftId: string, legs: MissionLegInput[]): MissionGroup {
   }
 }
 
+/**
+ * Date, aircraft and route are not unique: an aircraft that flies two round trips out of
+ * its home base in one day produces two missions keyed 2026-02-05-9633-lzib-lzib, and the
+ * second one fails to insert. Flight ids already carry the departure time for exactly this
+ * reason; missions were left without it, and only a fuller record made it show.
+ */
 export function missionPublicId(group: MissionGroup, registration: string): string {
-  const date = group.startedAt.toISOString().slice(0, 10)
+  const iso = group.startedAt.toISOString()
+  const date = iso.slice(0, 10)
+  const time = iso.slice(11, 16).replace(':', '')
   const slug = (v: string): string => v.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-  return `${date}-${slug(registration)}-${slug(group.routeKey)}`
+  return `${date}-${time}-${slug(registration)}-${slug(group.routeKey)}`
 }

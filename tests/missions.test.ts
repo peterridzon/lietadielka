@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { groupMissions, type MissionLegInput } from '../src/core/missions/group.js'
+import { groupMissions, missionPublicId, type MissionLegInput } from '../src/core/missions/group.js'
 
 let counter = 0
 function leg(
@@ -106,5 +106,21 @@ describe('groupMissions', () => {
     ]
     legs[1]!.blockSeconds = null
     expect(groupMissions(legs)[0]!.blockSeconds).toBeNull()
+  })
+})
+
+describe('missionPublicId', () => {
+  it('separates two round trips from the same base on the same day', () => {
+    // Date, aircraft and route repeat when an aircraft goes out and back twice, and the
+    // id is a unique key — the second mission simply failed to insert, taking the whole
+    // collection run with it once the record grew long enough for it to happen.
+    const morning = groupMissions([leg('LZIB', 'LZIB', '2026-02-05T06:00:00Z', '2026-02-05T07:00:00Z')])
+    const evening = groupMissions([leg('LZIB', 'LZIB', '2026-02-05T17:00:00Z', '2026-02-05T18:00:00Z')])
+
+    const a = missionPublicId(morning[0]!, '9633')
+    const b = missionPublicId(evening[0]!, '9633')
+    expect(a).not.toBe(b)
+    expect(a).toBe('2026-02-05-0600-9633-lzib-lzib')
+    expect(b).toBe('2026-02-05-1700-9633-lzib-lzib')
   })
 })
