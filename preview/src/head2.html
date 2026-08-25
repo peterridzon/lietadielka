@@ -148,7 +148,17 @@
 .route .meter { height: 10px; background: var(--rule); position: relative; }
 .route .meter i { position: absolute; inset: 0 auto 0 0; background: var(--accent); display: block; }
 .route .n { font-family: var(--data); font-size: 14px; font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; }
+/* Three grades, and they must be told apart at a glance: a pair we stand behind, one
+   resting on an endpoint below the confidence threshold, and a flight with only one end.
+   A solid bar for the first, a hatched one for the rest — the count is equally real in
+   every case, the attribution is not. */
 .route.unknown .pair, .route.unknown .n { color: var(--ink-3); }
+.route.unknown .meter i, .route.probable .meter i, .route.open .meter i {
+  background: repeating-linear-gradient(45deg, var(--accent), var(--accent) 3px, transparent 3px, transparent 6px);
+  box-shadow: inset 0 0 0 1px var(--accent-soft);
+}
+.route.probable .pair, .route.open .pair { color: var(--ink-2); }
+.route.open .n { color: var(--ink-2); }
 .route.unknown .meter i { background: var(--none); }
 
 /* --- prose / footer ------------------------------------------------------ */

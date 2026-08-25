@@ -88,6 +88,7 @@
     })
     bar.appendChild(sortRow)
 
+    var wantsRange = initial.range !== false
     var rangeRow = el('div', 'listbar-row')
     rangeRow.appendChild(el('span', 'listbar-label', 'Obdobie'))
     function dateInput(which, label) {
@@ -118,7 +119,7 @@
       apply()
     })
     rangeRow.appendChild(reset)
-    bar.appendChild(rangeRow)
+    if (wantsRange) bar.appendChild(rangeRow)
 
     var footer = el('div', 'listbar-foot')
     var count = el('span', 'lb-count', '')
@@ -1661,47 +1662,110 @@
   }
 
   // --- dvojice miest ------------------------------------------------------
+  // Predtým tu bola jedna hromada: "jeden alebo oba konce neznáme, 99". To je pravda, ale
+  // nepoužiteľná — devätdesiat z tých deväťdesiatich deviatich sa dá zaradiť, ak sa
+  // rozlíši, čo presne o nich vieme:
+  //
+  //   24  aspoň jeden koniec určený pod hranicou spoľahlivosti — letisko poznáme, len
+  //       si ním nie sme istí; taká dvojica patrí do tabuľky, označená vlnovkou
+  //   66  jeden koniec známy, druhý sa stratil vo vzduchu — vieme odkiaľ, nevieme kam,
+  //       a to je stále informácia, ktorú stojí za to zoskupiť
+  //    9  ani jeden koniec; tie zostávajú hromadou, lebo naozaj nič nehovoria
   var pairs = {}
-  var unknownLegs = 0
+  var openEnded = {}
+  var fullyUnknown = 0
+
+  function side(f, which) {
+    var p = endpoint(f, which)
+    if (p.state === 'known') return { code: p.code, city: p.city, sure: true }
+    if (p.state === 'probable') return { code: p.code, city: p.city, sure: false }
+    return null
+  }
+
   flights.forEach(function (f) {
-    var dep = endpoint(f, 'dep'), arr = endpoint(f, 'arr')
-    if (dep.state !== 'known' || arr.state !== 'known') { unknownLegs++; return }
-    var sameField = dep.code === arr.code
-    var codes = [dep.code, arr.code].sort()
-    var key = sameField ? dep.code + ' ⟲' : codes.join(' ⇄ ')
-    if (!pairs[key]) {
-      pairs[key] = {
-        key: key,
-        n: 0,
-        cities: sameField
-          ? (dep.city || dep.code) + ' — vrátilo sa na letisko, z ktorého vzlietlo'
-          : [dep, arr].sort(function (a, b) { return a.code < b.code ? -1 : 1 })
-              .map(function (p) { return p.city }).join(' – '),
+    var dep = side(f, 'dep'), arr = side(f, 'arr')
+
+    if (dep && arr) {
+      var sameField = dep.code === arr.code
+      var sure = dep.sure && arr.sure
+      var ends = [dep, arr].sort(function (a, b) { return a.code < b.code ? -1 : 1 })
+      var label = function (p) { return p.code + (p.sure ? '' : '~') }
+      var key = sameField
+        ? label(dep) + ' ⟲'
+        : ends.map(label).join(' ⇄ ')
+      if (!pairs[key]) {
+        pairs[key] = {
+          key: key, n: 0, sure: sure,
+          cities: (sameField
+            ? (dep.city || dep.code) + ' — vrátilo sa na letisko, z ktorého vzlietlo'
+            : ends.map(function (p) { return p.city || p.code }).join(' – ')) +
+            (sure ? '' : ' · vlnovka označuje koniec určený pod hranicou spoľahlivosti'),
+        }
       }
+      pairs[key].n++
+      return
     }
-    pairs[key].n++
+
+    if (dep || arr) {
+      var known = dep || arr
+      var outbound = !!dep
+      var k = known.code + (known.sure ? '' : '~') + (outbound ? ' →' : ' ←')
+      if (!openEnded[k]) {
+        openEnded[k] = {
+          key: k, n: 0, sure: known.sure,
+          cities: (known.city || known.code) + (outbound
+            ? ' — vzlietlo odtiaľto, pristátie sme nezachytili'
+            : ' — pristálo tu, vzlet sme nezachytili'),
+        }
+      }
+      openEnded[k].n++
+      return
+    }
+
+    fullyUnknown++
   })
 
-  var list = Object.keys(pairs).map(function (k) { return pairs[k] })
-  list.sort(function (a, b) { return b.n - a.n })
-  var max = Math.max.apply(null, list.map(function (p) { return p.n }).concat([unknownLegs, 1]))
+  function byCount(map) {
+    return Object.keys(map).map(function (k) { return map[k] })
+      .sort(function (a, b) { return b.n - a.n })
+  }
+  var list = byCount(pairs)
+  var openList = byCount(openEnded)
+  var max = Math.max.apply(null, list.map(function (p) { return p.n })
+    .concat(openList.map(function (p) { return p.n })).concat([fullyUnknown, 1]))
 
   var routesBox = document.getElementById('routes')
-  function routeRow(title, subtitle, n, unknown) {
-    var row = el('div', 'route' + (unknown ? ' unknown' : ''))
-    var pair = el('div', 'pair', title)
-    pair.appendChild(el('em', null, subtitle))
+  function routeRow(item) {
+    var row = el('div', 'route' + (item.kind === 'unknown' ? ' unknown' : '') +
+      (item.kind === 'open' ? ' open' : '') + (item.sure === false ? ' probable' : ''))
+    var pair = el('div', 'pair', item.key)
+    pair.appendChild(el('em', null, item.cities))
     row.appendChild(pair)
     var meter = el('div', 'meter')
     var fill = el('i')
-    fill.style.width = Math.round((n / max) * 100) + '%'
+    fill.style.width = Math.max(2, Math.round((item.n / max) * 100)) + '%'
     meter.appendChild(fill)
     row.appendChild(meter)
-    row.appendChild(el('div', 'n', nf(n)))
+    row.appendChild(el('div', 'n', nf(item.n)))
+    row.setAttribute('data-sort-n', String(item.n))
+    row.setAttribute('data-sort-pair', item.key)
+    // Isté dvojice pred odhadnutými, odhadnuté pred jednostrannými; v rámci skupiny počet.
+    row.setAttribute('data-sort-rank', String((item.rank * 1000000) + (999999 - item.n)))
     routesBox.appendChild(row)
   }
-  list.forEach(function (p) { routeRow(p.key, p.cities, p.n, false) })
-  if (unknownLegs) routeRow('Jeden alebo oba konce neznáme', 'nepriradené k žiadnemu letisku', unknownLegs, true)
+
+  list.forEach(function (p) { p.rank = p.sure ? 0 : 1; p.kind = 'pair'; routeRow(p) })
+  openList.forEach(function (p) { p.rank = 2; p.kind = 'open'; routeRow(p) })
+  if (fullyUnknown) {
+    routeRow({ key: 'Oba konce neznáme', cities: 'pokrytie sa stratilo pred vzletom aj po pristátí',
+      n: fullyUnknown, rank: 3, kind: 'unknown', sure: true })
+  }
+
+  listControls(routesBox, '.route', [
+    { key: 'rank', label: 'Spoľahlivosť a počet', numeric: true, desc: false },
+    { key: 'n', label: 'Počet letov', numeric: true, desc: true },
+    { key: 'pair', label: 'Kód letiska', numeric: false, desc: false }
+  ], { key: 'rank', desc: false, label: 'Zoradiť spojenia', range: false })
 
   // --- pätička ------------------------------------------------------------
   document.getElementById('foot-generated').textContent =

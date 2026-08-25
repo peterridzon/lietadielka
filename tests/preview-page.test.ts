@@ -281,6 +281,24 @@ describe('design preview', () => {
     ;($('#cov-clear') as HTMLButtonElement).click()
   })
 
+  it('accounts for every flight in the route table, including the unattributable', () => {
+    // One lump of "99 unknown" was true and useless. Splitting it by what is actually
+    // known must not lose or double-count anything: the rows have to sum to the fleet.
+    const rows = $$('.route')
+    const total = rows.reduce((n, r) => n + Number(r.getAttribute('data-sort-n') ?? 0), 0)
+    expect(total).toBe($$('.strip').length)
+
+    // A pair resting on a below-threshold endpoint, or with one end never seen, must not
+    // be presented as firmly as one we stand behind.
+    for (const row of rows) {
+      const marked = row.className.includes('probable') || row.className.includes('open') ||
+        row.className.includes('unknown')
+      const label = row.querySelector('.pair')?.firstChild?.textContent ?? ''
+      const hedged = /[~→←]/.test(label) || label.includes('neznáme')
+      expect(marked, `"${label}" is hedged in text but not in class`).toBe(hedged)
+    }
+  })
+
   it('shows a workable slice of a long list, with a way to ask for more', () => {
     ;($('#sec-flights .lb-reset') as HTMLButtonElement).click()
     // Three hundred flights cannot be read top to bottom, and rendering them all at once
