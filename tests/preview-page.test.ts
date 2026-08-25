@@ -189,6 +189,23 @@ describe('design preview', () => {
     expect(flown, 'a record with no flights would mean the pipeline found nothing').toBeGreaterThan(0)
   })
 
+  it('draws every day exactly once across the year panels', () => {
+    // Panels pad to whole weeks, so the last week of a year reaches into the next one. A
+    // day claimed by both panels is drawn twice with a valid state in each, and the counts
+    // beside the grid stop matching the grid.
+    const days = $$('.cov-day')
+      .map((c) => c.getAttribute('data-day'))
+      .filter((d): d is string => Boolean(d))
+    expect(new Set(days).size).toBe(days.length)
+
+    for (const panel of $$('.cov-year')) {
+      const inPanel = [...panel.querySelectorAll('.cov-day')]
+        .filter((c) => c.getAttribute('data-state') !== 'outside')
+        .map((c) => (c.getAttribute('data-day') ?? '').slice(0, 4))
+      expect(new Set(inPanel).size, 'a panel holds one year of real days').toBeLessThanOrEqual(1)
+    }
+  })
+
   it('sizes itself by week count instead of fixed pixels', () => {
     for (const grid of $$('.cov-grid')) {
       const weeks = Number((grid as HTMLElement).style.getPropertyValue('--weeks'))

@@ -1049,7 +1049,11 @@
       })
       var lastMonth = null
       byYear[year].forEach(function (day, i) {
-        var inRange = day >= first && day <= last
+        // Deň patrí do panela svojho roka a nikam inam. Panel sa dopĺňa na celé týždne, takže
+        // posledný týždeň roka siaha do januára toho ďalšieho — a bez tejto podmienky by sa
+        // ten istý deň vykreslil dvakrát, v oboch paneloch, s platným stavom v oboch. Súčty
+        // vedľa mriežky by potom nesedeli s bunkami, čo je presne to, čo si test všimol.
+        var inRange = day >= first && day <= last && day.slice(0, 4) === String(year)
         var month = day.slice(5, 7)
         // Popisok patrí nad stĺpec svojho týždňa. V automatickom toku by si ukrojil vlastný
         // stĺpec a pri dvanástich mesiacoch by mriežku posunul o dvanásť týždňov.
