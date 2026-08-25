@@ -1661,6 +1661,21 @@
       : stripsBaseLabel
   }
 
+  // Krajiny, ktoré sa v poslednej zachytenej polohe zatiaľ objavili. Neznámy kód sa
+  // zobrazí tak, ako prišiel — vymýšľať názov by bolo horšie než ukázať kód.
+  var COUNTRY = {
+    AE: 'Spojené arabské emiráty', BG: 'Bulharsko', BN: 'Brunej', CN: 'Čína', CY: 'Cyprus',
+    EG: 'Egypt', FI: 'Fínsko', FO: 'Faerské ostrovy', GB: 'Spojené kráľovstvo',
+    GE: 'Gruzínsko', GR: 'Grécko', HU: 'Maďarsko', ID: 'Indonézia', IN: 'India',
+    IS: 'Island', IT: 'Taliansko', KE: 'Keňa', KZ: 'Kazachstan', LT: 'Litva',
+    LV: 'Lotyšsko', ME: 'Čierna Hora', MK: 'Severné Macedónsko', MQ: 'Martinik',
+    MY: 'Malajzia', OM: 'Omán', PL: 'Poľsko', RO: 'Rumunsko', RS: 'Srbsko', RU: 'Rusko',
+    SA: 'Saudská Arábia', SE: 'Švédsko', TR: 'Turecko', US: 'Spojené štáty',
+    VE: 'Venezuela', AT: 'Rakúsko', CZ: 'Česko', DE: 'Nemecko', FR: 'Francúzsko',
+    BE: 'Belgicko', ES: 'Španielsko', UA: 'Ukrajina', PT: 'Portugalsko', NL: 'Holandsko'
+  }
+  function countryName(code) { return code ? (COUNTRY[code] || code) : null }
+
   // --- dvojice miest ------------------------------------------------------
   // Predtým tu bola jedna hromada: "jeden alebo oba konce neznáme, 99". To je pravda, ale
   // nepoužiteľná — devätdesiat z tých deväťdesiatich deviatich sa dá zaradiť, ak sa
@@ -1707,15 +1722,21 @@
     }
 
     if (dep || arr) {
+      // Druhý koniec nepoznáme, ale vieme, nad ktorou krajinou sme lietadlo videli
+      // naposledy. To je smer, nie cieľ — a je to podstatne bližšie skutočnosti než
+      // "jeden koniec neznámy". Pomenovať namiesto toho najbližšie letisko by bolo
+      // horšie než mlčať: polovica týchto letov sa stratila nad 25 000 stopami, kde
+      // lietadlo nepristáva, len preletí.
       var known = dep || arr
       var outbound = !!dep
-      var k = known.code + (known.sure ? '' : '~') + (outbound ? ' →' : ' ←')
+      var far = countryName(outbound ? f.arrLastSeenCountry : f.depLastSeenCountry)
+      var k = known.code + (known.sure ? '' : '~') + ' ⇢ ' + (far || 'neurčené')
       if (!openEnded[k]) {
         openEnded[k] = {
-          key: k, n: 0, sure: known.sure,
-          cities: (known.city || known.code) + (outbound
-            ? ' — vzlietlo odtiaľto, pristátie sme nezachytili'
-            : ' — pristálo tu, vzlet sme nezachytili'),
+          key: outbound ? k : (far || 'neurčené') + ' ⇢ ' + known.code + (known.sure ? '' : '~'),
+          n: 0, sure: known.sure,
+          cities: (known.city || known.code) + ' – ' + (far || 'koniec neurčený') +
+            ' · smer podľa poslednej zachytenej polohy, nie potvrdené pristátie',
         }
       }
       openEnded[k].n++

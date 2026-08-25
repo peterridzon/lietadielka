@@ -294,7 +294,9 @@ describe('design preview', () => {
       const marked = row.className.includes('probable') || row.className.includes('open') ||
         row.className.includes('unknown')
       const label = row.querySelector('.pair')?.firstChild?.textContent ?? ''
-      const hedged = /[~→←]/.test(label) || label.includes('neznáme')
+      // ~ endpoint below the threshold, ⇢ a direction inferred from the last position
+      // rather than a confirmed landing, "neznáme" nothing at all.
+      const hedged = /[~⇢]/.test(label) || label.includes('neznáme')
       expect(marked, `"${label}" is hedged in text but not in class`).toBe(hedged)
     }
   })
