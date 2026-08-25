@@ -769,7 +769,10 @@
       else if (st === 'empty') quiet++
       else unknown++
     })
-    if (!seen) return { state: 'outside', flights: 0 }
+    // Deň v rozsahu záznamu, ktorý ešte nikto nečítal, nie je prázdny okraj mriežky.
+    // Nechať ho vyzerať ako odsadenie by bola tá istá zámena, akej bráni rozdiel medzi
+    // pokojným a chýbajúcim dňom — len o úroveň vyššie, na úrovni samotného záznamu.
+    if (!seen) return { state: 'pending', flights: 0 }
     if (unknown === seen) return { state: 'nodata', flights: 0 }
     if (unknown) return { state: 'partial', flights: 0 }
     return { state: 'quiet', flights: 0 }
@@ -780,6 +783,7 @@
     quiet: 'Archív deň mal a žiadne z lietadiel v ňom nevidel. Pokojný deň, nie chýbajúci.',
     partial: 'Časť flotily sa v ten deň overiť dala, časť nie. Neoverené lietadlá sú z čísel vylúčené.',
     nodata: 'Deň sa nepodarilo získať zo žiadneho zdroja. Je vylúčený zo všetkých súčtov — nezapočítaný ako nula.',
+    pending: 'Tento deň ešte nebol prečítaný. Dopĺňa sa z archívu — do žiadneho čísla na tejto stránke zatiaľ nevstupuje.',
     outside: 'Mimo sledovaného obdobia.'
   }
   var CELL_WORD = {
@@ -806,25 +810,25 @@
 
   if (yearsBox && dayKeys.length) {
     var first = dayKeys[0], last = dayKeys[dayKeys.length - 1]
-    // Mriežka musí začať v pondelok a skončiť v nedeľu, inak sa stĺpce rozsypú.
-    var cursor = addDays(first, -dowIndex(first))
-    var stop = addDays(last, 6 - dowIndex(last))
 
-    // Týždne sa číslujú súvisle od začiatku mriežky, nie od začiatku roka. Keď záznam
-    // začína v strede týždňa — 1. januára 2026 je štvrtok, takže mriežka siaha po
-    // pondelok 29. decembra — rok sa začína neúplným týždňom a číslovanie v rámci roka
-    // by stĺpce posunulo.
+    // Panel sa robí pre každý kalendárny rok záznamu a odsadzuje sa vnútri seba, nie
+    // cezeň. Keby sa mriežka dopĺňala dozadu naprieč rokmi, prvý január 2026 (štvrtok)
+    // by odtrhol pondelok až stredu do vlastného trojdňového panela roka 2025 a prvý
+    // týždeň 2026 by začínal štvrtkom. Takto má každý stĺpec celý týždeň od pondelka
+    // a dni mimo záznamu sú v ňom prázdne miesta.
     var byYear = {}
     var yearOrder = []
-    var weekOf = {}
-    var index = 0
-    while (cursor <= stop) {
-      var y = cursor.slice(0, 4)
-      if (!byYear[y]) { byYear[y] = []; yearOrder.push(y) }
-      byYear[y].push(cursor)
-      weekOf[cursor] = Math.floor(index / 7)
-      index++
-      cursor = addDays(cursor, 1)
+    for (var y = Number(first.slice(0, 4)); y <= Number(last.slice(0, 4)); y++) {
+      var yearStart = y + '-01-01'
+      var yearEnd = y + '-12-31'
+      var from = yearStart > first ? yearStart : first
+      var to = yearEnd < last ? yearEnd : last
+      var cursor = addDays(from, -dowIndex(from))
+      var stop = addDays(to, 6 - dowIndex(to))
+      var list = []
+      while (cursor <= stop) { list.push(cursor); cursor = addDays(cursor, 1) }
+      byYear[y] = list
+      yearOrder.push(String(y))
     }
 
     yearOrder.forEach(function (year) {
@@ -832,23 +836,21 @@
       if (yearOrder.length > 1) panel.appendChild(el('h3', null, year))
 
       var grid = el('div', 'cov-grid')
-      var firstWeek = weekOf[byYear[year][0]]
-      var lastWeek = weekOf[byYear[year][byYear[year].length - 1]]
       // Šírka stĺpca je zlomok, nie pixel, takže bunka rastie, kým je záznam krátky,
       // a zmenšuje sa, ako pribúdajú roky. Mriežka tak nikdy neuteká nabok.
-      grid.style.setProperty('--weeks', String(lastWeek - firstWeek + 1))
+      grid.style.setProperty('--weeks', String(byYear[year].length / 7))
       DOW.forEach(function (d, i) {
         var lab = el('span', 'cov-dow', i % 2 ? '' : d)
         lab.style.gridRow = String(i + 2)
         grid.appendChild(lab)
       })
       var lastMonth = null
-      byYear[year].forEach(function (day) {
+      byYear[year].forEach(function (day, i) {
         var inRange = day >= first && day <= last
         var month = day.slice(5, 7)
         // Popisok patrí nad stĺpec svojho týždňa. V automatickom toku by si ukrojil vlastný
         // stĺpec a pri dvanástich mesiacoch by mriežku posunul o dvanásť týždňov.
-        var week = weekOf[day] - firstWeek + 1
+        var week = Math.floor(i / 7) + 1
         if (inRange && month !== lastMonth) {
           var lab = el('span', 'cov-mon', MONTH_SHORT[Number(month) - 1])
           lab.style.gridColumn = String(week + 1)
@@ -888,11 +890,15 @@
 
     // Pri siedmich týždňoch by pás štvorčekov cez celú šírku bol prázdne divadlo.
     // To, ako úplný záznam je, povedia čísla — tie patria vedľa mriežky, nie pod ňu.
-    var tally = { flew: 0, quiet: 0, partial: 0, nodata: 0 }
-    dayKeys.forEach(function (d) {
-      var st = dayState(d).state
+    // Ráta sa celý rozsah záznamu, nie len dni so záznamom o pokuse. Inak by neprečítané
+    // dni v čísle nefigurovali, hoci v mriežke ich je vidieť najviac.
+    var tally = { flew: 0, quiet: 0, partial: 0, nodata: 0, pending: 0 }
+    var walk = first
+    while (walk <= last) {
+      var st = dayState(walk).state
       if (tally[st] !== undefined) tally[st]++
-    })
+      walk = addDays(walk, 1)
+    }
     document.getElementById('cov-period').textContent =
       longDate(first + 'T00:00:00Z') + ' – ' + longDate(last + 'T00:00:00Z')
 
@@ -904,7 +910,9 @@
       ['quiet', 'deň overene pokojný', 'dni overene pokojné', 'dní overene pokojných'],
       ['partial', 'deň overený len sčasti', 'dni overené len sčasti', 'dní overených len sčasti'],
       ['nodata', 'deň sa nedal získať — vylúčený', 'dni sa nedali získať — vylúčené',
-        'dní sa nedalo získať — vylúčené']
+        'dní sa nedalo získať — vylúčené'],
+      ['pending', 'deň ešte nie je prečítaný', 'dni ešte nie sú prečítané',
+        'dní ešte nie je prečítaných']
     ]
     STATS.forEach(function (row) {
       var n = tally[row[0]]
@@ -982,6 +990,8 @@
     detailDay.textContent = longDate(day + 'T00:00:00Z')
     detailVerdict.textContent = VERDICT[info.state]
     detailRows.textContent = ''
+    // Neprečítaný deň nemá čo rozpisovať po lietadlách — nič sa oň ešte nepokúšalo.
+    if (info.state === 'pending') { goToFlights(day); return }
     DATA.fleet.forEach(function (ac) {
       var st = byCell[ac.icao24 + '|' + day]
       if (st === undefined) return

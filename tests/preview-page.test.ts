@@ -170,7 +170,7 @@ describe('design preview', () => {
     // Which states occur depends on the data, and that changes as the archive fills —
     // the archive has no unavailable days at all. Asserting that today's mix is present
     // would make this test fail on a better record, so it asserts the rules instead.
-    const known = new Set(['flew', 'quiet', 'partial', 'nodata', 'outside'])
+    const known = new Set(['flew', 'quiet', 'partial', 'nodata', 'pending', 'outside'])
     const cells = $$('.cov-day')
     expect(cells.length).toBeGreaterThan(0)
 
@@ -193,9 +193,31 @@ describe('design preview', () => {
     for (const grid of $$('.cov-grid')) {
       const weeks = Number((grid as HTMLElement).style.getPropertyValue('--weeks'))
       expect(weeks).toBeGreaterThan(0)
-      // Seven rows of cells per week column, so the two must agree exactly.
-      const cells = grid.querySelectorAll('.cov-day').length
-      expect(cells).toBe(weeks * 7)
+
+      // A year panel can start or end mid-week — the record began on a Thursday, so the
+      // 2025 panel holds three days — which makes "seven cells per week" false. What must
+      // hold is that the declared width matches the columns actually used, or the grid
+      // reserves space it never fills.
+      const cells = [...grid.querySelectorAll('.cov-day')] as HTMLElement[]
+      const columns = new Set(cells.map((c) => c.style.gridColumn))
+      expect(columns.size).toBe(weeks)
+      // Column 1 carries the weekday labels and row 1 the month labels, so days occupy
+      // columns 2..weeks+1 and rows 2..8.
+      for (const cell of cells) {
+        const column = Number(cell.style.gridColumn)
+        const row = Number(cell.style.gridRow)
+        expect(column).toBeGreaterThanOrEqual(2)
+        expect(column).toBeLessThanOrEqual(weeks + 1)
+        expect(row).toBeGreaterThanOrEqual(2)
+        expect(row).toBeLessThanOrEqual(8)
+      }
+      // No column may hold two of the same weekday, which is what a numbering slip does.
+      const seen = new Set<string>()
+      for (const cell of cells) {
+        const key = `${cell.style.gridColumn}:${cell.style.gridRow}`
+        expect(seen.has(key), `two days share ${key}`).toBe(false)
+        seen.add(key)
+      }
     }
   })
 
@@ -237,6 +259,7 @@ describe('design preview', () => {
       nodata: /nezapočítaný ako nula/,
       quiet: /Pokojný deň/,
       partial: /časť nie/i,
+      pending: /ešte nebol prečítaný/,
     }
 
     let checked = 0
@@ -418,6 +441,12 @@ describe('design preview', () => {
 
   it('never shows a purpose without saying how well it is established', () => {
     const allowed = new Set(['potvrdený', 'pravdepodobný', 'neznámy'])
+    // Detail is built on first open, so an unopened flight has no purpose block at all.
+    // Checking only what some earlier test happened to open makes this pass or fail on
+    // the order of the suite rather than on the page.
+    for (const button of $$('.strip[open-state="0"] .strip-btn')) {
+      ;(button as HTMLButtonElement).click()
+    }
     const blocks = $$('.purpose')
     expect(blocks.length).toBeGreaterThan(0)
 
