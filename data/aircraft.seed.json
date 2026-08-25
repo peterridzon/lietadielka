@@ -118,6 +118,33 @@
       "publishedAt": "2026-01-01",
       "type": "journalism",
       "notes": "JOURNALISM, A LEAD NOT A SOURCE. Reports roughly 1.2 million EUR for type and maintenance training of four pilots on the two Global 5000s, awarded to Elite Jet without competition; Elite Jet holds no training approval and bought the training from CAE. Recorded to be replaced by the underlying orders once obtained. Note the ministry is DEFENCE, not Interior, despite order numbers that read as Letecky utvar."
+    },
+    {
+      "id": "src-uvo-global5000-udrzba-vestnik",
+      "publisher": "Urad pre verejne obstaravanie",
+      "title": "Komplexne technicke zabezpecenie udrzby lietadiel Global 5000",
+      "url": "https://www.uvo.gov.sk/vestnik-a-registre/vestnik/oznamenie/detail/1405181",
+      "publishedAt": "2026-01-01",
+      "type": "government",
+      "notes": "A1 for fleet identity: names both airframes explicitly — 'Komplexne technicke zabezpecenie udrzby pre 2ks lietadiel Global 5000 ev.c. 9513 a ev. c. 9633'. Also the scope of the 10M framework, which covers parts, materials, engineering and logistics, not only labour."
+    },
+    {
+      "id": "src-mosr-objednavky",
+      "publisher": "Ministerstvo obrany SR",
+      "title": "Register objednavok MO SR",
+      "url": "https://zmluvy.mosr.sk/",
+      "publishedAt": "2026-08-25",
+      "type": "government",
+      "notes": "Published orders of the Letecky utvar MO SR. An order is a commitment, not a proof of payment, and most entries do not name an airframe — allocation to 9513/9633 is inference, not record."
+    },
+    {
+      "id": "src-nrsr-tlac-1189",
+      "publisher": "Narodna rada SR",
+      "title": "Tlac 1189: Pisomne odpovede clenov vlady na interpelacie podane do 20. marca 2026",
+      "url": "https://www.nrsr.sk/web/Dynamic/Download.aspx?DocID=588337",
+      "publishedAt": "2026-04-01",
+      "type": "government",
+      "notes": "CONFIRMS THE DOCUMENT EXISTS, DOES NOT CONTAIN IT. Item 19 is the answer of Deputy PM and Defence Minister Robert Kalinak to MP Gabor Grendel's interpellation of 4 March 2026 'vo veci letov lietadiel Bombardier Global 5000'. The print is only an index; its closing note says the written answers are held in the members' lounge, so the text is not online. Obtaining it is the single most valuable outstanding lead — an official answer about these flights specifically."
     }
   ],
   "aircraft": [
