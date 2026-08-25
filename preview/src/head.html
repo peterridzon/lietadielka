@@ -164,6 +164,9 @@ section > .wrap > .sec-head { margin-bottom: 28px; }
   display: block; height: 100%; width: 0; background: var(--accent);
   transition: width 600ms ease;
 }
+/* Finished reads as finished, not as an accent bar that happens to be full. */
+.backfill[data-complete="1"] .bf-bar span { background: var(--ok); }
+.backfill[data-complete="1"] .eyebrow { color: var(--ok); }
 .bf-note {
   margin-top: 9px; font-family: var(--data); font-size: 11.5px; color: var(--ink-2);
   font-variant-numeric: tabular-nums;

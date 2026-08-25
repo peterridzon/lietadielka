@@ -917,17 +917,22 @@
     var done = Object.keys(examined).length
     if (total === 0) return
 
-    // Hotový záznam sa nechváli tým, že je hotový — pruh zmizne.
-    if (done >= total) return
-
+    // Pruh zostáva aj po dokončení. Skrývať ho pri 100 % bola chyba: to, že je záznam
+    // úplný, je práve tá informácia, kvôli ktorej sa tu čítajú čísla — a jeho zmiznutie
+    // sa nedá odlíšiť od toho, že tam nikdy nebol.
     var pct = Math.round((done / total) * 100)
-    document.getElementById('bf-fill').style.width = Math.max(1, pct) + '%'
-    document.getElementById('bf-note').innerHTML =
-      '<b>' + nf(done) + '</b> z <b>' + nf(total) + '</b> ' +
-      plural(total, 'dňa', 'dní', 'dní') + ' od ' + longDate(target + 'T00:00:00Z') +
-      ' je prečítaných — <b>' + pct + ' %</b>. ' +
-      'Zvyšok sa dopĺňa z archívu automaticky, po dávkach; čísla nižšie zatiaľ ' +
-      'opisujú len prečítané obdobie.'
+    var complete = done >= total
+    box.setAttribute('data-complete', complete ? '1' : '0')
+    document.getElementById('bf-fill').style.width = Math.max(1, Math.min(100, pct)) + '%'
+    document.getElementById('bf-note').innerHTML = complete
+      ? 'Celé obdobie od ' + longDate(target + 'T00:00:00Z') + ' je prečítané — <b>' +
+        nf(total) + '</b> ' + plural(total, 'deň', 'dni', 'dní') +
+        ', bez vynechaného dňa. Čísla nižšie opisujú celý ten čas.'
+      : '<b>' + nf(done) + '</b> z <b>' + nf(total) + '</b> ' +
+        plural(total, 'dňa', 'dní', 'dní') + ' od ' + longDate(target + 'T00:00:00Z') +
+        ' je prečítaných — <b>' + pct + ' %</b>. ' +
+        'Zvyšok sa dopĺňa z archívu automaticky, po dávkach; čísla nižšie zatiaľ ' +
+        'opisujú len prečítané obdobie.'
     box.hidden = false
   })()
 

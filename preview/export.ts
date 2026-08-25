@@ -194,8 +194,11 @@ writeFileSync(
      * date in batches over days, so the page has to be able to say how much of the period
      * is already examined — a reader who cannot see that the record is still filling has
      * no way to tell a quiet January from an unread one.
+     *
+     * Moved back to 2025 once the 2026 target was met and collection carried on. The
+     * figure has to describe the record being built, not the one that was finished.
      */
-    backfillFrom: process.env.BACKFILL_FROM ?? '2026-01-01',
+    backfillFrom: process.env.BACKFILL_FROM ?? '2025-01-01',
     flights,
     fleet,
     operators,

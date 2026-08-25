@@ -48,21 +48,26 @@ const $$ = (selector: string): Element[] => [...dom.window.document.querySelecto
  * total below describes only the part that has been read.
  */
 describe('backfill progress', () => {
-  it('shows how much of the target period has been read', () => {
+  it('shows how much of the target period has been read, finished or not', () => {
     const box = $('#backfill') as HTMLElement
     const note = $('#bf-note')?.textContent ?? ''
-    const [, done, total] = note.match(/(\d[\d\s ]*) z (\d[\d\s ]*)/) ?? []
+    const width = Number((($('#bf-fill') as HTMLElement).style.width || '0').replace('%', ''))
     const n = (v?: string) => Number((v ?? '').replace(/\s/g, ''))
 
-    if (box.hidden) {
-      // Hidden means finished, which the numbers have to agree with.
-      expect(note === '' || n(done) >= n(total)).toBe(true)
+    // Hiding the bar once the record is complete was wrong: "the period is fully read" is
+    // the very thing a reader needs, and an absent bar cannot be told apart from one that
+    // was never there.
+    expect(box.hidden).toBe(false)
+
+    if (box.getAttribute('data-complete') === '1') {
+      expect(note).toContain('je prečítané')
+      expect(note).toContain('bez vynechaného dňa')
+      expect(width).toBe(100)
       return
     }
+    const [, done, total] = note.match(/(\d[\d\s ]*) z (\d[\d\s ]*)/) ?? []
     expect(n(done)).toBeGreaterThan(0)
     expect(n(done)).toBeLessThan(n(total))
-    // The bar must not claim more than the sentence does.
-    const width = Number((($('#bf-fill') as HTMLElement).style.width || '0').replace('%', ''))
     expect(width).toBeLessThanOrEqual(Math.round((n(done) / n(total)) * 100) + 1)
     expect(note).toContain('opisujú len prečítané obdobie')
   })
