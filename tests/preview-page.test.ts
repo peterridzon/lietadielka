@@ -42,6 +42,36 @@ const $$ = (selector: string): Element[] => [...dom.window.document.querySelecto
  * happened once the page was served over HTTP rather than opened from disk. The bytes
  * were always correct; nothing told the parser how to read them.
  */
+/**
+ * The record reaches back in batches over days. While it is still filling, the page has
+ * to say so: an unread January and a quiet one look identical on the calendar, and every
+ * total below describes only the part that has been read.
+ */
+describe('backfill progress', () => {
+  it('shows how much of the target period has been read', () => {
+    const box = $('#backfill') as HTMLElement
+    const note = $('#bf-note')?.textContent ?? ''
+    const [, done, total] = note.match(/(\d[\d\s ]*) z (\d[\d\s ]*)/) ?? []
+    const n = (v?: string) => Number((v ?? '').replace(/\s/g, ''))
+
+    if (box.hidden) {
+      // Hidden means finished, which the numbers have to agree with.
+      expect(note === '' || n(done) >= n(total)).toBe(true)
+      return
+    }
+    expect(n(done)).toBeGreaterThan(0)
+    expect(n(done)).toBeLessThan(n(total))
+    // The bar must not claim more than the sentence does.
+    const width = Number((($('#bf-fill') as HTMLElement).style.width || '0').replace('%', ''))
+    expect(width).toBeLessThanOrEqual(Math.round((n(done) / n(total)) * 100) + 1)
+    expect(note).toContain('opisujú len prečítané obdobie')
+  })
+
+  it('sits directly under the masthead, before any of the numbers', () => {
+    expect($('header.masthead')?.nextElementSibling?.id).toBe('backfill')
+  })
+})
+
 describe('document envelope', () => {
   it('declares UTF-8 within the first 1024 bytes', () => {
     const head = readFileSync(PAGE).subarray(0, 1024).toString('latin1')

@@ -692,6 +692,42 @@
     })
   }
 
+  // --- dopĺňanie histórie --------------------------------------------------
+  // Zber siaha dozadu po dávkach a trvá dni. Kým nie je hotový, musí byť vidieť, kam
+  // siaha — inak sa neprečítaný január na kalendári tvári rovnako ako pokojný.
+  ;(function () {
+    var target = DATA.backfillFrom
+    var box = document.getElementById('backfill')
+    if (!target || !box) return
+
+    var yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+    if (yesterday < target) return
+
+    var examined = {}
+    days.forEach(function (d) { if (d.day >= target && d.day <= yesterday) examined[d.day] = true })
+
+    var total = 0
+    var cursor = new Date(target + 'T00:00:00Z')
+    var end = new Date(yesterday + 'T00:00:00Z')
+    while (cursor <= end) { total++; cursor.setUTCDate(cursor.getUTCDate() + 1) }
+
+    var done = Object.keys(examined).length
+    if (total === 0) return
+
+    // Hotový záznam sa nechváli tým, že je hotový — pruh zmizne.
+    if (done >= total) return
+
+    var pct = Math.round((done / total) * 100)
+    document.getElementById('bf-fill').style.width = Math.max(1, pct) + '%'
+    document.getElementById('bf-note').innerHTML =
+      '<b>' + nf(done) + '</b> z <b>' + nf(total) + '</b> ' +
+      plural(total, 'dňa', 'dní', 'dní') + ' od ' + longDate(target + 'T00:00:00Z') +
+      ' je prečítaných — <b>' + pct + ' %</b>. ' +
+      'Zvyšok sa dopĺňa z archívu automaticky, po dávkach; čísla nižšie zatiaľ ' +
+      'opisujú len prečítané obdobie.'
+    box.hidden = false
+  })()
+
   // --- kalendár pokrytia ----------------------------------------------------
   // Matica lietadlo × deň sa pri roku rozpadne: 5 × 365 je pásik na 1825 buniek. Týždne
   // ako stĺpce a dni v týždni ako riadky zmestia celý rok pod seba, nie vedľa seba.

@@ -149,6 +149,27 @@ section > .wrap > .sec-head { margin-bottom: 28px; }
 .kpi .note { font-size: 12.5px; color: var(--ink-3); }
 
 /* --- coverage grid ------------------------------------------------------- */
+/* --- backfill progress ------------------------------------------------------
+   Visible only while the record is still being filled. A reader who cannot see that
+   January has not been read yet has no way to tell a quiet month from an unread one —
+   which is the same confusion the coverage calendar exists to prevent, one level up. */
+.backfill { background: var(--surface); border-bottom: 1px solid var(--rule); }
+.backfill .wrap { padding-block: 14px 16px; }
+.backfill .eyebrow { margin-bottom: 9px; }
+.bf-bar {
+  height: 6px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--rule);
+  overflow: hidden;
+}
+.bf-bar span {
+  display: block; height: 100%; width: 0; background: var(--accent);
+  transition: width 600ms ease;
+}
+.bf-note {
+  margin-top: 9px; font-family: var(--data); font-size: 11.5px; color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.bf-note b { color: var(--ink); font-weight: 600; }
+
 /* --- coverage calendar ----------------------------------------------------
    This is the first thing on the page and the way into everything else, so it has to
    carry weight at 44 days and still be legible at several years.

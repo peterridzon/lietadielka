@@ -189,6 +189,13 @@ writeFileSync(
   JSON.stringify({
     generatedAt: new Date().toISOString(),
     publicationDelayHours: env.publicationDelayHours,
+    /**
+     * How far back the record is meant to reach. The archive backfill works towards this
+     * date in batches over days, so the page has to be able to say how much of the period
+     * is already examined — a reader who cannot see that the record is still filling has
+     * no way to tell a quiet January from an unread one.
+     */
+    backfillFrom: process.env.BACKFILL_FROM ?? '2026-01-01',
     flights,
     fleet,
     operators,
