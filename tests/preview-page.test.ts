@@ -346,6 +346,26 @@ describe('design preview', () => {
     expect(labels).toContain('BTS')
   })
 
+  it('narrows the flight list to an airport clicked on the map', () => {
+    ;($('#sec-flights .lb-reset') as HTMLButtonElement).click()
+    const hit = $$('.map-hit').find((h) => (h.getAttribute('aria-label') ?? '').includes('BRU'))
+    expect(hit, 'airports on the map must be clickable').toBeDefined()
+
+    hit!.dispatchEvent(new dom.window.Event('click'))
+    const visible = $$('.strip').filter((s) => (s as HTMLElement).style.display !== 'none')
+    expect(visible.length).toBeGreaterThan(0)
+    for (const s of visible) expect(s.getAttribute('data-sort-route')).toContain('BRU')
+
+    // Narrowing asked for by a click is fine; narrowing nobody can see the reason for is
+    // not. The count has to name the airport, not blame a date range that was never set.
+    expect($('#sec-flights .lb-count')?.textContent).toContain('cez BRU')
+    const chip = $('#sec-flights .lb-chip') as HTMLElement
+    expect(chip.hidden).toBe(false)
+
+    chip.click()
+    expect($('#sec-flights .lb-count')?.textContent).not.toContain('cez BRU')
+  })
+
   it('shows a workable slice of a long list, with a way to ask for more', () => {
     ;($('#sec-flights .lb-reset') as HTMLButtonElement).click()
     // Three hundred flights cannot be read top to bottom, and rendering them all at once

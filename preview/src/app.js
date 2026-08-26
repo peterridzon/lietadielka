@@ -60,7 +60,7 @@
   var PAGE_STEP = 30
 
   function listControls(box, rowSelector, specs, initial) {
-    var state = { key: initial.key, desc: initial.desc, from: '', to: '', limit: PAGE_STEP }
+    var state = { key: initial.key, desc: initial.desc, from: '', to: '', airport: '', limit: PAGE_STEP }
 
     var bar = el('div', 'listbar')
     bar.setAttribute('role', 'group')
@@ -114,11 +114,22 @@
     reset.className = 'lb-reset'
     reset.textContent = 'Celé obdobie'
     reset.addEventListener('click', function () {
-      state.from = ''; state.to = ''; state.limit = PAGE_STEP
+      state.from = ''; state.to = ''; state.airport = ''; state.limit = PAGE_STEP
       fromInput.value = ''; toInput.value = ''
       apply()
     })
     rangeRow.appendChild(reset)
+
+    // Výber letiska z mapy. Zúženie zoznamu je tu vyžiadané kliknutím, nie vedľajší účinok,
+    // takže musí byť aj vidieť čím — a dať sa jedným kliknutím zrušiť.
+    var airportChip = document.createElement('button')
+    airportChip.type = 'button'
+    airportChip.className = 'lb-chip'
+    airportChip.hidden = true
+    airportChip.addEventListener('click', function () {
+      state.airport = ''; state.limit = PAGE_STEP; apply()
+    })
+    rangeRow.appendChild(airportChip)
     if (wantsRange) bar.appendChild(rangeRow)
 
     var footer = el('div', 'listbar-foot')
@@ -139,6 +150,10 @@
       var day = (row.getAttribute('data-sort-date') || '').slice(0, 10)
       if (state.from && day < state.from) return false
       if (state.to && day > state.to) return false
+      if (state.airport) {
+        var codes = ' ' + (row.getAttribute('data-sort-route') || '') + ' '
+        if (codes.indexOf(' ' + state.airport + ' ') === -1) return false
+      }
       return true
     }
 
@@ -166,6 +181,11 @@
         if (visible) shown++
       })
 
+      if (state.airport) {
+        airportChip.hidden = false
+        airportChip.textContent = 'len cez ' + state.airport + ' ✕'
+      } else airportChip.hidden = true
+
       var buttons = bar.querySelectorAll('.lb-sort')
       for (var i = 0; i < buttons.length; i++) {
         var on = buttons[i].getAttribute('data-key') === state.key
@@ -174,12 +194,16 @@
       }
 
       var whole = rows.length
+      // Pomenovať dôvod zúženia. "Vo zvolenom období" pri výbere letiska z mapy tvrdilo
+      // niečo, čo sa nestalo, a čitateľ by hľadal zle nastavený dátum.
+      var why = state.airport
+        ? (state.from || state.to ? ' cez ' + state.airport + ' vo zvolenom období' : ' cez ' + state.airport)
+        : (state.from || state.to ? ' vo zvolenom období' : '')
       count.textContent = shown === matching
         ? (matching === whole
             ? nf(matching) + ' ' + plural(matching, 'záznam', 'záznamy', 'záznamov')
-            : nf(matching) + ' z ' + nf(whole) + ' vo zvolenom období')
-        : 'zobrazených ' + nf(shown) + ' z ' + nf(matching) +
-            (matching === whole ? '' : ' vo zvolenom období')
+            : nf(matching) + ' z ' + nf(whole) + why)
+        : 'zobrazených ' + nf(shown) + ' z ' + nf(matching) + why
       var rest = matching - shown
       more.style.display = rest > 0 ? '' : 'none'
       all.style.display = rest > PAGE_STEP ? '' : 'none'
@@ -204,6 +228,14 @@
        * zoradení od najnovších znamená vysypať tristosedemdesiat riadkov, čím strop
        * prestane existovať práve vtedy, keď je najviac potrebný.
        */
+      focusAirport: function (code) {
+        state.airport = state.airport === code ? '' : code
+        state.from = ''; state.to = ''
+        fromInput.value = ''; toInput.value = ''
+        state.limit = PAGE_STEP
+        apply()
+        return state.airport
+      },
       revealDay: function (day) {
         if (!day) return
         var month = day.slice(0, 7)
@@ -504,18 +536,44 @@
 
       var c = document.createElementNS(SVG_NS, 'circle')
       c.setAttribute('cx', q[0].toFixed(1)); c.setAttribute('cy', q[1].toFixed(1))
-      c.setAttribute('r', '4.5')
+      // Vyťaženejšie letisko je väčšie koliesko — a väčší terč, čo pri klikaní pomáha.
+      c.setAttribute('r', m.n && opts.places
+        ? String(Math.min(8, 3.4 + Math.sqrt(m.n) * 0.42).toFixed(1))
+        : '4.5')
       c.style.setProperty('fill', known ? 'var(--accent)' : 'var(--surface)')
       c.style.setProperty('stroke', known ? 'var(--surface)' : 'var(--accent)')
       c.setAttribute('stroke-width', '2')
       if (!known) c.setAttribute('stroke-dasharray', '2.5 2')
-      svg.appendChild(c)
+
+      if (opts.onPlace && m.port.code) {
+        // Terč na klikanie je väčší než koliesko: pri drobnej mape sa do 4 px netrafí nikto.
+        var hitArea = document.createElementNS(SVG_NS, 'circle')
+        hitArea.setAttribute('cx', q[0].toFixed(1)); hitArea.setAttribute('cy', q[1].toFixed(1))
+        hitArea.setAttribute('r', '11')
+        hitArea.setAttribute('fill', 'transparent')
+        hitArea.setAttribute('class', 'map-hit')
+        hitArea.setAttribute('tabindex', '0')
+        hitArea.setAttribute('role', 'button')
+        hitArea.setAttribute('aria-label', 'Zobraziť lety cez ' + m.port.code)
+        var fire = function () { opts.onPlace(m.port.code) }
+        hitArea.addEventListener('click', fire)
+        hitArea.addEventListener('keydown', function (ev) {
+          if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); fire() }
+        })
+        var t = document.createElementNS(SVG_NS, 'title')
+        t.textContent = m.port.code +
+          (m.n ? ' · ' + m.n + ' ' + plural(m.n, 'let', 'lety', 'letov') : '')
+        hitArea.appendChild(t)
+        svg.appendChild(c)
+        svg.appendChild(hitArea)
+      } else svg.appendChild(c)
 
       // Na prehľadovej mape by šesť popiskov „NEZN“ len zaclonilo trasy; duté koliesko
       // a legenda povedia to isté.
       if (!known && opts.labelUnknown === false) return
       var text = m.port.code + (known ? '' : ' ?')
-      var boxW = text.length * 7.4 + 10
+      var fontSize = opts.smallLabels ? 9.5 : 12
+      var boxW = text.length * (opts.smallLabels ? 5.9 : 7.4) + 8
       // Greedy vyhýbanie sa prekryvom: skús vpravo, potom nad a pod, inak popisok vynechaj.
       var offsets = [[9, 4], [9, -9], [9, 16], [-boxW - 4, 4], [9, -21], [9, 28]]
       var spot = null
@@ -524,7 +582,8 @@
         var hit = false
         for (var pI = 0; pI < placed.length; pI++) {
           var r = placed[pI]
-          if (bx < r[0] + r[2] && bx + boxW > r[0] && by < r[1] + 14 && by + 14 > r[1]) { hit = true; break }
+          var lh = opts.smallLabels ? 11 : 14
+          if (bx < r[0] + r[2] && bx + boxW > r[0] && by < r[1] + lh && by + lh > r[1]) { hit = true; break }
         }
         if (!hit) { spot = [bx, by, boxW]; break }
       }
@@ -533,10 +592,10 @@
 
       var label = document.createElementNS(SVG_NS, 'text')
       label.setAttribute('x', spot[0].toFixed(1))
-      label.setAttribute('y', (spot[1] + 14).toFixed(1))
+      label.setAttribute('y', (spot[1] + (opts.smallLabels ? 11 : 14)).toFixed(1))
       label.style.setProperty('font-family', 'var(--data)')
-      label.setAttribute('font-size', '12')
-      label.setAttribute('font-weight', '600')
+      label.setAttribute('font-size', String(fontSize))
+      label.setAttribute('font-weight', opts.smallLabels ? '500' : '600')
       label.style.setProperty('fill', 'var(--ink)')
       label.setAttribute('paint-order', 'stroke')
       label.style.setProperty('stroke', 'var(--surface)')
@@ -591,7 +650,10 @@
     if (known.length === 2) {
       if (known[0].port.code === known[1].port.code) return   // okruh, čiara by bola bod
       var key = [known[0].port.code, known[1].port.code].sort().join('|')
-      var pair = pairCount[key] || (pairCount[key] = { a: known[0].pt, b: known[1].pt, n: 0, kind: 'pair' })
+      var pair = pairCount[key] || (pairCount[key] = {
+        a: known[0].pt, b: known[1].pt, n: 0, kind: 'pair',
+        codes: [known[0].port.code, known[1].port.code],
+      })
       pair.n++
     } else if (known.length === 1) {
       // Vieme odkiaľ a kde sme ho stratili. Prerušovaný lúč hovorí smer, nie pristátie.
@@ -609,19 +671,41 @@
     }
   })
 
-  var connections = Object.keys(pairCount).map(function (k) { return pairCount[k] })
-    .concat(Object.keys(lostRays).map(function (k) { return lostRays[k] }))
   var places = Object.keys(placeAt).map(function (k) { return placeAt[k] })
     .sort(function (x, y) { return y.n - x.n })
+
+  // Jedna čiara na destináciu. Letisko, ktoré má spojenie s viacerými domácimi, by inak
+  // dostalo čiaru za každé z nich a mapa by sa opäť začala prekrývať tam, kde je najhustejšia.
+  // Ostáva to najčastejšie spojenie; ostatné sa dajú prečítať v tabuľke spojení nižšie.
+  var busiest = {}
+  var rank = {}
+  places.forEach(function (p, i) { rank[p.code] = i })
+  Object.keys(pairCount).forEach(function (k) {
+    var c = pairCount[k]
+    // Destinácia je ten koniec, ktorý je v poradí vyťaženosti nižšie — teda nie domovský uzol.
+    var far = rank[c.codes[0]] > rank[c.codes[1]] ? c.codes[0] : c.codes[1]
+    if (!busiest[far] || busiest[far].n < c.n) busiest[far] = c
+  })
+
+  var connections = Object.keys(busiest).map(function (k) { return busiest[k] })
+    .concat(Object.keys(lostRays).map(function (k) { return lostRays[k] }))
 
   var overview = document.getElementById('overview')
   var overviewSvg = connections.length ? buildMap(flights, {
     minHeight: 320,
     maxHeight: 440,
     connections: connections,
-    // Popisky len pre najvyťaženejšie letiská; stosedemdesiat kódov cez seba je opäť škvrna.
-    places: places.slice(0, 14),
+    // Kódy pre všetky letiská, drobným písmom. Čo sa nezmestí bez prekrytia, popisok
+    // vynechá — koliesko ostáva klikateľné aj tak.
+    places: places,
+    smallLabels: true,
     labelUnknown: false,
+    onPlace: function (code) {
+      if (!flightList) return
+      var active = flightList.focusAirport(code)
+      var sec = document.getElementById('sec-flights')
+      if (active && sec) bringIntoView(sec.querySelector('.listbar') || sec, 'start')
+    },
     aria: 'Mapa spojení slovenskej štátnej flotily, hrúbka čiary podľa počtu letov',
   }) : null
 
