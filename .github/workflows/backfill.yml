@@ -19,7 +19,7 @@ on:
       from:
         description: 'Earliest day to reach (YYYY-MM-DD)'
         required: false
-        default: '2026-01-01'
+        default: '2025-01-01'
       days:
         description: 'Days to process in this run'
         required: false
@@ -71,7 +71,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           npm run archive:backfill -- \
-            --from "${{ inputs.from || '2026-01-01' }}" \
+            --from "${{ inputs.from || '2025-01-01' }}" \
             --days "${{ inputs.days || 40 }}"
 
       - name: Commit, rebase and publish
@@ -83,6 +83,7 @@ jobs:
         run: |
           {
             echo '## Doplnenie histórie'
+            echo "Rozsah: **${{ inputs.from || '2025-01-01' }}** až po včerajšok."
             echo '```'
             npx tsx src/cli/imports-list.ts 2>/dev/null | head -20 || true
             echo '```'

@@ -110,7 +110,15 @@ async function main(): Promise<void> {
   const missing = [...eachDay(from, to)].filter((day) => (done.get(day) ?? 0) < activeOn(day))
 
   if (missing.length === 0) {
-    console.log(`Nothing to do: ${dayKey(from)}..${dayKey(to)} is complete for all ${fleet.length} aircraft.`)
+    // A finished range exits successfully having done nothing, which reads exactly like a
+    // healthy collector. That is how 2026 quietly completed while 2025 sat untouched: the
+    // schedule kept running, kept succeeding, and kept filling in nothing at all. Say so
+    // loudly enough that it cannot be mistaken for work.
+    console.log(
+      `NOTHING TO DO — ${dayKey(from)}..${dayKey(to)} is already complete for every aircraft.\n` +
+        `  The collector is finished for this range, not running. To reach further back,\n` +
+        `  give an earlier --from, or change the default in .github/workflows/backfill.yml.`,
+    )
     return
   }
 
