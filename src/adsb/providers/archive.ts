@@ -150,11 +150,21 @@ export class ArchiveProvider implements AdsbProvider {
     }
 
     // Parts must be concatenated in name order: .tar.aa then .tar.ab, never sorted by size.
-    const parts = found.release.assets
+    //
+    // Early 2023 is not split at all — a day was small enough to ship as one .tar — and
+    // matching only the split form made those days look like releases with nothing in
+    // them. They were then recorded as unavailable, and an unavailable day is never
+    // retried, so the gap would have been permanent and looked like the archive's fault.
+    const split = found.release.assets
       .filter((a) => /\.tar\.[a-z]{2}$/.test(a.name))
       .sort((a, b) => a.name.localeCompare(b.name))
+    const whole = found.release.assets.filter((a) => /\.tar$/.test(a.name))
+    const parts = split.length ? split : whole
     if (parts.length === 0) {
-      log.warn(`archive: ${found.release.tag_name} has no tar parts`)
+      log.warn(
+        `archive: ${found.release.tag_name} has no tar asset — ` +
+          `assets present: ${found.release.assets.map((a) => a.name).join(', ') || 'none'}`,
+      )
       return false
     }
 

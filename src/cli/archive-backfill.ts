@@ -142,6 +142,11 @@ async function main(): Promise<void> {
 
     let dayPositions = 0
     let dayFailed = 0
+    // Counted from what the pipeline reports, not from thrown errors. An unavailable day
+    // is a normal return, so counting exceptions reported sixty unreadable days of 2023 as
+    // "60 days filled, 0 unavailable" — a run that had achieved nothing, announcing success.
+    let dayUnavailable = 0
+    let dayAsked = 0
 
     for (const aircraft of fleet) {
       // Asking the archive for an aircraft that did not yet belong to Slovakia would file
@@ -156,6 +161,8 @@ async function main(): Promise<void> {
           force: flag(args, 'force'),
         })
         dayPositions += result.days.reduce((sum, d) => sum + d.stored, 0)
+        dayAsked++
+        if (result.days.every((d) => d.status === 'unavailable')) dayUnavailable++
       } catch (error) {
         dayFailed++
         const message = error instanceof Error ? error.message : String(error)
@@ -163,7 +170,10 @@ async function main(): Promise<void> {
       }
     }
 
-    if (dayFailed > 0 && dayFailed === activeOn(day)) {
+    if (dayAsked > 0 && dayUnavailable + dayFailed === dayAsked + dayFailed) {
+      unavailable++
+      console.log(`  ${day}  NEDOSTUPNÝ — v archíve nie je`)
+    } else if (dayFailed > 0 && dayFailed === activeOn(day)) {
       unavailable++
       console.log(`  ${day}  unavailable`)
     } else {
@@ -177,6 +187,14 @@ async function main(): Promise<void> {
     `\n${filled} ${filled === 1 ? 'day' : 'days'} filled, ${unavailable} unavailable, ` +
       `${left} still to go.`,
   )
+  if (filled === 0 && unavailable > 0) {
+    console.log(
+      '\nWARNING: not one day of this batch could be read.\n' +
+        '  Either the archive genuinely lacks them, or their releases are published under a\n' +
+        '  name ARCHIVE_VARIANTS does not list. Check the tags for one of these dates before\n' +
+        '  accepting the gap — a day recorded as unavailable is never retried.',
+    )
+  }
   if (left > 0) console.log('Run again to continue — progress is stored, nothing is repeated.')
 }
 

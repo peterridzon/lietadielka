@@ -75,7 +75,18 @@ export const env = {
    * window. "prod" is the primary feed; "staging" is tried when a day is missing from it.
    */
   archiveRepoOwner: str('ARCHIVE_REPO_OWNER', 'adsblol'),
-  archiveVariants: (opt('ARCHIVE_VARIANTS') ?? 'planes-readsb-prod-0,planes-readsb-staging-0')
+  /**
+   * Release name variants, in order of preference.
+   *
+   * The archive has not always used the same name. Early 2023 published under
+   * `planes-readsb-test-*`, later 2023 added `prod-1` and `staging-1`, and 2025 has a
+   * handful of `-0tmp` days. Looking only for the two current names made a published day
+   * indistinguishable from a missing one: sixty days of February and March 2023 were
+   * recorded as unavailable while sitting in the archive under a name nobody asked for.
+   */
+  archiveVariants: (opt('ARCHIVE_VARIANTS') ??
+    'planes-readsb-prod-0,planes-readsb-prod-1,planes-readsb-staging-0,planes-readsb-staging-1,' +
+      'planes-readsb-test-0,planes-readsb-test-1,planes-readsb-prod-0tmp,planes-readsb-staging-0tmp')
     .split(',')
     .map((value) => value.trim())
     .filter(Boolean),
