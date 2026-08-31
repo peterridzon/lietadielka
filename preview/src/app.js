@@ -1488,114 +1488,26 @@
     else stat.textContent = 'v tomto období nezaznamenané'
     body.appendChild(stat)
 
-    // Klik na fotku otvorí, čo o tom lietadle vieme: koľko lietalo, koľko to stálo a
-    // ktoré lety to boli. Fotka bola dovtedy jediný prvok karty, ktorý nič nerobil,
-    // hoci je to prvá vec, na ktorú človek na karte ukáže.
+    // Klik na fotku vyberie lietadlo. Panel s číslami sa neotvára vnútri karty — karty
+    // sú úzke a v mriežke po troch, takže rozbalenie jednej rozhádže riadok. Objaví sa
+    // pod celým registrom, rovnako ako panel vybraného dňa pod kalendárom.
     if (mine.length) {
-      var panelId = 'ac-detail-' + String(ac.registration).toLowerCase().replace(/[^a-z0-9]+/g, '-')
-      var toggle = document.createElement('button')
-      toggle.type = 'button'
-      toggle.className = 'ac-toggle'
-      toggle.setAttribute('aria-expanded', 'false')
-      toggle.setAttribute('aria-controls', panelId)
-      toggle.textContent = 'Koľko lietalo a čo to stálo'
-      body.appendChild(toggle)
-
-      var panel = el('div', 'ac-detail')
-      panel.id = panelId
-      panel.hidden = true
-      card.appendChild(panel)
-
-      var built = false
-      function open() {
-        if (built) return
-        built = true
-
-        var costed = mine.filter(function (f) { return f.costFullMid != null })
-        var sum = function (key) {
-          return costed.reduce(function (t, f) { return t + (f[key] || 0) }, 0)
-        }
-        var km = mine.reduce(function (t, f) { return t + (f.distanceKm || 0) }, 0)
-        var benchmark = costed.filter(function (f) {
-          return String(f.costModelVersion || '').indexOf('BENCHMARK') !== -1
-        }).length
-
-        var facts = el('dl', 'ac-facts')
-        function fact(label, value, note) {
-          facts.appendChild(el('dt', null, label))
-          var dd = el('dd', null, value)
-          if (note) dd.appendChild(el('em', null, note))
-          facts.appendChild(dd)
-        }
-        fact('Letov', nf(mine.length))
-        fact('Čas vo vzduchu', nf(hours, 1) + ' h')
-        fact('Preletená vzdialenosť', nf(Math.round(km)) + ' km')
-        if (costed.length) {
-          fact('Priame náklady', eur(sum('costDirectMid')),
-            ' ' + eur(sum('costDirectLow')) + ' – ' + eur(sum('costDirectHigh')))
-          fact('Celkové náklady', eur(sum('costFullMid')),
-            ' ' + eur(sum('costFullLow')) + ' – ' + eur(sum('costFullHigh')))
-          if (benchmark) {
-            fact('Podklad', benchmark === costed.length
-              ? 'komerčný benchmark pre typ'
-              : nf(benchmark) + ' z ' + nf(costed.length) + ' letov na benchmarku',
-              ' nie slovenský údaj')
-          }
-        }
-        panel.appendChild(facts)
-
-        // Päť najdrahších letov: pri stovke letov na lietadlo je zoznam všetkých len
-        // druhá kópia tabuľky nižšie, kým toto odpovedá na otázku, kvôli ktorej sem klikol.
-        var top = costed.slice().sort(function (a, b) { return (b.costFullMid || 0) - (a.costFullMid || 0) }).slice(0, 5)
-        if (top.length) {
-          panel.appendChild(el('p', 'ac-sub', 'Najdrahšie lety'))
-          var list = el('div', 'ac-flights')
-          top.forEach(function (f) {
-            var dep = endpoint(f, 'dep'), arr = endpoint(f, 'arr')
-            var row = document.createElement('button')
-            row.type = 'button'
-            row.className = 'ac-flight'
-            row.appendChild(el('span', 'd', dayLabel(f.departureTime)))
-            row.appendChild(el('span', 'r', (dep.code || 'NEZN') + ' → ' + (arr.code || 'NEZN')))
-            row.appendChild(el('span', 'c', eur(f.costFullMid)))
-            row.addEventListener('click', function () { goToFlights(isoDate(f.departureTime)) })
-            list.appendChild(row)
-          })
-          panel.appendChild(list)
-        }
-
-        var all = document.createElement('button')
-        all.type = 'button'
-        all.className = 'ac-all'
-        all.textContent = 'Všetkých ' + nf(mine.length) + ' ' +
-          plural(mine.length, 'let', 'lety', 'letov') + ' v zozname →'
-        all.addEventListener('click', function () {
-          if (!flightList) return
-          flightList.focusAircraft(ac.registration)
-          var sec = document.getElementById('sec-flights')
-          if (sec) bringIntoView(sec.querySelector('.listbar') || sec, 'start')
+      card.setAttribute('data-reg', ac.registration)
+      var fig2 = card.querySelector('figure')
+      var pick = function (ev) {
+        // Odkazy na autora a licenciu vo figcaption musia zostať odkazmi.
+        if (ev && ev.target && ev.target.closest && ev.target.closest('a')) return
+        selectAircraft(ac.registration)
+      }
+      if (fig2) {
+        fig2.classList.add('clickable')
+        fig2.setAttribute('role', 'button')
+        fig2.setAttribute('tabindex', '0')
+        fig2.setAttribute('aria-label', 'Zobraziť lety a náklady ' + ac.registration)
+        fig2.addEventListener('click', pick)
+        fig2.addEventListener('keydown', function (ev) {
+          if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); pick(ev) }
         })
-        panel.appendChild(all)
-      }
-
-      function flip() {
-        var openNow = panel.hidden
-        if (openNow) open()
-        panel.hidden = !openNow
-        toggle.setAttribute('aria-expanded', String(openNow))
-        card.classList.toggle('open', openNow)
-      }
-      toggle.addEventListener('click', flip)
-      if (photo) {
-        var fig2 = card.querySelector('figure')
-        if (fig2) {
-          fig2.classList.add('clickable')
-          fig2.addEventListener('click', function (ev) {
-            // Odkazy na autora a licenciu vo figcaption musia zostať odkazmi.
-            if (ev.target && ev.target.closest && ev.target.closest('a')) return
-            flip()
-          })
-        }
       }
     }
 
@@ -1646,6 +1558,115 @@
     group.appendChild(grid)
     groupsBox.appendChild(group)
   }
+
+  // --- vybrané lietadlo ----------------------------------------------------
+  // Jeden panel pod celým registrom, nie rozbalenie vnútri karty: karty stoja v mriežke
+  // po troch a rozbalenie jednej rozhádže celý riadok. Rovnaký vzor ako pri kalendári,
+  // kde deň otvára panel pod mriežkou.
+  var fleetDetail = document.getElementById('fleet-detail')
+  var fleetTitle = document.getElementById('fleet-detail-title')
+  var fleetSub = document.getElementById('fleet-detail-sub')
+  var fleetBody = document.getElementById('fleet-detail-body')
+  var pickedReg = null
+
+  function selectAircraft(reg) {
+    if (pickedReg === reg) reg = null
+    pickedReg = reg
+
+    var cards = document.querySelectorAll('#fleet-groups .ac')
+    for (var i = 0; i < cards.length; i++) {
+      cards[i].classList.toggle('picked', cards[i].getAttribute('data-reg') === reg)
+    }
+    fleetDetail.setAttribute('data-open', reg ? '1' : '0')
+    if (!reg) return
+
+    var ac = DATA.fleet.filter(function (a) { return a.registration === reg })[0] || {}
+    var mine = flights.filter(function (f) { return f.registration === reg })
+    var costed = mine.filter(function (f) { return f.costFullMid != null })
+    var sum = function (key) { return costed.reduce(function (t, f) { return t + (f[key] || 0) }, 0) }
+    var hours = mine.reduce(function (t, f) { return t + (f.durationSeconds || 0) }, 0) / 3600
+    var km = mine.reduce(function (t, f) { return t + (f.distanceKm || 0) }, 0)
+    var benchmark = costed.filter(function (f) {
+      return String(f.costModelVersion || '').indexOf('BENCHMARK') !== -1
+    }).length
+
+    fleetTitle.textContent = reg + (ac.variant || ac.model ? ' · ' + (ac.variant || ac.model) : '')
+    fleetSub.textContent = benchmark
+      ? (benchmark === costed.length
+          ? 'Náklady stoja na komerčnom benchmarku pre typ, nie na slovenskom údaji.'
+          : nf(benchmark) + ' z ' + nf(costed.length) + ' letov je ocenených benchmarkom pre typ.')
+      : 'Náklady sú odvodené zo slovenského vládneho materiálu.'
+
+    fleetBody.textContent = ''
+    var facts = el('dl', 'picked-facts')
+    function fact(label, value, note) {
+      var cell = el('div', 'picked-fact')
+      cell.appendChild(el('dt', null, label))
+      var dd = el('dd', null, value)
+      if (note) dd.appendChild(el('em', null, note))
+      cell.appendChild(dd)
+      facts.appendChild(cell)
+    }
+    fact('Letov', nf(mine.length))
+    fact('Čas vo vzduchu', nf(hours, 1) + ' h')
+    fact('Preletená vzdialenosť', nf(Math.round(km)) + ' km')
+    if (costed.length) {
+      fact('Priame náklady', eur(sum('costDirectMid')),
+        eur(sum('costDirectLow')) + ' – ' + eur(sum('costDirectHigh')))
+      // Ak sa celkové rovnajú priamym, nie je to výsledok výpočtu, ale chýbajúci údaj:
+      // k tomuto lietadlu nepoznáme fixné náklady. Dva rovnaké riadky vedľa seba by
+      // vyzerali ako dve nezávislé čísla, ktoré sa zhodou okolností stretli.
+      if (Math.round(sum('costFullMid')) === Math.round(sum('costDirectMid'))) {
+        fact('Celkové náklady', 'nevieme',
+          'fixné náklady tohto lietadla nemáme, takže celkové by boli len opakovaním priamych')
+      } else {
+        fact('Celkové náklady', eur(sum('costFullMid')),
+          eur(sum('costFullLow')) + ' – ' + eur(sum('costFullHigh')))
+      }
+    }
+    fleetBody.appendChild(facts)
+
+    // Päť najdrahších letov: pri stovke letov na lietadlo by úplný zoznam bol len druhá
+    // kópia tabuľky nižšie, kým tieto odpovedajú na otázku, kvôli ktorej naň niekto klikol.
+    var top = costed.slice().sort(function (a, b) {
+      return (b.costFullMid || 0) - (a.costFullMid || 0)
+    }).slice(0, 5)
+    if (top.length) {
+      fleetBody.appendChild(el('p', 'picked-sub', 'Najdrahšie lety'))
+      var list = el('div', 'picked-flights')
+      top.forEach(function (f) {
+        var dep = endpoint(f, 'dep'), arr = endpoint(f, 'arr')
+        var row = document.createElement('button')
+        row.type = 'button'
+        row.className = 'picked-flight'
+        row.appendChild(el('span', 'd', dayLabel(f.departureTime)))
+        row.appendChild(el('span', 'r', (dep.code || 'NEZN') + ' → ' + (arr.code || 'NEZN')))
+        row.appendChild(el('span', 'c', eur(f.costFullMid)))
+        row.addEventListener('click', function () { goToFlights(isoDate(f.departureTime)) })
+        list.appendChild(row)
+      })
+      fleetBody.appendChild(list)
+    }
+
+    var all = document.createElement('button')
+    all.type = 'button'
+    all.className = 'picked-all'
+    all.textContent = 'Všetkých ' + nf(mine.length) + ' ' +
+      plural(mine.length, 'let', 'lety', 'letov') + ' v zozname →'
+    all.addEventListener('click', function () {
+      if (!flightList) return
+      flightList.focusAircraft(reg)
+      var sec = document.getElementById('sec-flights')
+      if (sec) bringIntoView(sec.querySelector('.listbar') || sec, 'start')
+    })
+    fleetBody.appendChild(all)
+
+    bringIntoView(fleetDetail, 'nearest')
+  }
+
+  document.getElementById('fleet-clear').addEventListener('click', function () {
+    selectAircraft(pickedReg)
+  })
 
   // --- letové pásiky ------------------------------------------------------
   function portNode(p, estimated) {

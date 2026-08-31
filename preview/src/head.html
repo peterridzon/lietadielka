@@ -302,6 +302,51 @@ section > .wrap > .sec-head { margin-bottom: 28px; }
 @media (max-width: 1000px) { .fleet { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 620px) { .fleet { grid-template-columns: minmax(0, 1fr); } }
 
+/* --- vybrané lietadlo ------------------------------------------------------
+   Panel pod celým registrom, nie rozbalenie vnútri karty. Karty stoja v mriežke po
+   troch: rozbalenie jednej z nich roztiahne celý riadok a ostatné dve nechá visieť
+   v prázdne. Rovnaký tvar ako panel vybraného dňa pod kalendárom, aby sa výber na
+   stránke správal všade rovnako. */
+.ac figure.clickable { cursor: pointer; }
+.ac figure.clickable:hover img { opacity: 0.92; }
+.ac figure.clickable:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.ac.picked { box-shadow: inset 0 0 0 2px var(--accent); }
+
+.picked {
+  margin-top: 18px; border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+  background: var(--surface); padding: 18px 20px 20px; display: none;
+}
+.picked[data-open="1"] { display: block; }
+.picked-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline;
+  justify-content: space-between; }
+.picked-head b { font-family: var(--display); font-size: 18px; }
+.picked-head .verdict { font-size: 13px; color: var(--ink-2); flex: 1 1 280px; }
+
+.picked-facts { margin: 18px 0 0; display: grid; gap: 1px; background: var(--rule);
+  border: 1px solid var(--rule); grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.picked-fact { background: var(--surface); padding: 12px 14px; }
+.picked-fact dt { font-family: var(--data); font-size: 10.5px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ink-3); }
+.picked-fact dd { margin: 5px 0 0; font-family: var(--data); font-size: 19px; font-weight: 600;
+  font-variant-numeric: tabular-nums; }
+.picked-fact dd em { display: block; font-style: normal; font-size: 11px; font-weight: 400;
+  color: var(--ink-3); margin-top: 3px; }
+
+.picked-sub { margin: 20px 0 8px; font-family: var(--data); font-size: 10.5px;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
+.picked-flights { display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.picked-flight { display: grid; grid-template-columns: 70px 1fr auto; gap: 12px; align-items: baseline;
+  background: var(--surface); border: 0; padding: 9px 12px; cursor: pointer; text-align: left;
+  font-size: 13px; }
+.picked-flight:hover { background: var(--surface-2); }
+.picked-flight .d { font-family: var(--data); color: var(--ink-3); }
+.picked-flight .r { font-family: var(--data); font-weight: 600; }
+.picked-flight .c { font-family: var(--data); font-variant-numeric: tabular-nums; font-weight: 600; }
+.picked-all { margin-top: 14px; font-family: var(--data); font-size: 12px;
+  background: none; border: 1px solid var(--accent); color: var(--accent);
+  padding: 8px 14px; cursor: pointer; }
+.picked-all:hover { background: var(--accent-soft); }
+
 .ac { background: var(--surface); border: 1px solid var(--rule); display: flex; flex-direction: column; }
 .ac figure { margin: 0; position: relative; }
 /* Fitted into the band, never cropped — a cover crop took the nose off the panoramic one. */

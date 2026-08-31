@@ -346,31 +346,43 @@ describe('design preview', () => {
     expect(labels).toContain('BTS')
   })
 
-  it('opens an aircraft\'s flying and cost when its photograph is clicked', () => {
+  it('opens an aircraft into a panel under the register, not inside its card', () => {
     const card = $$('.ac').find((c) => c.querySelector('.reg')?.textContent === 'OM-BYA')
     expect(card, 'OM-BYA must be on the page').toBeDefined()
 
     const figure = card!.querySelector('figure') as HTMLElement
     expect(figure.className, 'the photograph is the obvious thing to click').toContain('clickable')
-    const panel = card!.querySelector('.ac-detail') as HTMLElement
-    expect(panel.hidden).toBe(true)
+
+    // Cards sit three to a row, so expanding one inside the grid stretches the whole row
+    // and leaves its neighbours hanging. The panel belongs under the register, the same
+    // shape the calendar uses for a selected day.
+    const panel = $('#fleet-detail') as HTMLElement
+    expect(card!.contains(panel), 'the panel is not inside the card').toBe(false)
+    expect(panel.getAttribute('data-open')).toBe('0')
 
     figure.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }))
-    expect(panel.hidden).toBe(false)
+    expect(panel.getAttribute('data-open')).toBe('1')
+    expect($('#fleet-detail-title')?.textContent).toContain('OM-BYA')
+    expect(card!.className).toContain('picked')
 
-    const labels = [...panel.querySelectorAll('.ac-facts dt')].map((t) => t.textContent)
+    const labels = [...panel.querySelectorAll('.picked-fact dt')].map((t) => t.textContent)
     expect(labels).toContain('Letov')
     expect(labels).toContain('Celkové náklady')
     // Every total keeps its interval: a single figure would claim a precision the
     // underlying rate does not have.
-    const totals = [...panel.querySelectorAll('.ac-facts dd')].map((t) => t.textContent ?? '')
+    const totals = [...panel.querySelectorAll('.picked-fact dd')].map((t) => t.textContent ?? '')
     expect(totals.some((t) => t.includes('–')), 'cost totals carry their range').toBe(true)
 
-    ;(panel.querySelector('.ac-all') as HTMLButtonElement).click()
+    ;(panel.querySelector('.picked-all') as HTMLButtonElement).click()
     const visible = $$('.strip').filter((s) => (s as HTMLElement).style.display !== 'none')
     for (const s of visible) expect(s.getAttribute('data-sort-reg')).toBe('OM-BYA')
     expect($('#sec-flights .lb-count')?.textContent).toContain('OM-BYA')
     ;($('#sec-flights .lb-chip') as HTMLButtonElement).click()
+
+    // Clicking the same photograph again closes it.
+    figure.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }))
+    expect(panel.getAttribute('data-open')).toBe('0')
+    expect(card!.className).not.toContain('picked')
   })
 
   it('narrows the flight list to an airport clicked on the map', () => {
