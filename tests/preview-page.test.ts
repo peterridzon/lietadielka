@@ -346,6 +346,33 @@ describe('design preview', () => {
     expect(labels).toContain('BTS')
   })
 
+  it('opens an aircraft\'s flying and cost when its photograph is clicked', () => {
+    const card = $$('.ac').find((c) => c.querySelector('.reg')?.textContent === 'OM-BYA')
+    expect(card, 'OM-BYA must be on the page').toBeDefined()
+
+    const figure = card!.querySelector('figure') as HTMLElement
+    expect(figure.className, 'the photograph is the obvious thing to click').toContain('clickable')
+    const panel = card!.querySelector('.ac-detail') as HTMLElement
+    expect(panel.hidden).toBe(true)
+
+    figure.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }))
+    expect(panel.hidden).toBe(false)
+
+    const labels = [...panel.querySelectorAll('.ac-facts dt')].map((t) => t.textContent)
+    expect(labels).toContain('Letov')
+    expect(labels).toContain('Celkové náklady')
+    // Every total keeps its interval: a single figure would claim a precision the
+    // underlying rate does not have.
+    const totals = [...panel.querySelectorAll('.ac-facts dd')].map((t) => t.textContent ?? '')
+    expect(totals.some((t) => t.includes('–')), 'cost totals carry their range').toBe(true)
+
+    ;(panel.querySelector('.ac-all') as HTMLButtonElement).click()
+    const visible = $$('.strip').filter((s) => (s as HTMLElement).style.display !== 'none')
+    for (const s of visible) expect(s.getAttribute('data-sort-reg')).toBe('OM-BYA')
+    expect($('#sec-flights .lb-count')?.textContent).toContain('OM-BYA')
+    ;($('#sec-flights .lb-chip') as HTMLButtonElement).click()
+  })
+
   it('narrows the flight list to an airport clicked on the map', () => {
     ;($('#sec-flights .lb-reset') as HTMLButtonElement).click()
     const hit = $$('.map-hit').find((h) => (h.getAttribute('aria-label') ?? '').includes('BRU'))

@@ -60,7 +60,7 @@
   var PAGE_STEP = 30
 
   function listControls(box, rowSelector, specs, initial) {
-    var state = { key: initial.key, desc: initial.desc, from: '', to: '', airport: '', limit: PAGE_STEP }
+    var state = { key: initial.key, desc: initial.desc, from: '', to: '', airport: '', aircraft: '', limit: PAGE_STEP }
 
     var bar = el('div', 'listbar')
     bar.setAttribute('role', 'group')
@@ -114,7 +114,7 @@
     reset.className = 'lb-reset'
     reset.textContent = 'Celé obdobie'
     reset.addEventListener('click', function () {
-      state.from = ''; state.to = ''; state.airport = ''; state.limit = PAGE_STEP
+      state.from = ''; state.to = ''; state.airport = ''; state.aircraft = ''; state.limit = PAGE_STEP
       fromInput.value = ''; toInput.value = ''
       apply()
     })
@@ -127,7 +127,7 @@
     airportChip.className = 'lb-chip'
     airportChip.hidden = true
     airportChip.addEventListener('click', function () {
-      state.airport = ''; state.limit = PAGE_STEP; apply()
+      state.airport = ''; state.aircraft = ''; state.limit = PAGE_STEP; apply()
     })
     rangeRow.appendChild(airportChip)
     if (wantsRange) bar.appendChild(rangeRow)
@@ -154,6 +154,7 @@
         var codes = ' ' + (row.getAttribute('data-sort-route') || '') + ' '
         if (codes.indexOf(' ' + state.airport + ' ') === -1) return false
       }
+      if (state.aircraft && row.getAttribute('data-sort-reg') !== state.aircraft) return false
       return true
     }
 
@@ -181,9 +182,9 @@
         if (visible) shown++
       })
 
-      if (state.airport) {
+      if (state.airport || state.aircraft) {
         airportChip.hidden = false
-        airportChip.textContent = 'len cez ' + state.airport + ' ✕'
+        airportChip.textContent = (state.airport ? 'len cez ' + state.airport : 'len ' + state.aircraft) + ' ✕'
       } else airportChip.hidden = true
 
       var buttons = bar.querySelectorAll('.lb-sort')
@@ -196,9 +197,8 @@
       var whole = rows.length
       // Pomenovať dôvod zúženia. "Vo zvolenom období" pri výbere letiska z mapy tvrdilo
       // niečo, čo sa nestalo, a čitateľ by hľadal zle nastavený dátum.
-      var why = state.airport
-        ? (state.from || state.to ? ' cez ' + state.airport + ' vo zvolenom období' : ' cez ' + state.airport)
-        : (state.from || state.to ? ' vo zvolenom období' : '')
+      var narrowed = state.airport ? ' cez ' + state.airport : state.aircraft ? ' · ' + state.aircraft : ''
+      var why = narrowed + (state.from || state.to ? ' vo zvolenom období' : '')
       count.textContent = shown === matching
         ? (matching === whole
             ? nf(matching) + ' ' + plural(matching, 'záznam', 'záznamy', 'záznamov')
@@ -228,6 +228,15 @@
        * zoradení od najnovších znamená vysypať tristosedemdesiat riadkov, čím strop
        * prestane existovať práve vtedy, keď je najviac potrebný.
        */
+      focusAircraft: function (reg) {
+        state.aircraft = state.aircraft === reg ? '' : reg
+        state.airport = ''
+        state.from = ''; state.to = ''
+        fromInput.value = ''; toInput.value = ''
+        state.limit = PAGE_STEP
+        apply()
+        return state.aircraft
+      },
       focusAirport: function (code) {
         state.airport = state.airport === code ? '' : code
         state.from = ''; state.to = ''
@@ -1478,6 +1487,117 @@
     }
     else stat.textContent = 'v tomto období nezaznamenané'
     body.appendChild(stat)
+
+    // Klik na fotku otvorí, čo o tom lietadle vieme: koľko lietalo, koľko to stálo a
+    // ktoré lety to boli. Fotka bola dovtedy jediný prvok karty, ktorý nič nerobil,
+    // hoci je to prvá vec, na ktorú človek na karte ukáže.
+    if (mine.length) {
+      var panelId = 'ac-detail-' + String(ac.registration).toLowerCase().replace(/[^a-z0-9]+/g, '-')
+      var toggle = document.createElement('button')
+      toggle.type = 'button'
+      toggle.className = 'ac-toggle'
+      toggle.setAttribute('aria-expanded', 'false')
+      toggle.setAttribute('aria-controls', panelId)
+      toggle.textContent = 'Koľko lietalo a čo to stálo'
+      body.appendChild(toggle)
+
+      var panel = el('div', 'ac-detail')
+      panel.id = panelId
+      panel.hidden = true
+      card.appendChild(panel)
+
+      var built = false
+      function open() {
+        if (built) return
+        built = true
+
+        var costed = mine.filter(function (f) { return f.costFullMid != null })
+        var sum = function (key) {
+          return costed.reduce(function (t, f) { return t + (f[key] || 0) }, 0)
+        }
+        var km = mine.reduce(function (t, f) { return t + (f.distanceKm || 0) }, 0)
+        var benchmark = costed.filter(function (f) {
+          return String(f.costModelVersion || '').indexOf('BENCHMARK') !== -1
+        }).length
+
+        var facts = el('dl', 'ac-facts')
+        function fact(label, value, note) {
+          facts.appendChild(el('dt', null, label))
+          var dd = el('dd', null, value)
+          if (note) dd.appendChild(el('em', null, note))
+          facts.appendChild(dd)
+        }
+        fact('Letov', nf(mine.length))
+        fact('Čas vo vzduchu', nf(hours, 1) + ' h')
+        fact('Preletená vzdialenosť', nf(Math.round(km)) + ' km')
+        if (costed.length) {
+          fact('Priame náklady', eur(sum('costDirectMid')),
+            ' ' + eur(sum('costDirectLow')) + ' – ' + eur(sum('costDirectHigh')))
+          fact('Celkové náklady', eur(sum('costFullMid')),
+            ' ' + eur(sum('costFullLow')) + ' – ' + eur(sum('costFullHigh')))
+          if (benchmark) {
+            fact('Podklad', benchmark === costed.length
+              ? 'komerčný benchmark pre typ'
+              : nf(benchmark) + ' z ' + nf(costed.length) + ' letov na benchmarku',
+              ' nie slovenský údaj')
+          }
+        }
+        panel.appendChild(facts)
+
+        // Päť najdrahších letov: pri stovke letov na lietadlo je zoznam všetkých len
+        // druhá kópia tabuľky nižšie, kým toto odpovedá na otázku, kvôli ktorej sem klikol.
+        var top = costed.slice().sort(function (a, b) { return (b.costFullMid || 0) - (a.costFullMid || 0) }).slice(0, 5)
+        if (top.length) {
+          panel.appendChild(el('p', 'ac-sub', 'Najdrahšie lety'))
+          var list = el('div', 'ac-flights')
+          top.forEach(function (f) {
+            var dep = endpoint(f, 'dep'), arr = endpoint(f, 'arr')
+            var row = document.createElement('button')
+            row.type = 'button'
+            row.className = 'ac-flight'
+            row.appendChild(el('span', 'd', dayLabel(f.departureTime)))
+            row.appendChild(el('span', 'r', (dep.code || 'NEZN') + ' → ' + (arr.code || 'NEZN')))
+            row.appendChild(el('span', 'c', eur(f.costFullMid)))
+            row.addEventListener('click', function () { goToFlights(isoDate(f.departureTime)) })
+            list.appendChild(row)
+          })
+          panel.appendChild(list)
+        }
+
+        var all = document.createElement('button')
+        all.type = 'button'
+        all.className = 'ac-all'
+        all.textContent = 'Všetkých ' + nf(mine.length) + ' ' +
+          plural(mine.length, 'let', 'lety', 'letov') + ' v zozname →'
+        all.addEventListener('click', function () {
+          if (!flightList) return
+          flightList.focusAircraft(ac.registration)
+          var sec = document.getElementById('sec-flights')
+          if (sec) bringIntoView(sec.querySelector('.listbar') || sec, 'start')
+        })
+        panel.appendChild(all)
+      }
+
+      function flip() {
+        var openNow = panel.hidden
+        if (openNow) open()
+        panel.hidden = !openNow
+        toggle.setAttribute('aria-expanded', String(openNow))
+        card.classList.toggle('open', openNow)
+      }
+      toggle.addEventListener('click', flip)
+      if (photo) {
+        var fig2 = card.querySelector('figure')
+        if (fig2) {
+          fig2.classList.add('clickable')
+          fig2.addEventListener('click', function (ev) {
+            // Odkazy na autora a licenciu vo figcaption musia zostať odkazmi.
+            if (ev.target && ev.target.closest && ev.target.closest('a')) return
+            flip()
+          })
+        }
+      }
+    }
 
     card.appendChild(body)
     return card
