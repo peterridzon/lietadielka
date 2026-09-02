@@ -661,12 +661,26 @@ describe('design preview', () => {
 
   it('never shows a purpose without saying how well it is established', () => {
     const allowed = new Set(['potvrdený', 'pravdepodobný', 'neznámy'])
+
     // Detail is built on first open, so an unopened flight has no purpose block at all.
-    // Checking only what some earlier test happened to open makes this pass or fail on
-    // the order of the suite rather than on the page.
-    for (const button of $$('.strip[open-state="0"] .strip-btn')) {
-      ;(button as HTMLButtonElement).click()
+    // Opening every strip to find the researched ones worked at a hundred and seventy
+    // flights and timed out at five hundred and fifty — a test that fails as the record
+    // grows is a test that will fail again. The flights worth opening are known from the
+    // embedded data, so open those and one ordinary flight for the unlabelled case.
+    const data = JSON.parse($('#flight-data')?.textContent ?? '{}')
+    const researchedDays: string[] = (data.flights ?? [])
+      .filter((f: { purposeTitle?: string }) => f.purposeTitle)
+      .map((f: { departureTime: string }) => f.departureTime)
+    expect(researchedDays.length, 'the seed carries researched purposes').toBeGreaterThan(0)
+
+    const wanted = new Set(researchedDays)
+    const strips = $$('.strip').filter((s) => wanted.has(s.getAttribute('data-sort-date') ?? ''))
+    expect(strips.length, 'every researched flight has a strip').toBe(researchedDays.length)
+    for (const strip of [...strips, $$('.strip')[0]!]) {
+      const button = strip.querySelector('.strip-btn') as HTMLButtonElement | null
+      if (button && strip.getAttribute('open-state') !== '1') button.click()
     }
+
     const blocks = $$('.purpose')
     expect(blocks.length).toBeGreaterThan(0)
 
@@ -681,6 +695,6 @@ describe('design preview', () => {
         researched++
       }
     }
-    expect(researched, 'no researched purpose left on the page').toBeGreaterThan(0)
+    expect(researched, 'no researched purpose left on the page').toBe(researchedDays.length)
   })
 })
