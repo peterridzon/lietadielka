@@ -606,7 +606,7 @@ day,status,provider,positions
 2026-08-12,empty,archive,0
 2026-08-13,empty,adsblol,0
 2026-08-14,empty,adsblol,0
-2026-08-15,empty,adsblol,0
+2026-08-15,empty,archive,0
 2026-08-16,empty,archive,0
 2026-08-17,empty,adsblol,0
 2026-08-18,empty,archive,0
@@ -616,7 +616,7 @@ day,status,provider,positions
 2026-08-22,empty,archive,0
 2026-08-23,empty,archive,0
 2026-08-24,empty,adsblol,0
-2026-08-25,completed,adsblol,0
+2026-08-25,completed,archive,8
 2026-08-26,empty,archive,0
 2026-08-27,completed,archive,3
 2026-08-28,empty,archive,0
@@ -627,7 +627,7 @@ day,status,provider,positions
 2026-09-02,completed,adsblol,0
 2026-09-03,empty,adsblol,0
 2026-09-04,empty,archive,0
-2026-09-05,empty,adsblol,0
+2026-09-05,empty,archive,0
 2026-09-06,empty,archive,0
 2026-09-07,completed,archive,0
 2026-09-08,empty,archive,0
