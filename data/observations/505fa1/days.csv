@@ -616,11 +616,11 @@ day,status,provider,positions
 2026-08-22,empty,archive,0
 2026-08-23,empty,archive,0
 2026-08-24,empty,archive,0
-2026-08-25,completed,adsblol,0
+2026-08-25,completed,archive,8
 2026-08-26,empty,archive,0
 2026-08-27,completed,archive,3
 2026-08-28,empty,archive,0
-2026-08-29,empty,adsblol,0
+2026-08-29,empty,archive,0
 2026-08-30,empty,archive,0
 2026-08-31,completed,archive,1242
 2026-09-01,completed,archive,1193
@@ -632,7 +632,7 @@ day,status,provider,positions
 2026-09-07,completed,archive,0
 2026-09-08,empty,archive,0
 2026-09-09,completed,adsblol,211
-2026-09-10,empty,adsblol,0
+2026-09-10,empty,archive,0
 2026-09-11,empty,archive,0
 2026-09-12,empty,adsblol,0
 2026-09-13,empty,adsblol,0
@@ -644,7 +644,7 @@ day,status,provider,positions
 2026-09-19,empty,archive,0
 2026-09-20,empty,adsblol,0
 2026-09-21,completed,archive,0
-2026-09-22,completed,adsblol,1528
-2026-09-23,completed,adsblol,1267
+2026-09-22,completed,archive,0
+2026-09-23,completed,archive,0
 2026-09-24,empty,adsblol,0
 2026-09-25,unavailable,archive,0
