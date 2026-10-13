@@ -1333,4 +1333,5 @@ day,status,provider,positions
 2026-10-09,empty,archive,0
 2026-10-10,empty,adsblol,0
 2026-10-11,completed,archive,736
-2026-10-12,unavailable,archive,0
+2026-10-12,completed,archive,496
+2026-10-13,unavailable,archive,0
