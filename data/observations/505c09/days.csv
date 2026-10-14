@@ -1334,4 +1334,5 @@ day,status,provider,positions
 2026-10-10,empty,archive,0
 2026-10-11,completed,archive,736
 2026-10-12,completed,archive,0
-2026-10-13,unavailable,archive,0
+2026-10-13,completed,archive,963
+2026-10-14,unavailable,archive,0
