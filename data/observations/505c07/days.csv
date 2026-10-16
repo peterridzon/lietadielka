@@ -1300,7 +1300,7 @@ day,status,provider,positions
 2026-09-06,empty,adsblol,0
 2026-09-07,empty,archive,0
 2026-09-08,empty,archive,0
-2026-09-09,empty,adsblol,0
+2026-09-09,empty,archive,0
 2026-09-10,empty,archive,0
 2026-09-11,empty,archive,0
 2026-09-12,empty,archive,0
@@ -1331,9 +1331,10 @@ day,status,provider,positions
 2026-10-07,empty,archive,0
 2026-10-08,empty,adsblol,0
 2026-10-09,empty,archive,0
-2026-10-10,empty,adsblol,0
+2026-10-10,empty,archive,0
 2026-10-11,empty,archive,0
 2026-10-12,empty,archive,0
 2026-10-13,completed,archive,80
 2026-10-14,completed,archive,60
 2026-10-15,unavailable,archive,0
+2026-10-16,unavailable,archive,0
