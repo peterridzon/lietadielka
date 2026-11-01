@@ -1352,4 +1352,5 @@ day,status,provider,positions
 2026-10-28,empty,archive,0
 2026-10-29,completed,archive,1485
 2026-10-30,empty,archive,0
-2026-10-31,unavailable,archive,0
+2026-10-31,empty,archive,0
+2026-11-01,unavailable,archive,0
